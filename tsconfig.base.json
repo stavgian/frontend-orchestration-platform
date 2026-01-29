@@ -1,0 +1,24 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "@frontend/shared-contract": ["libs/shared-contract/src/index.ts"],
+      "@frontend/shared-event-bus": ["libs/shared-event-bus/src/index.ts"]
+    },
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["DOM", "DOM.Iterable", "ES2020"],
+    "jsx": "preserve",
+    "sourceMap": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "types": ["vite/client"],
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["apps", "libs"]
+}

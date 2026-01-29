@@ -1,0 +1,31 @@
+{
+  "version": "1.0.0",
+  "mfes": [
+    {
+      "id": "angular-mfe",
+      "displayName": "Angular MFE",
+      "route": "angular-mfe",
+      "type": "module-federation",
+      "remoteEntry": "http://localhost:4301/remoteEntry.js",
+      "remoteName": "angularMfe",
+      "exposedModule": "./bootstrap",
+      "customElement": "angular-mfe"
+    },
+    {
+      "id": "react-mfe",
+      "displayName": "React MFE",
+      "route": "react-mfe",
+      "type": "module-federation",
+      "remoteEntry": "http://localhost:4302/react-mfe.js",
+      "customElement": "react-mfe"
+    },
+    {
+      "id": "js-mfe",
+      "displayName": "Vanilla JS MFE",
+      "route": "js-mfe",
+      "type": "script",
+      "scripts": ["http://localhost:4303/js-mfe.js"],
+      "customElement": "js-mfe"
+    }
+  ]
+}

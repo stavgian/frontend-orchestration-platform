@@ -1,0 +1,21 @@
+{
+  "name": "shell",
+  "root": "apps/shell",
+  "sourceRoot": "apps/shell/src",
+  "projectType": "application",
+  "targets": {
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "vite dev --config apps/shell/vite.config.ts --host --port 4300 --strictPort"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["dist/apps/shell"],
+      "options": {
+        "command": "vite build --config apps/shell/vite.config.ts"
+      }
+    }
+  }
+}

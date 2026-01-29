@@ -1,0 +1,15 @@
+{
+  "name": "shared-contract",
+  "root": "libs/shared-contract",
+  "sourceRoot": "libs/shared-contract/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/dist/libs/shared-contract"],
+      "options": {
+        "command": "tsc -p libs/shared-contract/tsconfig.lib.json"
+      }
+    }
+  }
+}
