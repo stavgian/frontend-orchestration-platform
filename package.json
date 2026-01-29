@@ -6,7 +6,6 @@
     "nx": "nx",
     "build": "nx run-many --target=build --all",
     "serve:portal": "nx serve portal",
-    "serve:shell": "nx serve shell",
     "serve:mfe-a": "nx serve mfe-a",
     "serve:mfe-b": "nx serve mfe-b",
     "serve:js-mfe": "node mfes/js-mfe/server.mjs",
@@ -15,7 +14,6 @@
     "build:react-mfe": "node mfes/react-mfe/build.mjs",
     "serve:react-mfe": "node mfes/react-mfe/server.mjs",
     "serve:all": "concurrently -k -n ANG,REACT,JS,PORTAL -c cyan,magenta,yellow,green \"npm:serve:angular-mfe\" \"npm:serve:react-mfe\" \"npm:serve:js-mfe\" \"NX_DAEMON=false npm run serve:portal\"",
-    "build:shell": "nx build shell",
     "build:mfe-a": "nx build mfe-a",
     "build:mfe-b": "nx build mfe-b",
     "build:libs": "nx run-many --target=build --projects=shared-contract,shared-event-bus"

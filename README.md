@@ -7,7 +7,7 @@ Microfrontends are discovered via a JSON manifest, loaded dynamically by URL, mo
 ## What this project demonstrates
 
 - Runtime discovery and loading of microfrontends via a manifest
-- Application shell pattern for composing distributed frontends
+- Application shell pattern for composing distributed frontends (implemented via the Angular portal)
 - Custom elements as a framework-agnostic integration boundary
 - Typed, event-based cross-microfrontend communication
 - Independent build and serve of MFEs within an Nx workspace
@@ -32,7 +32,7 @@ Microfrontends are discovered via a JSON manifest, loaded dynamically by URL, mo
 
 ## Runtime manifest
 
-The shell reads a JSON manifest at runtime that describes available MFEs.
+The portal reads a JSON manifest at runtime that describes available MFEs.
 
 Example:
 
@@ -62,7 +62,7 @@ Example:
 }
 ```
 
-The shell uses this information to load and render MFEs without compile-time coupling.
+The portal uses this information to load and render MFEs without compile-time coupling.
 
 ## Cross-microfrontend communication
 
@@ -71,7 +71,7 @@ Communication is based on browser-native CustomEvents.
 - Event names and payloads are defined in shared-contract
 - MFEs publish and subscribe via shared-event-bus
 - No direct imports between MFEs
-- The shell can observe events without participating in business logic
+- The portal can observe events without participating in business logic
 
 Example flow:
 1. MFE A publishes customerSelected
@@ -84,7 +84,6 @@ Example flow:
 ```
 apps/
   portal/
-  shell/
   mfe-a/
   mfe-b/
 
