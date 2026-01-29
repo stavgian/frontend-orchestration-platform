@@ -1,0 +1,46 @@
+<ng-container *ngIf="!loadingManifest; else loading">
+  <div class="page">
+    <aside class="sidebar">
+      <div class="brand">Portal</div>
+      <div class="manifest-version" *ngIf="manifestVersion">Manifest v{{ manifestVersion }}</div>
+      <div class="manifest-error" *ngIf="manifestError">{{ manifestError }}</div>
+
+      <nav class="nav">
+        <a
+          *ngFor="let mfe of mfes; trackBy: trackById"
+        [routerLink]="navLink(mfe)"
+        routerLinkActive="active"
+        [class.active]="activeMfeId === mfe.id || activeMfeId === mfe.route"
+      >
+        <span class="mfe-name">{{ mfe.displayName }}</span>
+        <span class="mfe-route">/{{ mfe.route || mfe.id }}</span>
+      </a>
+    </nav>
+    </aside>
+
+    <section class="workspace">
+      <router-outlet></router-outlet>
+    </section>
+
+    <section class="event-log">
+      <header>
+        <div class="title">Event Log</div>
+        <div class="subtitle">Listening to customerSelected & ticketCreated</div>
+      </header>
+      <div class="log-list">
+        <div class="log-empty" *ngIf="!logs.length">No events yet.</div>
+        <div class="log-entry" *ngFor="let log of logs">
+          <div class="log-meta">
+            <span class="badge">{{ log.name }}</span>
+            <span class="time">{{ log.timestamp | date: 'shortTime' }}</span>
+          </div>
+          <pre>{{ log.payload | json }}</pre>
+        </div>
+      </div>
+    </section>
+  </div>
+</ng-container>
+
+<ng-template #loading>
+  <div class="loading-state">Loading manifest…</div>
+</ng-template>

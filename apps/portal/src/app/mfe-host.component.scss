@@ -1,0 +1,47 @@
+.host-wrapper {
+  background: #0e141b;
+  border: 1px solid #1f2a36;
+  border-radius: 12px;
+  padding: 16px;
+  min-height: 420px;
+  position: relative;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+}
+
+.mfe-host {
+  min-height: 360px;
+  border-radius: 8px;
+  background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.04), transparent 45%),
+    radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.03), transparent 40%),
+    #0b1016;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  padding: 12px;
+  transition: opacity 150ms ease-in-out;
+}
+
+.mfe-host.dimmed {
+  opacity: 0.5;
+}
+
+.host-status,
+.host-error {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+}
+
+.host-status {
+  background: rgba(68, 199, 255, 0.12);
+  color: #8ae1ff;
+  border: 1px solid rgba(68, 199, 255, 0.35);
+}
+
+.host-error {
+  background: rgba(255, 99, 132, 0.14);
+  color: #ff9cb3;
+  border: 1px solid rgba(255, 99, 132, 0.4);
+}
