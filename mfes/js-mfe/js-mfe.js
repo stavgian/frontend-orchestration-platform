@@ -123,6 +123,8 @@
           publish(EVENT_NAMES.ticketCreated, {
             ticketId,
             customerId: customer.customerId,
+            source: "js-mfe",
+            emittedAt: new Date().toISOString(),
           });
         });
       }

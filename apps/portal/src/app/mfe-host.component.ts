@@ -2,8 +2,11 @@ import { CommonModule } from '@angular/common';
 import {
   Component,
   ElementRef,
+  Input,
   OnDestroy,
   OnInit,
+  OnChanges,
+  SimpleChanges,
   ViewChild,
 } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -19,10 +22,10 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
   templateUrl: './mfe-host.component.html',
   styleUrl: './mfe-host.component.scss',
 })
-export class MfeHostComponent implements OnInit, OnDestroy {
+export class MfeHostComponent implements OnInit, OnChanges, OnDestroy {
   @ViewChild('host', { static: true }) hostRef!: ElementRef<HTMLElement>;
 
-  definition?: MfeDefinition;
+  @Input() definition?: MfeDefinition;
   loading = false;
   error?: string;
 
@@ -34,6 +37,11 @@ export class MfeHostComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    if (this.definition) {
+      void this.loadDefinition(this.definition);
+      return;
+    }
+
     this.sub = this.route.paramMap
       .pipe(
         switchMap((params) => {
@@ -70,6 +78,30 @@ export class MfeHostComponent implements OnInit, OnDestroy {
         })
       )
       .subscribe();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['definition'] && this.definition) {
+      void this.loadDefinition(this.definition);
+    }
+  }
+
+  private loadDefinition(definition: MfeDefinition) {
+    this.loading = true;
+    this.error = undefined;
+
+    return from(this.loader.loadMfe(definition))
+      .pipe(
+        tap(() => this.mount(definition)),
+        tap(() => (this.loading = false)),
+        catchError((err) => {
+          this.loading = false;
+          this.error = err?.message ?? 'Failed to load microfrontend';
+          this.clearHost();
+          return of(null);
+        })
+      )
+      .toPromise();
   }
 
   private mount(definition: MfeDefinition): void {

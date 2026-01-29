@@ -38,11 +38,15 @@ export const EVENT_NAMES = {
 export interface CustomerSelectedPayload {
   customerId: string;
   name: string;
+  source?: string;
+  emittedAt?: string;
 }
 
 export interface TicketCreatedPayload {
   ticketId: string;
   customerId: string;
+  source?: string;
+  emittedAt?: string;
 }
 
 export type EventPayloadMap = {

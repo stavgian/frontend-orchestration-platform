@@ -156,6 +156,8 @@ class AngularMfeComponent implements OnInit, OnDestroy {
     publish(EVENT_NAMES.ticketCreated, {
       ticketId,
       customerId: customerToUse.customerId,
+      source: 'angular-mfe',
+      emittedAt: new Date().toISOString(),
     });
     this.ticketMessage = `Published ticketCreated (${ticketId})`;
   }

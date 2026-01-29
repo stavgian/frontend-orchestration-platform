@@ -1,24 +1,6 @@
 <ng-container *ngIf="!loadingManifest; else loading">
-  <div class="page">
-    <aside class="sidebar">
-      <div class="brand">Portal</div>
-      <div class="manifest-version" *ngIf="manifestVersion">Manifest v{{ manifestVersion }}</div>
-      <div class="manifest-error" *ngIf="manifestError">{{ manifestError }}</div>
-
-      <nav class="nav">
-        <a
-          *ngFor="let mfe of mfes; trackBy: trackById"
-        [routerLink]="navLink(mfe)"
-        routerLinkActive="active"
-        [class.active]="activeMfeId === mfe.id || activeMfeId === mfe.route"
-      >
-        <span class="mfe-name">{{ mfe.displayName }}</span>
-        <span class="mfe-route">/{{ mfe.route || mfe.id }}</span>
-      </a>
-    </nav>
-    </aside>
-
-    <section class="workspace">
+  <div class="page single-column">
+    <section class="workspace full">
       <router-outlet></router-outlet>
     </section>
 
@@ -33,6 +15,10 @@
           <div class="log-meta">
             <span class="badge">{{ log.name }}</span>
             <span class="time">{{ log.timestamp | date: 'shortTime' }}</span>
+          </div>
+          <div class="source" *ngIf="log.source || log.emittedAt">
+            {{ log.source || 'unknown source' }}
+            <ng-container *ngIf="log.emittedAt"> · {{ log.emittedAt | date:'shortTime' }}</ng-container>
           </div>
           <pre>{{ log.payload | json }}</pre>
         </div>
