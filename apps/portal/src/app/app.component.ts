@@ -22,6 +22,8 @@ type EventLogEntry = {
   name: keyof EventPayloadMap;
   payload: EventPayloadMap[keyof EventPayloadMap];
   timestamp: number;
+  source?: string;
+  emittedAt?: string;
 };
 
 @Component({
@@ -65,7 +67,8 @@ export class AppComponent implements OnInit, OnDestroy {
       this.manifestVersion = manifest.version;
       this.activeMfeId = this.currentRouteId();
 
-      if (!this.activeMfeId || !this.findMfe(this.activeMfeId)) {
+      const isMfeRoute = this.router.url.startsWith('/mfe/');
+      if (isMfeRoute && (!this.activeMfeId || !this.findMfe(this.activeMfeId))) {
         const first = manifest.mfes[0];
         if (first) {
           this.router.navigate(['mfe', first.route ?? first.id]);
@@ -106,7 +109,13 @@ export class AppComponent implements OnInit, OnDestroy {
     name: keyof EventPayloadMap,
     payload: EventPayloadMap[keyof EventPayloadMap]
   ): void {
-    const entry: EventLogEntry = { name, payload, timestamp: Date.now() };
+    const entry: EventLogEntry = {
+      name,
+      payload,
+      timestamp: Date.now(),
+      source: (payload as any).source,
+      emittedAt: (payload as any).emittedAt,
+    };
     this.logs = [entry, ...this.logs].slice(0, 50);
   }
 

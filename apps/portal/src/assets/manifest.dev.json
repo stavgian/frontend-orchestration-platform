@@ -15,8 +15,8 @@
       "id": "react-mfe",
       "displayName": "React MFE",
       "route": "react-mfe",
-      "type": "module-federation",
-      "remoteEntry": "http://localhost:4302/react-mfe.js",
+      "type": "script",
+      "scripts": ["http://localhost:4302/react-mfe.js"],
       "customElement": "react-mfe"
     },
     {

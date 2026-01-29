@@ -37,7 +37,12 @@ const App: React.FC = () => {
   const disabled = !customerId || !name;
 
   const handleSelect = () => {
-    const payload = { customerId: customerId.trim(), name: name.trim() };
+    const payload = {
+      customerId: customerId.trim(),
+      name: name.trim(),
+      source: 'react-mfe',
+      emittedAt: new Date().toISOString(),
+    };
     publishCustomerSelected(payload);
     setLast(payload);
   };
