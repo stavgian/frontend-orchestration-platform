@@ -66,18 +66,19 @@ The portal uses this information to load and render MFEs without compile-time co
 
 ## Cross-microfrontend communication
 
-Communication is based on browser-native CustomEvents.
+Communication is based on browser-native `CustomEvent`s published on `window`.
 
-- Event names and payloads are defined in shared-contract
-- MFEs publish and subscribe via shared-event-bus
-- No direct imports between MFEs
-- The portal can observe events without participating in business logic
+- Event names and payloads live in `libs/shared-contract`:
+  - `customerSelected`: `{ customerId: string; name: string; source?: string; emittedAt?: string }`
+  - `ticketCreated`: `{ ticketId: string; customerId: string; source?: string; emittedAt?: string }`
+- MFEs publish/subscribe via the lightweight `shared-event-bus`.
+- The portal listens and logs every event with its source and emitted time.
 
 Example flow:
-1. MFE A publishes customerSelected
-2. MFE B reacts and updates its state
-3. MFE B publishes ticketCreated
-4. Shell logs the event
+1. React MFE emits `customerSelected` with `source: "react-mfe"`, `emittedAt: <ISO time>`.
+2. Angular MFE & JS MFE receive it and display the selected customer.
+3. Angular or JS MFE emits `ticketCreated` with its own `source` and `emittedAt`.
+4. Portal event log shows both events and payloads.
 
 ## Repository structure
 
