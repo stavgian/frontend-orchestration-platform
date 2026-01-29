@@ -95,17 +95,21 @@ libs/
 
 ## Running locally
 
-Start each application independently:
-
+### One command (recommended)
 ```bash
-nx serve mfe-a
-nx serve mfe-b
-nx serve shell
-nx serve portal
+npm run serve:all
+```
+Starts Angular MFE (4301), React MFE (4302), JS MFE (4303), and the portal with prefixed logs.
+
+### Manual start (individual terminals)
+```bash
+npm run serve:angular-mfe   # 4301 -> remoteEntry.js
+npm run serve:react-mfe     # 4302 -> react-mfe.js
+npm run serve:js-mfe        # 4303 -> js-mfe.js
+NX_DAEMON=false npm run serve:portal
 ```
 
-The shell loads MFEs at runtime using the manifest configuration.  
-The Angular portal reads its runtime manifest from `apps/portal/src/assets/manifest.dev.json`; update those URLs to point at your running MFEs (`angular-mfe`, `react-mfe`, `js-mfe`).
+The portal manifest (`apps/portal/src/assets/manifest.dev.json`) points to those URLs. Adjust the URLs there if you change ports.
 
 ## Design principles
 
