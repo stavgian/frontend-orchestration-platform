@@ -7,7 +7,7 @@
     <section class="event-log">
       <header>
         <div class="title">Event Log</div>
-        <div class="subtitle">Listening to customerSelected & ticketCreated</div>
+        <div class="subtitle">Listening to status messages</div>
       </header>
       <div class="log-list">
         <div class="log-empty" *ngIf="!logs.length">No events yet.</div>
@@ -16,6 +16,7 @@
             <span class="badge">{{ log.name }}</span>
             <span class="time">{{ log.timestamp | date: 'shortTime' }}</span>
           </div>
+          <div class="message" *ngIf="log.message">{{ log.message }}</div>
           <div class="source" *ngIf="log.source || log.emittedAt">
             {{ log.source || 'unknown source' }}
             <ng-container *ngIf="log.emittedAt"> · {{ log.emittedAt | date:'shortTime' }}</ng-container>

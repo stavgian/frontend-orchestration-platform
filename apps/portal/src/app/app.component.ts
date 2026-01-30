@@ -12,6 +12,7 @@ import {
   EventPayloadMap,
   Manifest,
   MfeDefinition,
+  StatusMessagePayload,
 } from '@frontend/shared-contract';
 import { subscribe } from '@frontend/shared-event-bus';
 import { filter } from 'rxjs/operators';
@@ -20,10 +21,11 @@ import { MfeLoaderService } from './mfe-loader.service';
 
 type EventLogEntry = {
   name: keyof EventPayloadMap;
-  payload: EventPayloadMap[keyof EventPayloadMap];
+  payload: StatusMessagePayload;
   timestamp: number;
   source?: string;
   emittedAt?: string;
+  message?: string;
 };
 
 @Component({
@@ -96,25 +98,20 @@ export class AppComponent implements OnInit, OnDestroy {
 
   private setupEventLog(): void {
     this.eventUnsubscribers.push(
-      subscribe(EVENT_NAMES.customerSelected, (payload) =>
-        this.addLog(EVENT_NAMES.customerSelected, payload)
-      ),
-      subscribe(EVENT_NAMES.ticketCreated, (payload) =>
-        this.addLog(EVENT_NAMES.ticketCreated, payload)
+      subscribe(EVENT_NAMES.statusMessage, (payload) =>
+        this.addLog(EVENT_NAMES.statusMessage, payload)
       )
     );
   }
 
-  private addLog(
-    name: keyof EventPayloadMap,
-    payload: EventPayloadMap[keyof EventPayloadMap]
-  ): void {
+  private addLog(name: keyof EventPayloadMap, payload: StatusMessagePayload): void {
     const entry: EventLogEntry = {
       name,
       payload,
       timestamp: Date.now(),
       source: (payload as any).source,
       emittedAt: (payload as any).emittedAt,
+      message: (payload as any).text,
     };
     this.logs = [entry, ...this.logs].slice(0, 50);
   }
