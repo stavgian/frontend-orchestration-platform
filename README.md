@@ -4,6 +4,8 @@ A framework-agnostic portal that orchestrates independently deployed microfronte
 
 Microfrontends are discovered via a JSON manifest, loaded dynamically by URL, mounted through custom elements, and coordinated using browser-native, typed event contracts. The shell has no compile-time knowledge of individual MFEs and treats them as black boxes.
 
+![Preview](./preview.png)
+
 ## What this project demonstrates
 
 - Runtime discovery and loading of microfrontends via a manifest
