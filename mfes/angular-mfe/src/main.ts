@@ -9,21 +9,17 @@ import {
   OnInit,
   inject,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { createApplication } from '@angular/platform-browser';
 import { createCustomElement } from '@angular/elements';
 
 // Event contract (mirrors shared-contract but kept local to avoid compile-time coupling)
 const EVENT_NAMES = {
-  customerSelected: 'customerSelected',
-  ticketCreated: 'ticketCreated',
+  statusMessage: 'statusMessage',
 } as const;
 
-type CustomerSelectedPayload = { customerId: string; name: string };
-type TicketCreatedPayload = { ticketId: string; customerId: string };
+type StatusMessagePayload = { text: string; source?: string; emittedAt?: string };
 type EventPayloadMap = {
-  [EVENT_NAMES.customerSelected]: CustomerSelectedPayload;
-  [EVENT_NAMES.ticketCreated]: TicketCreatedPayload;
+  [EVENT_NAMES.statusMessage]: StatusMessagePayload;
 };
 
 function validate<K extends keyof EventPayloadMap>(
@@ -31,8 +27,7 @@ function validate<K extends keyof EventPayloadMap>(
   payload: EventPayloadMap[K]
 ) {
   const required = {
-    [EVENT_NAMES.customerSelected]: ['customerId', 'name'],
-    [EVENT_NAMES.ticketCreated]: ['ticketId', 'customerId'],
+    [EVENT_NAMES.statusMessage]: ['text'],
   } as const;
 
   const missing = required[eventName].filter(
@@ -75,32 +70,14 @@ function subscribe<K extends keyof EventPayloadMap>(
 @Component({
   selector: 'angular-mfe-view',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule],
   template: `
     <div class="card">
       <p class="title">Angular MFE</p>
-      <p class="subtitle">Listens to <code>customerSelected</code> and can publish <code>ticketCreated</code>.</p>
+      <p class="subtitle">Says hi and listens to status messages.</p>
 
-      <div class="panel" *ngIf="customer; else manual">
-        <div><strong>ID:</strong> {{ customer?.customerId }}</div>
-        <div><strong>Name:</strong> {{ customer?.name }}</div>
-        <div class="hint">Using selected customer event</div>
-      </div>
-      <ng-template #manual>
-        <div class="panel muted">
-          <div class="hint">No event yet — enter a customer to publish a ticket</div>
-          <label class="label">Customer ID</label>
-          <input class="input" [(ngModel)]="manualCustomerId" placeholder="123" />
-          <label class="label">Name</label>
-          <input class="input" [(ngModel)]="manualName" placeholder="Ada Lovelace" />
-        </div>
-      </ng-template>
-
-      <button class="btn" [disabled]="!canPublish" (click)="createTicket()">
-        Create ticket
-      </button>
-
-      <div class="note" *ngIf="ticketMessage">{{ ticketMessage }}</div>
+      <button class="btn ghost" (click)="sayHi()">Say hi to everyone</button>
+      <div class="note" *ngIf="lastStatus">Last heard: {{ lastStatus?.text }} ({{ lastStatus?.source || 'unknown' }})</div>
     </div>
   `,
   styles: [
@@ -115,61 +92,31 @@ function subscribe<K extends keyof EventPayloadMap>(
      .hint { font-size:12px; color:#b7c6da; }
      .btn { margin-top:12px; padding:10px 14px; border:none; border-radius:10px; font-weight:700; color:#0b1220; background:linear-gradient(90deg, #6bdcff, #9b8cff); cursor:pointer; }
      .btn:disabled { opacity:0.5; cursor:not-allowed; }
-     .note { margin-top:10px; color:#b7c6da; font-size:12px; }
+     .note { margin-top:10px; color:#9fb1c9; font-size:12px; }
     `,
   ],
 })
 class AngularMfeComponent implements OnInit, OnDestroy {
-  customer: CustomerSelectedPayload | null = null;
-  manualCustomerId = '';
-  manualName = '';
-  ticketMessage = '';
-  private unsubscribe?: () => void;
+  statusMessage = '';
+  private unsubscribeStatus?: () => void;
+  lastStatus?: StatusMessagePayload;
 
   ngOnInit(): void {
-    this.unsubscribe = subscribe(EVENT_NAMES.customerSelected, (payload) => {
-      this.customer = payload;
-      this.manualCustomerId = payload.customerId;
-      this.manualName = payload.name;
-      this.ticketMessage = '';
+    this.unsubscribeStatus = subscribe(EVENT_NAMES.statusMessage, (msg) => {
+      this.lastStatus = msg;
     });
   }
 
   ngOnDestroy(): void {
-    this.unsubscribe?.();
+    this.unsubscribeStatus?.();
   }
 
-  createTicket() {
-    const customerToUse =
-      this.customer ??
-      ({
-        customerId: this.manualCustomerId.trim(),
-        name: this.manualName.trim(),
-      } satisfies CustomerSelectedPayload);
-
-    if (!customerToUse.customerId || !customerToUse.name) {
-      this.ticketMessage = 'Enter a customer first.';
-      return;
-    }
-
-    const ticketId = `AT-${Date.now().toString(36)}-${Math.floor(Math.random() * 1000)}`;
-    publish(EVENT_NAMES.ticketCreated, {
-      ticketId,
-      customerId: customerToUse.customerId,
+  sayHi() {
+    publish(EVENT_NAMES.statusMessage, {
+      text: 'Hi from Angular MFE — waving at everyone!',
       source: 'angular-mfe',
       emittedAt: new Date().toISOString(),
     });
-    this.ticketMessage = `Published ticketCreated (${ticketId})`;
-  }
-
-  get canPublish(): boolean {
-    const c =
-      this.customer ??
-      ({
-        customerId: this.manualCustomerId.trim(),
-        name: this.manualName.trim(),
-      } satisfies CustomerSelectedPayload);
-    return !!c.customerId && !!c.name;
   }
 }
 

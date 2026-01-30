@@ -31,25 +31,15 @@ export interface Manifest {
 }
 
 export const EVENT_NAMES = {
-  customerSelected: "customerSelected",
-  ticketCreated: "ticketCreated",
+  statusMessage: "statusMessage",
 } as const;
 
-export interface CustomerSelectedPayload {
-  customerId: string;
-  name: string;
-  source?: string;
-  emittedAt?: string;
-}
-
-export interface TicketCreatedPayload {
-  ticketId: string;
-  customerId: string;
+export interface StatusMessagePayload {
+  text: string;
   source?: string;
   emittedAt?: string;
 }
 
 export type EventPayloadMap = {
-  [EVENT_NAMES.customerSelected]: CustomerSelectedPayload;
-  [EVENT_NAMES.ticketCreated]: TicketCreatedPayload;
+  [EVENT_NAMES.statusMessage]: StatusMessagePayload;
 };

@@ -8,8 +8,7 @@ const target: Window = window;
 const requiredStringFields: {
   [K in EventName]: (keyof EventPayloadMap[K])[];
 } = {
-  [EVENT_NAMES.customerSelected]: ["customerId", "name"],
-  [EVENT_NAMES.ticketCreated]: ["ticketId", "customerId"],
+  [EVENT_NAMES.statusMessage]: ["text"],
 };
 
 function validatePayload<K extends EventName>(

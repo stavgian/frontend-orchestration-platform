@@ -1,12 +1,10 @@
 (() => {
   const EVENT_NAMES = {
-    customerSelected: "customerSelected",
-    ticketCreated: "ticketCreated",
+    statusMessage: "statusMessage",
   };
 
   const requiredFields = {
-    [EVENT_NAMES.customerSelected]: ["customerId", "name"],
-    [EVENT_NAMES.ticketCreated]: ["ticketId", "customerId"],
+    [EVENT_NAMES.statusMessage]: ["text"],
   };
 
   const target = window;
@@ -45,27 +43,27 @@
     constructor() {
       super();
       this.attachShadow({ mode: "open" });
-      this.state = { customer: null };
-      this.unsubscribe = null;
+      this.state = { lastStatus: null };
+      this.unsubscribeStatus = null;
     }
 
     connectedCallback() {
       this.render();
-      this.unsubscribe = subscribe(EVENT_NAMES.customerSelected, (customer) => {
-        this.state.customer = customer;
+      this.unsubscribeStatus = subscribe(EVENT_NAMES.statusMessage, (msg) => {
+        this.state.lastStatus = msg;
         this.render();
       });
     }
 
     disconnectedCallback() {
-      if (this.unsubscribe) this.unsubscribe();
+      if (this.unsubscribeStatus) this.unsubscribeStatus();
     }
 
     render() {
       const { shadowRoot } = this;
       if (!shadowRoot) return;
 
-      const customer = this.state.customer;
+      const status = this.state.lastStatus;
       shadowRoot.innerHTML = `
         <style>
           :host {
@@ -82,47 +80,32 @@
           }
           .title { font-size: 16px; font-weight: 700; margin: 0 0 8px; }
           .subtitle { color: #9fb1c9; margin: 0 0 12px; font-size: 13px; }
-          .details { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; border: 1px dashed rgba(255,255,255,0.1); }
           button {
             margin-top: 12px;
             background: linear-gradient(90deg, #6bdcff, #9b8cff);
-            border: none;
+            border: 1px solid rgba(255,255,255,0.08);
             color: #0b1220;
             font-weight: 700;
             padding: 10px 14px;
             border-radius: 10px;
             cursor: pointer;
+            box-shadow: 0 6px 24px rgba(107, 220, 255, 0.12);
           }
-          button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-          }
+          .note { margin-top: 10px; color: #9fb1c9; font-size: 12px; }
         </style>
         <div class="card">
           <p class="title">JS MFE</p>
-          <p class="subtitle">Listens for customerSelected, publishes ticketCreated</p>
-          ${customer ? `
-            <div class="details">
-              <div><strong>ID:</strong> ${customer.customerId}</div>
-              <div><strong>Name:</strong> ${customer.name}</div>
-            </div>
-            <button id="create">Create ticket</button>
-          ` : `
-            <div class="details">No customer selected yet.</div>
-            <button id="create" disabled>Create ticket</button>
-          `}
+          <p class="subtitle">Says hi and listens to status messages</p>
+          <button id="hi">Say hi to everyone</button>
+          ${status ? `<div class="note">Last heard: ${status.text} (${status.source || 'unknown'})</div>` : ''}
         </div>
       `;
 
-      const btn = shadowRoot.querySelector("#create");
-      if (btn && customer) {
-        btn.addEventListener("click", () => {
-          const ticketId = `TCK-${Date.now().toString(36)}-${Math.floor(
-            Math.random() * 1000
-          )}`;
-          publish(EVENT_NAMES.ticketCreated, {
-            ticketId,
-            customerId: customer.customerId,
+      const hiBtn = shadowRoot.querySelector("#hi");
+      if (hiBtn) {
+        hiBtn.addEventListener("click", () => {
+          publish(EVENT_NAMES.statusMessage, {
+            text: "Hi from JS MFE — hope you see this!",
             source: "js-mfe",
             emittedAt: new Date().toISOString(),
           });

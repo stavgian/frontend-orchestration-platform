@@ -1,13 +1,13 @@
 # Frontend Orchestration Platform
 
-A framework-agnostic application shell that orchestrates independently deployed microfrontends at runtime.
+A framework-agnostic portal that orchestrates independently deployed microfrontends at runtime.
 
 Microfrontends are discovered via a JSON manifest, loaded dynamically by URL, mounted through custom elements, and coordinated using browser-native, typed event contracts. The shell has no compile-time knowledge of individual MFEs and treats them as black boxes.
 
 ## What this project demonstrates
 
 - Runtime discovery and loading of microfrontends via a manifest
-- Application shell pattern for composing distributed frontends (implemented via the Angular portal)
+- Portal pattern for composing distributed frontends (implemented via the Angular portal)
 - Custom elements as a framework-agnostic integration boundary
 - Typed, event-based cross-microfrontend communication
 - Independent build and serve of MFEs within an Nx workspace
@@ -15,7 +15,7 @@ Microfrontends are discovered via a JSON manifest, loaded dynamically by URL, mo
 
 ## High-level architecture
 
-- Shell
+- Portal
   - Loads a runtime manifest
   - Builds navigation dynamically
   - Loads and mounts MFEs by URL and custom element name
@@ -25,6 +25,7 @@ Microfrontends are discovered via a JSON manifest, loaded dynamically by URL, mo
   - Independently buildable and servable
   - Expose a custom element as their public API
   - Communicate only via shared event contracts
+  - Current MFEs: Angular (module federation), React (script), JS (script)
 
 - Shared libraries
   - shared-contract: manifest schema, event names, payload types
@@ -34,33 +35,10 @@ Microfrontends are discovered via a JSON manifest, loaded dynamically by URL, mo
 
 The portal reads a JSON manifest at runtime that describes available MFEs.
 
-Example:
-
-```json
-{
-  "version": "1.0",
-  "mfes": [
-    {
-      "id": "mfe-a",
-      "displayName": "Customer Search",
-      "remoteEntry": "http://localhost:4201/remoteEntry.js",
-      "module": "./bootstrap",
-      "customElement": "customer-search",
-      "route": "/search",
-      "capabilities": ["publish:customerSelected"]
-    },
-    {
-      "id": "mfe-b",
-      "displayName": "Customer Actions",
-      "remoteEntry": "http://localhost:4202/remoteEntry.js",
-      "module": "./bootstrap",
-      "customElement": "customer-actions",
-      "route": "/actions",
-      "capabilities": ["subscribe:customerSelected", "publish:ticketCreated"]
-    }
-  ]
-}
-```
+Current dev manifest (`apps/portal/src/assets/manifest.dev.json`):
+- Angular MFE (module federation): http://localhost:4301/remoteEntry.js
+- React MFE (script): http://localhost:4302/react-mfe.js
+- JS MFE (script): http://localhost:4303/js-mfe.js
 
 The portal uses this information to load and render MFEs without compile-time coupling.
 
@@ -68,29 +46,24 @@ The portal uses this information to load and render MFEs without compile-time co
 
 Communication is based on browser-native `CustomEvent`s published on `window`.
 
-- Event names and payloads live in `libs/shared-contract`:
-  - `customerSelected`: `{ customerId: string; name: string; source?: string; emittedAt?: string }`
-  - `ticketCreated`: `{ ticketId: string; customerId: string; source?: string; emittedAt?: string }`
+- Single event: `statusMessage` → `{ text: string; source?: string; emittedAt?: string }`
 - MFEs publish/subscribe via the lightweight `shared-event-bus`.
-- The portal listens and logs every event with its source and emitted time.
-
-Example flow:
-1. React MFE emits `customerSelected` with `source: "react-mfe"`, `emittedAt: <ISO time>`.
-2. Angular MFE & JS MFE receive it and display the selected customer.
-3. Angular or JS MFE emits `ticketCreated` with its own `source` and `emittedAt`.
-4. Portal event log shows both events and payloads.
+- The portal listens and logs every status with its source and emitted time; the dashboard header also shows the last heard message.
 
 ## Repository structure
 
 ```
 apps/
   portal/
-  mfe-a/
-  mfe-b/
 
 libs/
   shared-contract/
   shared-event-bus/
+
+mfes/
+  angular-mfe/
+  react-mfe/
+  js-mfe/
 ```
 
 ## Running locally
@@ -132,7 +105,7 @@ Run the lightweight dev server (serves the built single file):
 npm run serve:js-mfe
 ```
 
-It listens on http://localhost:4303/js-mfe.js and is referenced by the portal manifest (`apps/portal/src/assets/manifest.dev.json`).
+Listens on http://localhost:4303/js-mfe.js (portal manifest points here).
 
 ## React MFE (custom element)
 
@@ -162,4 +135,4 @@ From the repo root:
 ```bash
 npm run serve:all
 ```
-This runs Angular MFE (4301), React MFE (4302), JS MFE (4303), and the portal (default config, daemon disabled) in parallel with prefixed logs.
+Runs Angular MFE (4301), React MFE (4302), JS MFE (4303), and the portal (default config, daemon disabled) in parallel with prefixed logs.
