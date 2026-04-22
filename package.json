@@ -5,6 +5,7 @@
   "scripts": {
     "nx": "nx",
     "build": "nx run-many --target=build --all",
+    "build:github-pages": "node scripts/build-github-pages.mjs",
     "serve:portal": "nx serve portal",
     "serve:mfe-a": "nx serve mfe-a",
     "serve:mfe-b": "nx serve mfe-b",
