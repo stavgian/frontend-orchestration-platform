@@ -32,6 +32,12 @@
       },
       "configurations": {
         "production": {
+          "fileReplacements": [
+            {
+              "replace": "apps/portal/src/app/manifest-url.ts",
+              "with": "apps/portal/src/app/manifest-url.prod.ts"
+            }
+          ],
           "budgets": [
             {
               "type": "initial",

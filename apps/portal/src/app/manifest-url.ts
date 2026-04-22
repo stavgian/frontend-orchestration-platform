@@ -1,0 +1,1 @@
+export const manifestUrl = new URL('assets/manifest.dev.json', document.baseURI).toString();
