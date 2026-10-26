@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import { Manifest, MfeDefinition } from '@frontend/shared-contract';
+import { manifestUrl } from './manifest-url';
 
 @Injectable({ providedIn: 'root' })
 export class MfeLoaderService {
   private manifestPromise?: Promise<Manifest>;
   private scriptCache = new Map<string, Promise<void>>();
 
-  getManifest(url = '/assets/manifest.dev.json'): Promise<Manifest> {
+  getManifest(url = manifestUrl): Promise<Manifest> {
     if (!this.manifestPromise) {
       this.manifestPromise = fetch(url).then(async (response) => {
         if (!response.ok) {

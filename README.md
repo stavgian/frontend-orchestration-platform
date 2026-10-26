@@ -86,6 +86,38 @@ NX_DAEMON=false npm run serve:portal
 
 The portal manifest (`apps/portal/src/assets/manifest.dev.json`) points to those URLs. Adjust the URLs there if you change ports.
 
+## Deploying to GitHub Pages
+
+This repo now builds a single Pages artifact with separate URLs for the portal and each MFE.
+
+- Portal: `/REPOSITORY_NAME/`
+- Angular MFE: `/REPOSITORY_NAME/angular-mfe/`
+- React MFE: `/REPOSITORY_NAME/react-mfe/`
+- JS MFE: `/REPOSITORY_NAME/js-mfe/`
+
+Build the Pages artifact locally:
+
+```bash
+npm run build:github-pages
+```
+
+The generated output is written to `dist/github-pages`.
+
+Notes:
+- The portal production build uses `apps/portal/src/assets/manifest.prod.json`, which points to the deployed MFE folders with relative URLs.
+- The build script automatically sets the Angular portal base href to the repository name when running in GitHub Actions.
+- The repository includes `.npmrc` with `legacy-peer-deps=true` because the current Nx/Angular toolchain and pinned `esbuild` version do not install cleanly with strict peer resolution.
+- If you want to override the deployment base path manually, set `PAGES_BASE_PATH` before running the build.
+
+Examples:
+
+```bash
+PAGES_BASE_PATH=my-repo npm run build:github-pages
+PAGES_BASE_PATH=/ npm run build:github-pages
+```
+
+The workflow in `.github/workflows/deploy-pages.yml` publishes `dist/github-pages` to GitHub Pages on pushes to `main`.
+
 ## Design principles
 
 - No compile-time coupling between shell and MFEs
