@@ -25,11 +25,12 @@
 
     <div class="page">
       <section class="hero">
-        <p class="eyebrow">Frontend architecture · Live demo</p>
-        <h1>One page, built from <span class="hl">independent apps.</span></h1>
+        <p class="eyebrow">Frontend Orchestration Platform · Live demo</p>
+        <!-- Non-breaking hyphen and space keep "micro-frontends" and "at runtime" together when the headline wraps. -->
+        <h1>Orchestrate micro&#8209;frontends <span class="hl">at&nbsp;runtime.</span></h1>
         <p class="lede">
-          A catalog, a cart, a checkout and shipping, each built with a different technology and deployed on its own.
-          The shell portal reads a manifest, loads them at runtime, and gives them one shared message channel. That channel is the only way they work together.
+          Any framework, deployed on its own, discovered from a manifest, loaded on demand and connected through one message channel.
+          This demo runs four of them: Angular, React, Vue and plain JavaScript.
         </p>
         <ol class="steps">
           <li>
@@ -63,7 +64,7 @@
         <section class="host" aria-label="Hosted by the shell portal">
           <div class="host-label">
             <span class="p-badge" aria-hidden="true">P</span>
-            Shell portal<span class="long"> · loads {{ mfes.length }} apps from the manifest and hosts their channel</span>
+            Shell portal<span class="long"> · loads {{ mfes.length }} apps from the manifest and observes their channel</span>
           </div>
           @if (manifest) {
             <app-manifest-panel [manifest]="manifest" [url]="manifestUrl" />
