@@ -7,14 +7,14 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
-import { Manifest, MfeDefinition } from './manifest';
-import { manifestUrl } from './manifest-url';
-import { ManifestPanelComponent } from './manifest-panel.component';
-import { MessageChannelComponent } from './message-channel.component';
-import { MessageFeedService } from './message-feed.service';
-import { MessageLogComponent } from './message-log.component';
-import { MfeLoaderService } from './mfe-loader.service';
-import { ToastStackComponent } from './toast-stack.component';
+import { Manifest, MfeDefinition } from './core/manifest/manifest';
+import { manifestUrl } from './core/manifest/manifest-url';
+import { ManifestPanelComponent } from './components/manifest-panel/manifest-panel.component';
+import { MessageChannelComponent } from './components/message-channel/message-channel.component';
+import { MessageFeedService } from './core/messaging/message-feed.service';
+import { MessageLogComponent } from './components/message-log/message-log.component';
+import { MfeLoaderService } from './core/mfe-loader/mfe-loader.service';
+import { ToastStackComponent } from './components/toast-stack/toast-stack.component';
 import { version } from '../../package.json';
 
 const LOG_PREF_KEY = 'portal.message-log';

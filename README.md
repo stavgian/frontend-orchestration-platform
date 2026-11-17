@@ -41,7 +41,7 @@ Microfrontends are discovered via a JSON manifest, loaded dynamically by URL, mo
 
 - Shared library
   - [`@stavgian/mfe-communication`](libs/mfe-communication) (published to npm): events, requests with answers, and presence over browser-native events. The only code the portal and the MFEs share.
-  - The manifest format lives in the portal ([`manifest.ts`](apps/portal/src/app/manifest.ts)), because only the portal reads it.
+  - The manifest format lives in the portal ([`manifest.ts`](apps/portal/src/app/core/manifest/manifest.ts)), because only the portal reads it.
 
 ## Runtime manifest
 
@@ -103,7 +103,7 @@ An app is anything that registers a custom element and talks through `@stavgian/
 2. Build it into a single script that defines the custom element (see the existing `build.mjs` files).
 3. Call `connect({ id, name, meta: { framework: …, element: … } })` and use events, requests or presence like the others.
 4. Add an entry to `apps/portal/src/assets/manifest.dev.json` and `manifest.prod.json`. The shell needs nothing else: it reads the manifest at runtime.
-5. Optionally, give it a friendly name and colour in `apps/portal/src/app/participants.ts`. Without one it uses the manifest's `displayName`.
+5. Give it a `display` block in the manifest entry (`name`, `initials`, `color`). The portal takes how it presents each app from the manifest, so it has no code per app.
 
 Two Angular apps already share this page: the shell portal runs with zone.js, and `angular-mfe` runs without it (zoneless change detection with signals). Each brings its own Angular runtime inside its own bundle, so they can be on different Angular versions and neither upgrade blocks the other.
 

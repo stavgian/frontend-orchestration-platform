@@ -1,17 +1,17 @@
 import { Component, ElementRef, OnInit, inject, viewChildren, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MfeDefinition } from './manifest';
-import { FeedMessage, MessageFeedService, isRecipient } from './message-feed.service';
-import { MfeHostComponent } from './mfe-host.component';
-import { MfeLoaderService } from './mfe-loader.service';
-import { Participant, participantForMfe } from './participants';
+import { MfeDefinition } from '../../core/manifest/manifest';
+import { FeedMessage, MessageFeedService, isRecipient } from '../../core/messaging/message-feed.service';
+import { MfeHostComponent } from '../mfe-host/mfe-host.component';
+import { MfeLoaderService } from '../../core/mfe-loader/mfe-loader.service';
+import { Participant, participantForMfe } from '../../core/participants/participants';
 
 /**
  * One frame per app: the portal owns the frame, each app renders only its own content inside.
  * Frames light up when their app sends or receives, so traffic is visible on the real apps.
  */
 @Component({
-  selector: 'app-all-mfes',
+  selector: 'app-mfe-gallery',
   standalone: true,
   imports: [MfeHostComponent],
   template: `
@@ -36,7 +36,9 @@ import { Participant, participantForMfe } from './participants';
           <app-mfe-host [definition]="item.mfe" />
           <!-- Framework and web-component technique come from the app itself at runtime (presence metadata), not from the shell. -->
           <footer class="built">
-            <span><span class="label">Built with</span> <strong>{{ feed.frameworks().get(item.mfe.id) ?? item.who.tech }}</strong></span>
+            @if (feed.frameworks().get(item.mfe.id); as framework) {
+              <span><span class="label">Built with</span> <strong>{{ framework }}</strong></span>
+            }
             @if (feed.elements().get(item.mfe.id); as element) {
               <span><span class="label">As</span> <strong>{{ element }}</strong></span>
             }
@@ -73,7 +75,7 @@ import { Participant, participantForMfe } from './participants';
     .error { padding: 16px; margin-bottom: 16px; color: var(--danger); }
   `,
 })
-export class AllMfesComponent implements OnInit {
+export class MfeGalleryComponent implements OnInit {
   private readonly loader = inject(MfeLoaderService);
   readonly feed = inject(MessageFeedService);
   private readonly cards = viewChildren<ElementRef<HTMLElement>>('card');

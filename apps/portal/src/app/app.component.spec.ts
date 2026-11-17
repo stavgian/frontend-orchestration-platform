@@ -1,11 +1,15 @@
 import { TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AppComponent } from './app.component';
+import { MfeLoaderService } from './core/mfe-loader/mfe-loader.service';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AppComponent, RouterTestingModule],
+      providers: [
+        { provide: MfeLoaderService, useValue: { getManifest: () => Promise.resolve({ version: '1', mfes: [] }) } },
+      ],
     }).compileComponents();
   });
 

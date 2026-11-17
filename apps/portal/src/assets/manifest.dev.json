@@ -3,7 +3,11 @@
   "mfes": [
     {
       "id": "angular-mfe",
-      "displayName": "Angular MFE",
+      "display": {
+        "name": "Product catalog",
+        "initials": "A",
+        "color": "#c2255c"
+      },
       "route": "angular-mfe",
       "type": "module-federation",
       "remoteEntry": "http://localhost:4301/remoteEntry.js",
@@ -13,7 +17,11 @@
     },
     {
       "id": "react-mfe",
-      "displayName": "React MFE",
+      "display": {
+        "name": "Shopping cart",
+        "initials": "R",
+        "color": "#6741d9"
+      },
       "route": "react-mfe",
       "type": "script",
       "scripts": [
@@ -23,7 +31,11 @@
     },
     {
       "id": "js-mfe",
-      "displayName": "Vanilla JS MFE",
+      "display": {
+        "name": "Checkout",
+        "initials": "JS",
+        "color": "#c2410c"
+      },
       "route": "js-mfe",
       "type": "script",
       "scripts": [
@@ -33,7 +45,11 @@
     },
     {
       "id": "vue-mfe",
-      "displayName": "Vue MFE",
+      "display": {
+        "name": "Shipping",
+        "initials": "V",
+        "color": "#1e7a3c"
+      },
       "route": "vue-mfe",
       "type": "script",
       "scripts": [

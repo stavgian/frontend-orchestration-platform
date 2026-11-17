@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, computed, signal } from '@angular/core';
+import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
 import {
   Message,
   PeerInfo,
@@ -6,7 +6,8 @@ import {
   connect,
 } from '@stavgian/mfe-communication';
 import { Subject } from 'rxjs';
-import { PORTAL_ID, Participant, participantFor } from './participants';
+import { MfeLoaderService } from '../mfe-loader/mfe-loader.service';
+import { PORTAL, PORTAL_ID, Participant, participantForMfe, unknownParticipant } from '../participants/participants';
 
 export type FeedKind = 'event' | 'request' | 'reply' | 'joined' | 'left';
 
@@ -40,6 +41,9 @@ export class MessageFeedService implements OnDestroy {
     name: 'Portal',
     version: '1.0.0',
   });
+  private readonly loader = inject(MfeLoaderService);
+  /** Who is who, as described by the manifest. Apps only talk after the manifest has loaded them. */
+  private readonly participants = new Map<string, Participant>([[PORTAL_ID, PORTAL]]);
   private readonly timers = new Set<ReturnType<typeof setTimeout>>();
   /** Request id → when and what was asked, to label replies. */
   private readonly requests = new Map<string, { type: string; at: number }>();
@@ -77,6 +81,10 @@ export class MessageFeedService implements OnDestroy {
       observeAll: true,
     });
     this.bus.onPeersChange((peers) => this.peers.set(peers));
+    this.loader
+      .getManifest()
+      .then((manifest) => manifest.mfes.forEach((mfe) => this.participants.set(mfe.id, participantForMfe(mfe))))
+      .catch(() => undefined); // The page reports a failed manifest; senders then show as unknown.
   }
 
   /** To everyone, or with `to` to one app only. */
@@ -109,6 +117,10 @@ export class MessageFeedService implements OnDestroy {
     this.timers.forEach(clearTimeout);
   }
 
+  private participantOf(id: string | undefined): Participant {
+    return (id && this.participants.get(id)) || unknownParticipant(id);
+  }
+
   private add(envelope: Message): void {
     const kind = kindOf(envelope);
     if (!kind) return;
@@ -120,8 +132,8 @@ export class MessageFeedService implements OnDestroy {
       // Presence speaks for itself ("Checkout connected"); its payload is only shown in the details.
       summary:
         kind === 'joined' || kind === 'left' ? '' : summarize(envelope.payload),
-      sender: participantFor(envelope.source),
-      target: envelope.to ? participantFor(envelope.to) : undefined,
+      sender: this.participantOf(envelope.source),
+      target: envelope.to ? this.participantOf(envelope.to) : undefined,
       receivedAt: new Date(),
       envelope,
     };

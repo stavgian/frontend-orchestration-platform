@@ -1,5 +1,5 @@
 import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
-import { MessageFeedService } from './message-feed.service';
+import { MessageFeedService } from '../../core/messaging/message-feed.service';
 
 /** Short-lived pop-ups for each new message on the channel. */
 @Component({

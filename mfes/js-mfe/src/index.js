@@ -11,9 +11,6 @@ const escapeHtml = (value) =>
 
 const STYLES = `
   :host { display: block; font: 15px/1.5 var(--font-sans, Inter, system-ui, sans-serif); color: var(--text, #171a20); }
-  .status { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-secondary, #5a6578); margin-bottom: 12px; }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok, #15803d); }
-  .dot.off { background: transparent; border: 1.5px solid var(--text-secondary, #5a6578); }
   .total { padding: 12px 14px; border-radius: 8px; background: var(--surface, #f7f8fa); margin-bottom: 12px; }
   .total strong { font-size: 24px; letter-spacing: -0.02em; }
   .muted { color: var(--text-secondary, #5a6578); font-size: 13px; }
@@ -124,10 +121,6 @@ class JsMfe extends HTMLElement {
     this.shadowRoot.innerHTML = `
       <style>${STYLES}</style>
       ${announcement ? `<div class="announce" role="status"><span class="from">From ${escapeHtml(announcement.from)}${announcement.direct ? " · only to you" : ""}</span>${escapeHtml(announcement.text)}</div>` : ""}
-      <div class="status">
-        <span class="dot ${cartOnline ? "" : "off"}"></span>
-        ${cartOnline ? "Cart app is online" : "Cart app is offline"}
-      </div>
       <div class="total">
         <strong>€${escapeHtml(summary?.total ?? 0)}</strong> · ${escapeHtml(items(count))}
         <div class="muted">${cartOnline ? "Kept up to date by the cart's events" : "Waiting for the cart"}</div>

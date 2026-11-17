@@ -1,7 +1,6 @@
 import { JsonPipe } from '@angular/common';
 import { Component, input, ChangeDetectionStrategy } from '@angular/core';
-import { Manifest, MfeDefinition } from './manifest';
-import { participantForMfe } from './participants';
+import { Manifest, MfeDefinition } from '../../core/manifest/manifest';
 
 /**
  * Shows the manifest the shell portal read at startup: the only place it learns which apps
@@ -36,11 +35,10 @@ import { participantForMfe } from './participants';
             </tr>
           </thead>
           <tbody>
-            @for (mfe of manifest().mfes; track mfe.id) { @let who =
-            participant(mfe);
-            <tr [style.--c]="who.color">
+            @for (mfe of manifest().mfes; track mfe.id) {
+            <tr [style.--c]="mfe.display.color">
               <td>
-                <span class="dot" aria-hidden="true"></span>{{ who.name }}
+                <span class="dot" aria-hidden="true"></span>{{ mfe.display.name }}
               </td>
               <td>
                 {{
@@ -100,7 +98,6 @@ export class ManifestPanelComponent {
   readonly url = input.required<string>();
 
   readonly fileName = () => this.url().split('/').pop() ?? this.url();
-  readonly participant = participantForMfe;
   entryOf(mfe: MfeDefinition): string {
     return mfe.remoteEntry ?? mfe.scripts?.[0] ?? '—';
   }

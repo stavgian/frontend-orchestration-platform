@@ -63,7 +63,7 @@
         </div>
         <div class="tech">
           {{
-            online ? frameworks().get(node.id) ?? node.tech : 'Not connected'
+            online ? frameworks().get(node.id) ?? 'Connected' : 'Not connected'
           }}
           @if (ping !== undefined) {
           <span class="ping" [class.failed]="ping === 'timeout'">{{

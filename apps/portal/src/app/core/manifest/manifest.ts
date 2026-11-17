@@ -2,7 +2,8 @@ export type MfeType = "module-federation" | "script";
 
 export interface MfeDefinition {
   id: string;
-  displayName: string;
+  /** How the portal presents this app: its name, avatar initials and accent colour. */
+  display: { name: string; initials: string; color: string };
   /**
    * Used to build navigation and routing.
    * Example: "angular-mfe" becomes /mfe/angular-mfe
