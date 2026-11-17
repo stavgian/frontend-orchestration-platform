@@ -28,12 +28,17 @@ import { Participant, participantForMfe } from './participants';
               <h3>{{ item.who.name }}</h3>
               <p>
                 <span class="live" [class.off]="!online" aria-hidden="true"></span>
-                {{ online ? 'Connected' : 'Not connected' }} · {{ item.who.tech }}
+                {{ online ? 'Connected' : 'Not connected' }}
               </p>
             </div>
             <span class="activity" aria-hidden="true"></span>
           </header>
           <app-mfe-host [definition]="item.mfe" />
+          <!-- The framework comes from the app itself at runtime (presence metadata), not from the shell. -->
+          <footer class="built">
+            <span><span class="label">Built with</span> <strong>{{ feed.frameworks().get(item.mfe.id) ?? item.who.tech }}</strong></span>
+            <span>{{ item.mfe.type === 'module-federation' ? 'Module Federation remote' : 'Script' }}</span>
+          </footer>
         </section>
       }
     </div>
@@ -50,13 +55,18 @@ import { Participant, participantForMfe } from './participants';
     }
     h3 { margin: 0; font: 600 17px/1.3 var(--font-sans); letter-spacing: -0.01em; }
     p { margin: 3px 0 0; color: var(--subtle); font-size: 12px; display: flex; align-items: center; gap: 6px; }
-    .live { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
-    .live.off { background: transparent; box-shadow: none; border: 1.5px solid var(--subtle); }
     .activity {
       position: absolute; top: 14px; right: 14px; pointer-events: none;
       padding: 2px 8px; border-radius: 99px; font: 600 11px var(--font-mono); white-space: nowrap;
       color: var(--on-color); background: var(--pulse, var(--c)); opacity: 0;
     }
+    .built {
+      display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px;
+      margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border);
+      font-size: 13px; color: var(--text-secondary);
+    }
+    .label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-right: 4px; }
+    .built strong { color: var(--text); font-weight: 600; }
     .error { padding: 16px; margin-bottom: 16px; color: var(--danger); }
   `,
 })

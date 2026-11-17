@@ -39,7 +39,12 @@ const App: React.FC = () => {
   linesRef.current = lines;
 
   useEffect(() => {
-    const connection = connect({ id: 'react-mfe', name: 'Shopping cart', version: '1.0.0' });
+    const connection = connect({
+      id: 'react-mfe',
+      name: 'Shopping cart',
+      version: '1.0.0',
+      meta: { framework: `React ${React.version}` },
+    });
 
     connection.subscribe('cart:item-added', ({ payload: item }) => {
       setNote(null);

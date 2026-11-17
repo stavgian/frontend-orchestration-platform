@@ -48,6 +48,8 @@ export interface PeerInfo {
   id: string;
   name?: string;
   version?: string;
+  /** Free-form details an app shares about itself, e.g. `{ framework: 'Angular 18.2.14' }`. Strings only. */
+  meta?: Record<string, string>;
 }
 
 /** Payload of presence messages. */
@@ -461,6 +463,10 @@ function pickPeer(value: PeerInfo): PeerInfo {
   const peer: PeerInfo = { id: String(value?.id ?? '') };
   if (typeof value?.name === 'string') peer.name = value.name;
   if (typeof value?.version === 'string') peer.version = value.version;
+  if (value?.meta && typeof value.meta === 'object') {
+    const meta = Object.fromEntries(Object.entries(value.meta).filter(([, v]) => typeof v === 'string'));
+    if (Object.keys(meta).length) peer.meta = meta;
+  }
   return peer;
 }
 

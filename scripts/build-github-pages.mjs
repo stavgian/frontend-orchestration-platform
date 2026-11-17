@@ -35,6 +35,13 @@ const standalonePages = [
     scriptFiles: ['js-mfe.js'],
     sourceDir: join(workspaceRoot, 'mfes/js-mfe/dist'),
   },
+  {
+    id: 'vue-mfe',
+    title: 'Vue MFE',
+    elementTag: 'vue-mfe',
+    scriptFiles: ['vue-mfe.js'],
+    sourceDir: join(workspaceRoot, 'mfes/vue-mfe/dist'),
+  },
 ];
 
 run('npx', ['nx', 'build', 'mfe-communication']);
@@ -42,6 +49,7 @@ run('npx', ['nx', 'build', 'portal', '--configuration', 'production', '--base-hr
 run('node', ['mfes/angular-mfe/build.mjs']);
 run('node', ['mfes/react-mfe/build.mjs']);
 run('node', ['mfes/js-mfe/build.mjs']);
+run('node', ['mfes/vue-mfe/build.mjs']);
 
 rmSync(outputDir, { force: true, recursive: true });
 mkdirSync(outputDir, { recursive: true });

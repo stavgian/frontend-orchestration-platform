@@ -38,7 +38,12 @@ class JsMfe extends HTMLElement {
   }
 
   connectedCallback() {
-    this.bus = connect({ id: "js-mfe", name: "Checkout", version: "1.0.0" });
+    this.bus = connect({
+      id: "js-mfe",
+      name: "Checkout",
+      version: "1.0.0",
+      meta: { framework: "Plain JavaScript" },
+    });
 
     // Events keep the total current: the cart announces every change.
     this.bus.subscribe("cart:updated", (msg) => this.update({ summary: msg.payload, error: null }));

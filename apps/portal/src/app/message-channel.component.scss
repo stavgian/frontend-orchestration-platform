@@ -38,10 +38,8 @@ p { margin: 0; color: var(--subtle); font-size: 13px; }
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 18%, transparent);
 }
 .name { margin-top: 6px; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 6px; }
-.live { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
 .offline {
   .avatar { opacity: 0.35; filter: grayscale(1); }
-  .live { background: transparent; box-shadow: none; border: 1.5px solid var(--subtle); }
 }
 .tech { color: var(--subtle); font-size: 12px; }
 .stub { width: 2px; height: 12px; margin-top: 6px; background: var(--border-strong); }

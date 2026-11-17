@@ -16,6 +16,7 @@ const KNOWN: Record<string, Omit<Participant, 'id'>> = {
   'angular-mfe': { name: 'Product catalog', tech: 'Angular', initials: 'A', color: '#c2255c' },
   'react-mfe': { name: 'Shopping cart', tech: 'React', initials: 'R', color: '#6741d9' },
   'js-mfe': { name: 'Checkout', tech: 'Plain JavaScript', initials: 'JS', color: '#c2410c' },
+  'vue-mfe': { name: 'Shipping', tech: 'Vue', initials: 'V', color: '#1e7a3c' },
 };
 
 export function participantFor(id: string | undefined, displayName?: string): Participant {

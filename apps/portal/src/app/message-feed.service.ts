@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy, computed, signal } from '@angular/core';
-import { Message, ReplyPayload, connect } from '@stavgian/mfe-communication';
+import { Message, PeerInfo, ReplyPayload, connect } from '@stavgian/mfe-communication';
 import { Subject } from 'rxjs';
 import { PORTAL_ID, Participant, participantFor } from './participants';
 
@@ -52,7 +52,11 @@ export class MessageFeedService implements OnDestroy {
   /** Newest event, request or reply (presence changes excluded). */
   readonly latest = signal<FeedMessage | undefined>(undefined);
   /** Ids of apps currently connected to the channel. */
-  readonly connectedIds = signal<ReadonlySet<string>>(new Set());
+  /** Apps currently connected, with what they told the channel about themselves. */
+  readonly peers = signal<PeerInfo[]>([]);
+  readonly connectedIds = computed<ReadonlySet<string>>(() => new Set(this.peers().map((p) => p.id)));
+  /** Framework each app reports at runtime, e.g. "Angular 18.2.14". The shell is never told at build time. */
+  readonly frameworks = computed(() => new Map(this.peers().map((p) => [p.id, p.meta?.['framework']])));
   /** Last ping round trip per app id, in ms, or 'timeout'. */
   readonly pings = signal<ReadonlyMap<string, number | 'timeout'>>(new Map());
   readonly connectedCount = computed(() => this.connectedIds().size);
@@ -60,7 +64,7 @@ export class MessageFeedService implements OnDestroy {
   constructor() {
     // The portal watches all traffic, including messages addressed to one app.
     this.bus.subscribe('*', (message) => this.add(message), { observeAll: true });
-    this.bus.onPeersChange((peers) => this.connectedIds.set(new Set(peers.map((p) => p.id))));
+    this.bus.onPeersChange((peers) => this.peers.set(peers));
   }
 
   /** To everyone, or with `to` to one app only. */

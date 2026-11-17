@@ -92,6 +92,21 @@ pre {
   font: 700 10px var(--font-sans); color: var(--on-color); background: var(--bavaria);
 }
 
+/* Online indicator wherever a connection is shown: pulsing when online, hollow and still when not. */
+.live {
+  flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--ok);
+  animation: live-pulse 1.8s ease-out infinite;
+}
+.live.off,
+.offline .live { background: transparent; border: 1.5px solid var(--text-secondary); animation: none; }
+@keyframes live-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(21, 128, 61, 0.45); }
+  70%, 100% { box-shadow: 0 0 0 6px rgba(21, 128, 61, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .live { animation: none; }
+}
+
 /* Cards: white, hairline outline, the one design-system shadow. */
 .panel {
   display: block;

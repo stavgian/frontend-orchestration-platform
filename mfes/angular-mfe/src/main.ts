@@ -7,6 +7,7 @@ import {
   Component,
   OnDestroy,
   OnInit,
+  VERSION,
   inject,
 } from '@angular/core';
 import { createApplication } from '@angular/platform-browser';
@@ -72,7 +73,13 @@ class AngularMfeComponent implements OnInit, OnDestroy {
   announcement?: { text: string; direct: boolean };
 
   ngOnInit(): void {
-    this.bus = connect({ id: 'angular-mfe', name: 'Product catalog', version: '1.0.0' });
+    this.bus = connect({
+      id: 'angular-mfe',
+      name: 'Product catalog',
+      version: '1.0.0',
+      // Read at runtime, so the shell shows the version this bundle really ships.
+      meta: { framework: `Angular ${VERSION.full}` },
+    });
     this.bus.subscribe('portal:announcement', (msg) => {
       this.announcement = { text: (msg.payload as { text: string }).text, direct: msg.to === 'angular-mfe' };
       clearTimeout(this.announceTimer);

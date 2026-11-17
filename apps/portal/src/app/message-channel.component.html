@@ -73,7 +73,7 @@
             <span class="live" aria-hidden="true"></span>{{ node.name }}
           </div>
           <div class="tech">
-            {{ online ? node.tech : 'Not connected' }}
+            {{ online ? (frameworks().get(node.id) ?? node.tech) : 'Not connected' }}
             @if (ping !== undefined) {
               <span class="ping" [class.failed]="ping === 'timeout'">{{ ping === 'timeout' ? 'no answer' : ping + ' ms' }}</span>
             }

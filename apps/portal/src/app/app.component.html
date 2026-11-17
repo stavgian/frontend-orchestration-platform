@@ -1,15 +1,11 @@
 <div class="shell" [class.log-open]="logOpen()">
   <div class="main">
-    <header class="topbar">
-      <a class="brand" href="https://stavgian.de" target="_blank" rel="noopener" title="stavgian.de">
-        <img src="ys-logo.svg" alt="" height="28" />
-        <span><strong>Shell portal</strong> <span class="brand-sub">Frontend Orchestration</span></span>
-      </a>
-      <div class="topbar-actions">
+    <!-- No header: the shell's status and the log toggle float in the top corner. -->
+    <div class="corner" role="toolbar" aria-label="Shell portal status">
         @if (mfes.length) {
           <span class="online" title="Apps connected to the message channel">
             <span class="live" aria-hidden="true"></span>
-            {{ feed.connectedCount() }} of {{ mfes.length }} apps connected
+            <span>{{ feed.connectedCount() }} of {{ mfes.length }}<span class="long"> apps connected</span></span>
           </span>
         }
         <button
@@ -25,15 +21,14 @@
             <span class="badge" [attr.aria-label]="unread() + ' new'">{{ unread() }}</span>
           }
         </button>
-      </div>
-    </header>
+    </div>
 
     <div class="page">
       <section class="hero">
         <p class="eyebrow">Frontend architecture · Live demo</p>
         <h1>One page, built from <span class="hl">independent apps.</span></h1>
         <p class="lede">
-          A catalog, a cart and a checkout, each built with a different technology and deployed on its own.
+          A catalog, a cart, a checkout and shipping, each built with a different technology and deployed on its own.
           The shell portal reads a manifest, loads them at runtime, and gives them one shared message channel. That channel is the only way they work together.
         </p>
         <ol class="steps">
@@ -67,11 +62,12 @@
     </div>
 
     <footer class="footer">
-      <span>
-        © {{ year }} Yiannis Stavgianoudakis ·
-        <a href="https://github.com/stavgian/frontend-orchestration-platform/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
-      </span>
+      <a class="footer-logo" href="https://stavgian.de" target="_blank" rel="noopener" aria-label="stavgian.de">
+        <img src="ys-logo.svg" alt="" height="28" />
+      </a>
+      <span>© {{ year }} Yiannis Stavgianoudakis</span>
       <nav aria-label="Links">
+        <a href="https://github.com/stavgian/frontend-orchestration-platform/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
         <a href="https://stavgian.de" target="_blank" rel="noopener">stavgian.de</a>
         <a href="https://github.com/stavgian/frontend-orchestration-platform" target="_blank" rel="noopener">GitHub</a>
       </nav>

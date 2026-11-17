@@ -141,7 +141,7 @@ Each connection also carries a unique `instance` id. When an app remounts (Angul
 
 | | |
 | --- | --- |
-| `connect({ id, name?, version?, schemas? })` | Joins the channel and returns a `Connection`. |
+| `connect({ id, name?, version?, meta?, schemas? })` | Joins the channel and returns a `Connection`. `meta` is free-form string details peers see, e.g. `{ framework: 'Vue 3.5.45' }`. |
 | `connection.publish(type, payload)` | Sends to everyone, including this app's own subscribers. Returns the envelope. |
 | `connection.publish(type, payload, { to? })` | To everyone, or to one app. Returns the envelope. |
 | `connection.subscribe(pattern, handler, { observeAll? })` | `'type'`, `'namespace:*'` or `'*'`. Returns an unsubscribe function. |

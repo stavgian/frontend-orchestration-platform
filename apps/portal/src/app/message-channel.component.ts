@@ -29,6 +29,7 @@ export class MessageChannelComponent implements OnDestroy {
   readonly msg = this.feed.latest;
   readonly connectedIds = this.feed.connectedIds;
   readonly pings = this.feed.pings;
+  readonly frameworks = this.feed.frameworks;
   readonly pinging = signal(false);
   /** Announcement target: '' for everyone, or an app id. */
   readonly announceTo = signal('');

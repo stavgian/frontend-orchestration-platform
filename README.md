@@ -32,6 +32,8 @@ Microfrontends are discovered via a JSON manifest, loaded dynamically by URL, mo
     - **Product catalog** (Angular, module federation)
     - **Shopping cart** (React, script)
     - **Checkout** (plain JS, script)
+    - **Shipping** (Vue, script): listens to the cart and shows progress towards free shipping
+  - Each app reports its framework and version at runtime (presence `meta`, e.g. `Angular 18.2.14`); the shell shows it in the app's "Built with" footer without knowing it at build time
 
 - Shared library
   - [`@stavgian/mfe-communication`](libs/mfe-communication) (published to npm): events, requests with answers, and presence over browser-native events. The only code the portal and the MFEs share.
@@ -45,6 +47,7 @@ Current dev manifest (`apps/portal/src/assets/manifest.dev.json`):
 - Angular MFE (module federation): http://localhost:4301/remoteEntry.js
 - React MFE (script): http://localhost:4302/react-mfe.js
 - JS MFE (script): http://localhost:4303/js-mfe.js
+- Vue MFE (script): http://localhost:4304/vue-mfe.js
 
 The portal uses this information to load and render MFEs without compile-time coupling.
 
@@ -88,6 +91,18 @@ portal  angular-mfe  react-mfe  js-mfe     ← each pins its own version range
 
 In this repo, npm workspaces link the local library source to each app, as long as the library's version satisfies that app's range. An app can stay on `^1` while the library moves to `2.x`, in which case it installs `1.x` from npm instead.
 
+## Adding an app
+
+An app is anything that registers a custom element and talks through `@stavgian/mfe-communication`. To add one, for example a second Angular app on another Angular version:
+
+1. Create `mfes/<name>/` with its own `package.json`. Its dependencies are its own, so a second Angular app can pin a different major version than the first; npm installs it inside that workspace.
+2. Build it into a single script that defines the custom element (see the existing `build.mjs` files).
+3. Call `connect({ id, name, meta: { framework: … } })` and use events, requests or presence like the others.
+4. Add an entry to `apps/portal/src/assets/manifest.dev.json` and `manifest.prod.json`. The shell needs nothing else: it reads the manifest at runtime.
+5. Optionally, give it a friendly name and colour in `apps/portal/src/app/participants.ts`. Without one it uses the manifest's `displayName`.
+
+Two Angular versions on one page each bring their own runtime, so keep each one's zone.js and change detection inside its own bundle, as `angular-mfe` does.
+
 ## Repository structure
 
 ```
@@ -101,6 +116,7 @@ mfes/
   angular-mfe/
   react-mfe/
   js-mfe/
+  vue-mfe/
 ```
 
 ## Releasing `@stavgian/mfe-communication`
