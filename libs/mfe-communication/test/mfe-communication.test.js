@@ -180,7 +180,28 @@ test('a throwing responder rejects the request with its message', async () => {
 
 test('a request nobody answers times out', async () => {
   const lonely = connect({ id: 'lonely' });
-  await assert.rejects(lonely.request('nobody:home', {}, { timeout: 20 }), (err) => err.code === 'timeout');
+  await assert.rejects(lonely.request('nobody:home', {}, { timeout: 20 }), (err) => {
+    assert.equal(err.code, 'timeout');
+    assert.match(err.message, /No app answered "nobody:home" within 20 ms/);
+    return true;
+  });
+});
+
+test('a reply that arrives during the request dispatch is not lost', async () => {
+  // Some environments (zone.js) run a responder's async work before dispatchEvent returns.
+  // Simulate the extreme: a responder that replies synchronously, inside the dispatch.
+  window.addEventListener(DOM_EVENT, (event) => {
+    const m = event.detail;
+    if (!m.expectsReply) return;
+    window.dispatchEvent(
+      new CustomEvent(DOM_EVENT, {
+        detail: { specversion: '1', id: 'r1', type: 'system:reply', source: 'sync-app', time: new Date().toISOString(), to: m.source, inReplyTo: m.id, payload: { ok: true, value: 42 } },
+      })
+    );
+  });
+  const asker = connect({ id: 'asker' });
+
+  assert.equal(await asker.request('sync:answer', undefined, { timeout: 100 }), 42);
 });
 
 test('only the first answer counts', async () => {

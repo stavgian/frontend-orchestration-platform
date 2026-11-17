@@ -1,5 +1,6 @@
 import { Injectable, OnDestroy, computed, signal } from '@angular/core';
 import { Message, ReplyPayload, connect } from '@stavgian/mfe-communication';
+import { Subject } from 'rxjs';
 import { PORTAL_ID, Participant, participantFor } from './participants';
 
 // The messages the portal sends. Each app declares its own; nothing is shared but the names.
@@ -46,6 +47,8 @@ export class MessageFeedService implements OnDestroy {
   readonly toasts = signal<FeedMessage[]>([]);
   /** How many app messages arrived so far (presence changes excluded). */
   readonly messageCount = signal(0);
+  /** Every event, request and reply as it arrives. Unlike `latest`, none are skipped when several arrive at once. */
+  readonly arrivals = new Subject<FeedMessage>();
   /** Newest event, request or reply (presence changes excluded). */
   readonly latest = signal<FeedMessage | undefined>(undefined);
   /** Ids of apps currently connected to the channel. */
@@ -121,6 +124,7 @@ export class MessageFeedService implements OnDestroy {
     if (kind === 'joined' || kind === 'left') return;
 
     this.latest.set(entry);
+    this.arrivals.next(entry);
     this.messageCount.update((n) => n + 1);
     if (kind === 'event') this.showToast(entry);
   }
@@ -133,6 +137,12 @@ export class MessageFeedService implements OnDestroy {
     }, TOAST_MS);
     this.timers.add(timer);
   }
+}
+
+/** Whether `appId` receives `message`: its target if it was addressed, otherwise everyone but the sender. */
+export function isRecipient(message: FeedMessage | undefined, appId: string): boolean {
+  if (!message || message.sender.id === appId) return false;
+  return message.target ? message.target.id === appId : true;
 }
 
 /** Which feed entry a message becomes. `system:present` replies only feed the peer list. */

@@ -56,9 +56,9 @@ The demo shop uses all three patterns:
 
 | Pattern | In the demo |
 | --- | --- |
-| **Event**: "something happened" | The catalog publishes `cart:item-added`; the cart adds the item. Checkout publishes `order:placed`; the cart empties. |
-| **Request**: "I need an answer" | Checkout asks the cart directly: `request('cart:get-summary', …, { to: 'react-mfe' })`. The cart answers with `respond()`. Checkout keeps no copy of the cart. |
-| **Presence**: "who's here?" | Checkout only offers to ask while the cart is connected. The portal's "Ping all apps" checks every app and shows its response time. |
+| **Event**: "something happened" | The catalog publishes `cart:item-added`; the cart adds the item and publishes `cart:updated` with its new total, which checkout shows live. Checkout publishes `order:placed`; the cart empties. |
+| **Request**: "I need an answer" | On "Place order", checkout confirms the total with the cart itself: `request('cart:get-summary', …, { to: 'react-mfe' })`. The cart answers with `respond()`. |
+| **Presence**: "who's here?" | When the cart comes online, checkout asks it once for its current total. Events only report changes, so this covers apps that load late. Checkout only allows ordering while the cart is connected. The portal's "Ping all apps" checks every app and shows its response time. |
 
 How it works:
 - Each app calls `connect({ id })`, which announces it on the channel (`system:ready`) and discovers apps already connected (`system:present`). `disconnect()` announces `system:left`.

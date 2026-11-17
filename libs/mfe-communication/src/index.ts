@@ -219,19 +219,20 @@ export function connect(options: ConnectOptions): Connection {
   const peerHandlers = new Set<(peers: PeerInfo[]) => void>();
   let connected = true;
 
-  const send = (type: string, payload: unknown, extra: Envelope = {}): Message => {
-    const message: Message = {
-      specversion: SPEC_VERSION,
-      id: createId(),
-      type,
-      source: self.id,
-      time: new Date().toISOString(),
-      payload,
-      ...extra,
-    };
+  const envelope = (type: string, payload: unknown, extra: Envelope = {}): Message => ({
+    specversion: SPEC_VERSION,
+    id: createId(),
+    type,
+    source: self.id,
+    time: new Date().toISOString(),
+    payload,
+    ...extra,
+  });
+  const dispatch = (message: Message): Message => {
     target.dispatchEvent(new CustomEvent(DOM_EVENT, { detail: message }));
     return message;
   };
+  const send = (type: string, payload: unknown, extra?: Envelope): Message => dispatch(envelope(type, payload, extra));
 
   const settle = (reply: Message) => {
     const waiting = reply.inReplyTo ? pending.get(reply.inReplyTo) : undefined;
@@ -246,7 +247,7 @@ export function connect(options: ConnectOptions): Connection {
   const answer = (request: Message) => {
     const handler = request.type === 'system:ping' ? () => self : responders.get(request.type);
     if (!handler) return;
-    // Always answer asynchronously, so the requester is registered before the reply arrives.
+    // The handler may be sync or async; the requester is already waiting either way (see ask()).
     Promise.resolve()
       .then(() => handler(request.payload, request))
       .then(
@@ -336,13 +337,16 @@ export function connect(options: ConnectOptions): Connection {
 
   const ask = (type: string, payload: unknown, { to, timeout = DEFAULT_TIMEOUT_MS }: RequestOptions = {}) =>
     new Promise<unknown>((resolve, reject) => {
-      const request = send(type, payload, { expectsReply: true, ...(to ? { to } : {}) });
+      const request = envelope(type, payload, { expectsReply: true, ...(to ? { to } : {}) });
       const timer = setTimeout(() => {
         pending.delete(request.id);
-        const who = to ? `"${to}"` : 'No app';
-        reject(new RequestError(`${who} answered "${type}" within ${timeout} ms`, 'timeout'));
+        const what = to ? `"${to}" didn't answer` : 'No app answered';
+        reject(new RequestError(`${what} "${type}" within ${timeout} ms`, 'timeout'));
       }, timeout);
+      // Wait for the answer *before* sending: a reply can arrive while dispatch() is still running
+      // (e.g. zone.js drains microtasks when a responder's listener returns).
       pending.set(request.id, { resolve, reject, timer });
+      dispatch(request);
     });
 
   return {

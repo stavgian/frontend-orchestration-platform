@@ -2,7 +2,7 @@
   <div class="head">
     <div>
       <h2 id="channel-title">Live message channel</h2>
-      <p>Everything the apps say travels here. Watch who sends, who's asked, and who answers.</p>
+      <p>Provided by the portal. Who sends, who is asked, who answers.</p>
     </div>
     <div class="actions">
       <button type="button" class="btn-ghost" (click)="ping()" [disabled]="pinging()">
@@ -20,20 +20,24 @@
   }
 
   <p class="caption" aria-live="polite">
-    @if (msg(); as m) {
-      <strong [style.color]="m.sender.color">{{ m.sender.name }}</strong>
-      {{ verb(m) }}
-      <code>{{ m.kind === 'reply' ? (m.requestType ?? 'request') : m.type }}</code>
-      @if (m.summary) {
-        <q>{{ m.summary }}</q>
-      }
-      @if (m.target) {
-        to <strong [style.color]="m.target.color">{{ m.target.name }}</strong>
-      } @else {
-        to everyone
-      }
+    @if (showPings()) {
+      <strong class="portal">Portal</strong> pinged every app. Each one answered on its own.
     } @else {
-      Waiting for the first message. Add a product in the catalog below.
+      @if (msg(); as m) {
+        <strong [style.color]="m.sender.color">{{ m.sender.name }}</strong>
+        {{ verb(m) }}
+        <code>{{ m.kind === 'reply' ? (m.requestType ?? 'request') : m.type }}</code>
+        @if (m.summary) {
+          <q>{{ m.summary }}</q>
+        }
+        @if (m.target) {
+          to <strong [style.color]="m.target.color">{{ m.target.name }}</strong>
+        } @else {
+          to everyone
+        }
+      } @else {
+        Waiting for the first message. Add a product in the catalog below.
+      }
     }
   </p>
 </section>
@@ -42,15 +46,15 @@
   <div class="diagram" [style.--n]="nodes().length">
     <div class="nodes">
       @for (node of nodes(); track node.id) {
-        @let online = node.id === portalId || connectedIds().has(node.id);
+        @let online = connectedIds().has(node.id);
         @let sending = msg()?.sender?.id === node.id;
         @let receiving = receives(msg(), node.id, online);
         @let ping = pings().get(node.id);
         <div
           class="node"
           [class.offline]="!online"
-          [class.sending]="sending"
-          [class.receiving]="receiving"
+          [class.sending]="sending && !showPings()"
+          [class.receiving]="receiving && !showPings()"
           [style.--c]="node.color"
         >
           <div class="avatar" aria-hidden="true">{{ node.initials }}</div>
@@ -63,15 +67,25 @@
               <span class="ping" [class.failed]="ping === 'timeout'">{{ ping === 'timeout' ? 'no answer' : ping + ' ms' }}</span>
             }
           </div>
-          <span class="status" aria-hidden="true">{{ sending ? senderLabel(msg()!) : msg()?.target ? 'Received' : 'Heard it' }}</span>
+          @if (showPings() && ping !== undefined) {
+            <span class="status ping-result" [class.failed]="ping === 'timeout'">
+              {{ ping === 'timeout' ? 'No answer' : 'Answered · ' + ping + ' ms' }}
+            </span>
+          } @else {
+            <span class="status" aria-hidden="true">{{ sending ? senderLabel(msg()!) : msg()?.target ? 'Received' : 'Heard it' }}</span>
+          }
           <div class="stub"></div>
         </div>
       }
     </div>
-    <div class="bus">
+    <div class="bus" [class.sending]="portalSending()" [class.receiving]="portalReceiving()">
       @if (msg(); as m) {
         <div class="wave" [style.--x]="senderX() + '%'" [style.--c]="m.sender.color"></div>
       }
+      <span class="bus-label">
+        <span class="p-badge" aria-hidden="true">P</span>
+        Portal<span class="long"> · hosts the channel every app plugs into</span>
+      </span>
     </div>
   </div>
 </ng-template>

@@ -32,6 +32,9 @@ const PRODUCTS = [
   standalone: true,
   imports: [CommonModule],
   template: `
+    <div class="announce" *ngIf="announcement" role="status">
+      <span class="from">📣 From the portal</span>{{ announcement }}
+    </div>
     <p class="intro">Pick a product. The catalog announces it; whoever cares (the cart) reacts.</p>
     <ul class="products">
       <li *ngFor="let p of products">
@@ -43,7 +46,6 @@ const PRODUCTS = [
         </button>
       </li>
     </ul>
-    <p class="note" *ngIf="announcement">📣 {{ announcement }}</p>
   `,
   styles: [
     `:host { display:block; font: 14px/1.45 Inter, system-ui, sans-serif; color:#e9eef5; }
@@ -51,18 +53,21 @@ const PRODUCTS = [
      .products { list-style:none; margin:0; padding:0; display:grid; gap:8px; }
      li { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,0.04); }
      .emoji { font-size:20px; }
-     .name { flex:1; font-weight:600; }
+     .name { flex:1; min-width:0; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
      .price { color:#94a3b6; font-variant-numeric:tabular-nums; }
-     button { font:inherit; font-size:13px; font-weight:600; padding:6px 12px; border-radius:999px; cursor:pointer; border:0; color:#0a0f16; background:#ff6b8b; min-width:104px; transition:background 150ms; }
+     button { font:inherit; font-size:13px; font-weight:600; padding:6px 10px; border-radius:999px; cursor:pointer; border:0; color:#0a0f16; background:#ff6b8b; min-width:96px; flex:none; transition:background 150ms; }
      button:hover { background:#ff8aa3; }
      button.done { background:#4ade80; }
-     .note { margin:12px 0 0; font-size:13px; color:#94a3b6; }
+     .announce { display:flex; flex-direction:column; gap:2px; margin:0 0 12px; padding:10px 12px; border-radius:12px; font-size:13px; background:rgba(182,243,107,0.08); border:1px solid rgba(182,243,107,0.3); animation:announce-in 250ms ease-out; }
+     .from { font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#b6f36b; }
+     @keyframes announce-in { from { opacity:0; transform:translateY(-4px); } }
     `,
   ],
 })
 class AngularMfeComponent implements OnInit, OnDestroy {
   private bus?: Connection;
   private timer?: ReturnType<typeof setTimeout>;
+  private announceTimer?: ReturnType<typeof setTimeout>;
   readonly products = PRODUCTS;
   justAdded?: string;
   announcement?: string;
@@ -71,11 +76,14 @@ class AngularMfeComponent implements OnInit, OnDestroy {
     this.bus = connect({ id: 'angular-mfe', name: 'Product catalog', version: '1.0.0' });
     this.bus.subscribe('portal:announcement', (msg) => {
       this.announcement = (msg.payload as { text: string }).text;
+      clearTimeout(this.announceTimer);
+      this.announceTimer = setTimeout(() => (this.announcement = undefined), 6000);
     });
   }
 
   ngOnDestroy(): void {
     clearTimeout(this.timer);
+    clearTimeout(this.announceTimer);
     this.bus?.disconnect();
   }
 

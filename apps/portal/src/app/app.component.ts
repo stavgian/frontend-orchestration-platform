@@ -21,6 +21,7 @@ export class AppComponent implements OnInit {
   private readonly router = inject(Router);
   readonly feed = inject(MessageFeedService);
 
+  readonly year = new Date().getFullYear();
   mfes: MfeDefinition[] = [];
   loadingManifest = true;
   manifestError?: string;

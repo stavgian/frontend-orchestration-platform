@@ -11,7 +11,8 @@ type Summary = { count: number; total: number };
 declare module '@stavgian/mfe-communication' {
   interface MessageMap {
     'cart:item-added': Item;
-    'cart:cleared': Record<string, never>;
+    /** Published after every change, so other apps can stay in sync without asking. */
+    'cart:updated': Summary;
     'order:placed': Summary;
   }
   interface RequestMap {
@@ -30,6 +31,7 @@ const App: React.FC = () => {
   const [bus, setBus] = useState<Connection | null>(null);
   const [lines, setLines] = useState<Line[]>([]);
   const [note, setNote] = useState<string | null>(null);
+  const [announcement, setAnnouncement] = useState<string | null>(null);
   // The responder reads the latest cart without re-registering on every change.
   const linesRef = useRef(lines);
   linesRef.current = lines;
@@ -48,26 +50,48 @@ const App: React.FC = () => {
     });
     connection.subscribe('order:placed', ({ payload }) => {
       setLines([]);
-      setNote(`Order placed: ${payload.count} items, €${payload.total}. Cart emptied.`);
+      setNote(`Order placed: ${payload.count} ${payload.count === 1 ? 'item' : 'items'}, €${payload.total}. Cart emptied.`);
     });
-    connection.subscribe('portal:announcement', (msg) => setNote(`📣 ${(msg.payload as { text: string }).text}`));
+    let announceTimer: ReturnType<typeof setTimeout> | undefined;
+    connection.subscribe('portal:announcement', (msg) => {
+      setAnnouncement((msg.payload as { text: string }).text);
+      clearTimeout(announceTimer);
+      announceTimer = setTimeout(() => setAnnouncement(null), 6000);
+    });
 
     // Answer questions from other apps, e.g. the checkout asking for the total.
     connection.respond('cart:get-summary', () => summarize(linesRef.current));
 
     setBus(connection);
-    return () => connection.disconnect();
+    return () => {
+      clearTimeout(announceTimer);
+      connection.disconnect();
+    };
   }, []);
 
-  const clear = () => {
-    setLines([]);
-    bus?.publish('cart:cleared', {});
-  };
+  // Tell everyone whenever the cart changes (not on first render: nothing changed yet).
+  const firstRender = useRef(true);
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    bus?.publish('cart:updated', summarize(lines));
+  }, [lines]);
+
+  const clear = () => setLines([]);
 
   const { count, total } = summarize(lines);
 
   return (
     <div style={styles.root}>
+      <style>{'@keyframes announce-in { from { opacity: 0; transform: translateY(-4px); } }'}</style>
+      {announcement && (
+        <div style={styles.announce} role="status">
+          <span style={styles.from}>📣 From the portal</span>
+          {announcement}
+        </div>
+      )}
       {lines.length === 0 ? (
         <p style={styles.empty}>Your cart is empty. Add something from the catalog.</p>
       ) : (
@@ -83,7 +107,7 @@ const App: React.FC = () => {
       )}
       <div style={styles.footer}>
         <span>
-          <strong>{count}</strong> items · <strong>€{total}</strong>
+          <strong>{count}</strong> {count === 1 ? 'item' : 'items'} · <strong>€{total}</strong>
         </span>
         <button style={styles.button} onClick={clear} disabled={!lines.length}>
           Clear cart
@@ -104,6 +128,8 @@ const styles: Record<string, React.CSSProperties> = {
   footer: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 },
   button: { font: 'inherit', fontSize: 13, fontWeight: 600, padding: '6px 12px', borderRadius: 999, cursor: 'pointer', color: '#e9eef5', background: 'transparent', border: '1px solid rgba(255,255,255,0.18)' },
   note: { margin: '12px 0 0', fontSize: 13, color: '#94a3b6' },
+  announce: { display: 'flex', flexDirection: 'column', gap: 2, margin: '0 0 12px', padding: '10px 12px', borderRadius: 12, fontSize: 13, background: 'rgba(182,243,107,0.08)', border: '1px solid rgba(182,243,107,0.3)', animation: 'announce-in 250ms ease-out' },
+  from: { fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#b6f36b' },
 };
 
 class ReactMfeElement extends HTMLElement {

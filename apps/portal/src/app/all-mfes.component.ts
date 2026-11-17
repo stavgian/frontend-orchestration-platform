@@ -1,11 +1,15 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, ElementRef, OnInit, inject, viewChildren } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MfeDefinition } from './manifest';
-import { MessageFeedService } from './message-feed.service';
+import { FeedMessage, MessageFeedService, isRecipient } from './message-feed.service';
 import { MfeHostComponent } from './mfe-host.component';
 import { MfeLoaderService } from './mfe-loader.service';
 import { Participant, participantForMfe } from './participants';
 
-/** One frame per app: the portal owns the frame, each app renders only its own content inside. */
+/**
+ * One frame per app: the portal owns the frame, each app renders only its own content inside.
+ * Frames light up when their app sends or receives, so traffic is visible on the real apps.
+ */
 @Component({
   selector: 'app-all-mfes',
   standalone: true,
@@ -17,7 +21,7 @@ import { Participant, participantForMfe } from './participants';
     <div class="grid">
       @for (item of items; track item.mfe.id) {
         @let online = feed.connectedIds().has(item.mfe.id);
-        <section class="panel card" [style.--c]="item.who.color" [attr.aria-label]="item.who.name">
+        <section #card class="panel card" [attr.data-app]="item.mfe.id" [style.--c]="item.who.color" [attr.aria-label]="item.who.name">
           <header>
             <div class="avatar" aria-hidden="true">{{ item.who.initials }}</div>
             <div class="titles">
@@ -27,6 +31,7 @@ import { Participant, participantForMfe } from './participants';
                 {{ online ? 'Connected' : 'Not connected' }} · {{ item.who.tech }}
               </p>
             </div>
+            <span class="activity" aria-hidden="true"></span>
           </header>
           <app-mfe-host [definition]="item.mfe" />
         </section>
@@ -35,8 +40,9 @@ import { Participant, participantForMfe } from './participants';
   `,
   styles: `
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; align-items: start; }
-    .card { padding: 18px; border-top: 3px solid var(--c); }
+    .card { position: relative; padding: 18px; border-top: 3px solid var(--c); }
     header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .titles { flex: 1; min-width: 0; }
     .avatar {
       flex: none; width: 36px; height: 36px; border-radius: 50%;
       display: grid; place-items: center; background: var(--c);
@@ -46,15 +52,28 @@ import { Participant, participantForMfe } from './participants';
     p { margin: 3px 0 0; color: var(--subtle); font-size: 12px; display: flex; align-items: center; gap: 6px; }
     .live { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 6px #4ade80; }
     .live.off { background: transparent; box-shadow: none; border: 1.5px solid var(--subtle); }
+    .activity {
+      position: absolute; top: 14px; right: 14px; pointer-events: none;
+      padding: 2px 8px; border-radius: 99px; font: 600 11px var(--font-mono); white-space: nowrap;
+      color: #0a0f16; background: var(--pulse, var(--c)); opacity: 0;
+    }
     .error { padding: 16px; margin-bottom: 16px; color: var(--danger); }
   `,
 })
 export class AllMfesComponent implements OnInit {
   private readonly loader = inject(MfeLoaderService);
   readonly feed = inject(MessageFeedService);
+  private readonly cards = viewChildren<ElementRef<HTMLElement>>('card');
 
   items: { mfe: MfeDefinition; who: Participant }[] = [];
   error?: string;
+
+  constructor() {
+    // Every message, even several in the same instant (e.g. three apps answering a ping round).
+    this.feed.arrivals
+      .pipe(takeUntilDestroyed())
+      .subscribe((message) => this.cards().forEach((card) => this.highlight(card.nativeElement, message)));
+  }
 
   async ngOnInit(): Promise<void> {
     try {
@@ -63,5 +82,30 @@ export class AllMfesComponent implements OnInit {
     } catch (err) {
       this.error = (err as Error)?.message ?? 'Unable to load manifest';
     }
+  }
+
+  /** Glows the frame in the sender's colour and shows what happened, using the Web Animations API. */
+  private highlight(card: HTMLElement, message: FeedMessage): void {
+    const appId = card.dataset['app'] ?? '';
+    const sent = message.sender.id === appId;
+    if (!sent && !isRecipient(message, appId)) return;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const color = message.sender.color;
+    const label = card.querySelector<HTMLElement>('.activity');
+    if (label) {
+      label.textContent = sent
+        ? message.kind === 'request' ? 'Asked' : message.kind === 'reply' ? 'Answered' : 'Sent'
+        : 'Received';
+      label.style.setProperty('--pulse', color);
+      label.animate([{ opacity: 0 }, { opacity: 1, offset: 0.1 }, { opacity: 1, offset: 0.8 }, { opacity: 0 }], { duration: 1800 });
+    }
+    card.animate(
+      [
+        { boxShadow: `0 0 0 2px ${color}, 0 0 28px ${color}66` },
+        { boxShadow: `0 0 0 1px ${color}00, 0 0 0 ${color}00` },
+      ],
+      { duration: sent ? 1200 : 1000, delay: sent ? 0 : 350, easing: 'ease-out' }
+    );
   }
 }
