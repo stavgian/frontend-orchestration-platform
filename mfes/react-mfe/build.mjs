@@ -10,14 +10,14 @@ export async function buildBundle() {
     entryPoints: [entry],
     outfile,
     bundle: true,
-    minify: false,
+    minify: true,
     sourcemap: true,
     format: 'iife',
     target: ['es2020'],
     jsxFactory: 'React.createElement',
     jsxFragment: 'React.Fragment',
     define: {
-      'process.env.NODE_ENV': '"development"',
+      'process.env.NODE_ENV': '"production"',
     },
     external: [],
   });

@@ -1,5 +1,3 @@
-// Ensure the JIT compiler is available when running the bundle outside Angular CLI.
-import '@angular/compiler';
 import {
   ApplicationRef,
   Component,

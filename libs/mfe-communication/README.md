@@ -1,6 +1,6 @@
 # @stavgian/mfe-communication
 
-Framework-agnostic messaging between microfrontends on the same page.
+Typed, framework-agnostic messaging between microfrontends on the same page. Under 4 KB gzipped.
 
 Apps built with Angular, React, plain JavaScript or anything else can work together without importing each other's code:
 - **Events:** "something happened", broadcast to everyone.

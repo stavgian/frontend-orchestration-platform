@@ -1,14 +1,18 @@
 {
   "name": "@stavgian/mfe-communication",
   "version": "2.0.0",
-  "description": "Typed, framework-agnostic messaging between microfrontends using browser-native CustomEvents.",
+  "description": "Typed events, requests and presence between micro-frontends on one page. Under 4 KB gzipped, no dependencies, built on browser CustomEvents.",
   "keywords": [
     "microfrontends",
     "micro-frontends",
     "event-bus",
     "custom-events",
     "web-components",
-    "framework-agnostic"
+    "framework-agnostic",
+    "request-response",
+    "presence",
+    "cloudevents",
+    "typescript"
   ],
   "license": "MIT",
   "repository": {

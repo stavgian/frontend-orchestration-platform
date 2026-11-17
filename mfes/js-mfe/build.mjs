@@ -14,7 +14,7 @@ export async function buildBundle() {
     platform: 'browser',
     target: ['es2020'],
     sourcemap: true,
-    minify: false,
+    minify: true,
   });
 
   console.log(`Built ${outfile}`);
