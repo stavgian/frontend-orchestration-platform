@@ -8,6 +8,8 @@ tmp
 .angular
 .idea
 
+graphify-out
+
 .claude/worktrees
 .claude/settings.local.json
 .agents

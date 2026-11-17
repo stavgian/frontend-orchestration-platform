@@ -37,7 +37,11 @@ import { Participant, participantForMfe } from '../../core/participants/particip
           <!-- Framework and web-component technique come from the app itself at runtime (presence metadata), not from the shell. -->
           <footer class="built">
             @if (feed.frameworks().get(item.mfe.id); as framework) {
-              <span><span class="label">Built with</span> <strong>{{ framework }}</strong></span>
+              <span>
+                <span class="label">Built with</span>
+                @if (item.who.logo; as logo) { <img class="logo" [src]="logo" alt="" /> }
+                <strong>{{ framework }}</strong>
+              </span>
             }
             @if (feed.elements().get(item.mfe.id); as element) {
               <span><span class="label">As</span> <strong>{{ element }}</strong></span>
@@ -72,6 +76,7 @@ import { Participant, participantForMfe } from '../../core/participants/particip
     }
     .label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-right: 4px; }
     .built strong { color: var(--text); font-weight: 600; }
+    .logo { width: 14px; height: 14px; margin-right: 4px; vertical-align: -2px; }
     .error { padding: 16px; margin-bottom: 16px; color: var(--danger); }
   `,
 })

@@ -62,6 +62,9 @@
           <span class="live" aria-hidden="true"></span>{{ node.name }}
         </div>
         <div class="tech">
+          @if (online && node.logo) {
+          <img class="logo" [src]="node.logo" alt="" />
+          }
           {{
             online ? frameworks().get(node.id) ?? 'Connected' : 'Not connected'
           }}
