@@ -42,7 +42,7 @@ class JsMfe extends HTMLElement {
       id: "js-mfe",
       name: "Checkout",
       version: "1.0.0",
-      meta: { framework: "Plain JavaScript" },
+      meta: { framework: "Plain JavaScript", element: "Native Web Component" },
     });
 
     // Events keep the total current: the cart announces every change.

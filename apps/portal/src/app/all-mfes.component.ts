@@ -34,10 +34,12 @@ import { Participant, participantForMfe } from './participants';
             <span class="activity" aria-hidden="true"></span>
           </header>
           <app-mfe-host [definition]="item.mfe" />
-          <!-- The framework comes from the app itself at runtime (presence metadata), not from the shell. -->
+          <!-- Framework and web-component technique come from the app itself at runtime (presence metadata), not from the shell. -->
           <footer class="built">
             <span><span class="label">Built with</span> <strong>{{ feed.frameworks().get(item.mfe.id) ?? item.who.tech }}</strong></span>
-            <span>{{ item.mfe.type === 'module-federation' ? 'Module Federation remote' : 'Script' }}</span>
+            @if (feed.elements().get(item.mfe.id); as element) {
+              <span><span class="label">As</span> <strong>{{ element }}</strong></span>
+            }
           </footer>
         </section>
       }

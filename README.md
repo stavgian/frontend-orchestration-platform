@@ -33,7 +33,8 @@ Microfrontends are discovered via a JSON manifest, loaded dynamically by URL, mo
     - **Shopping cart** (React, script)
     - **Checkout** (plain JS, script)
     - **Shipping** (Vue, script): listens to the cart and shows progress towards free shipping
-  - Each app reports its framework and version at runtime (presence `meta`, e.g. `Angular 18.2.14`); the shell shows it in the app's "Built with" footer without knowing it at build time
+  - Each app reports its framework and version at runtime (presence `meta`, e.g. `Angular 22.2.6`); the shell shows it in the app's "Built with" footer without knowing it at build time
+  - Each app also reports how it becomes a web component, so the demo shows four techniques side by side: Angular Elements, a React root inside a custom element, Vue's `defineCustomElement`, and a native Web Component
 
 - Shared library
   - [`@stavgian/mfe-communication`](libs/mfe-communication) (published to npm): events, requests with answers, and presence over browser-native events. The only code the portal and the MFEs share.
@@ -97,11 +98,11 @@ An app is anything that registers a custom element and talks through `@stavgian/
 
 1. Create `mfes/<name>/` with its own `package.json`. Its dependencies are its own, so a second Angular app can pin a different major version than the first; npm installs it inside that workspace.
 2. Build it into a single script that defines the custom element (see the existing `build.mjs` files).
-3. Call `connect({ id, name, meta: { framework: … } })` and use events, requests or presence like the others.
+3. Call `connect({ id, name, meta: { framework: …, element: … } })` and use events, requests or presence like the others.
 4. Add an entry to `apps/portal/src/assets/manifest.dev.json` and `manifest.prod.json`. The shell needs nothing else: it reads the manifest at runtime.
 5. Optionally, give it a friendly name and colour in `apps/portal/src/app/participants.ts`. Without one it uses the manifest's `displayName`.
 
-Two Angular versions on one page each bring their own runtime, so keep each one's zone.js and change detection inside its own bundle, as `angular-mfe` does.
+Two Angular versions already share this page: the shell portal runs Angular 18 with zone.js, and `angular-mfe` runs Angular 22 without zone.js (zoneless change detection with signals). Each brings its own runtime inside its own bundle, so neither upgrade blocks the other.
 
 ## Repository structure
 
@@ -138,7 +139,7 @@ Run the library's tests locally with `npm run test:mfe-communication`.
 ```bash
 npm run serve:all
 ```
-Starts Angular MFE (4301), React MFE (4302), JS MFE (4303), and the portal with prefixed logs.
+Starts Angular MFE (4301), React MFE (4302), JS MFE (4303), Vue MFE (4304), and the portal with prefixed logs.
 
 ### Manual start (individual terminals)
 ```bash
@@ -256,4 +257,4 @@ From the repo root:
 ```bash
 npm run serve:all
 ```
-Runs Angular MFE (4301), React MFE (4302), JS MFE (4303), and the portal (default config, daemon disabled) in parallel with prefixed logs.
+Runs Angular MFE (4301), React MFE (4302), JS MFE (4303), Vue MFE (4304), and the portal (default config, daemon disabled) in parallel with prefixed logs.

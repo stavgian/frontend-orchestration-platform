@@ -55,8 +55,10 @@ export class MessageFeedService implements OnDestroy {
   /** Apps currently connected, with what they told the channel about themselves. */
   readonly peers = signal<PeerInfo[]>([]);
   readonly connectedIds = computed<ReadonlySet<string>>(() => new Set(this.peers().map((p) => p.id)));
-  /** Framework each app reports at runtime, e.g. "Angular 18.2.14". The shell is never told at build time. */
+  /** Framework each app reports at runtime, e.g. "Angular 22.2.6". The shell is never told at build time. */
   readonly frameworks = computed(() => new Map(this.peers().map((p) => [p.id, p.meta?.['framework']])));
+  /** How each app turns itself into a web component, e.g. "Angular Elements". Also reported by the app. */
+  readonly elements = computed(() => new Map(this.peers().map((p) => [p.id, p.meta?.['element']])));
   /** Last ping round trip per app id, in ms, or 'timeout'. */
   readonly pings = signal<ReadonlyMap<string, number | 'timeout'>>(new Map());
   readonly connectedCount = computed(() => this.connectedIds().size);

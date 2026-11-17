@@ -9,9 +9,9 @@
   },
   "dependencies": {
     "@stavgian/mfe-communication": "^1.0.0",
-    "vue": "^3.5.0"
+    "vue": "^3.5.45"
   },
   "devDependencies": {
-    "esbuild": "^0.21.5"
+    "esbuild": "^0.28.2"
   }
 }

@@ -8,16 +8,15 @@
     "serve": "node server.mjs"
   },
   "dependencies": {
-    "@angular/common": "^18.2.14",
-    "@angular/compiler": "^18.2.14",
-    "@angular/core": "^18.2.14",
-    "@angular/elements": "^18.2.14",
-    "@angular/platform-browser": "^18.2.14",
+    "@angular/common": "^22.2.6",
+    "@angular/compiler": "^22.2.6",
+    "@angular/core": "^22.2.6",
+    "@angular/elements": "^22.2.6",
+    "@angular/platform-browser": "^22.2.6",
     "@stavgian/mfe-communication": "^1.0.0",
-    "rxjs": "~7.8.1",
-    "zone.js": "~0.14.10"
+    "rxjs": "~7.8.1"
   },
   "devDependencies": {
-    "esbuild": "^0.21.5"
+    "esbuild": "^0.28.2"
   }
 }

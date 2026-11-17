@@ -34,7 +34,7 @@ import { participantForMfe } from './participants';
               @let who = participant(mfe);
               <tr [style.--c]="who.color">
                 <td><span class="dot" aria-hidden="true"></span>{{ who.name }}</td>
-                <td>{{ mfe.type === 'module-federation' ? 'Module Federation remote' : 'Script' }}</td>
+                <td>{{ mfe.type === 'module-federation' ? 'Module Federation' : 'Script tag' }}</td>
                 <td><code class="url">{{ entryOf(mfe) }}</code></td>
                 <td><code>&lt;{{ mfe.customElement }}&gt;</code></td>
               </tr>

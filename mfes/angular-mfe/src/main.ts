@@ -1,14 +1,13 @@
-import 'zone.js';
 // Ensure the JIT compiler is available when running the bundle outside Angular CLI.
 import '@angular/compiler';
-import { CommonModule } from '@angular/common';
 import {
   ApplicationRef,
   Component,
   OnDestroy,
   OnInit,
   VERSION,
-  inject,
+  provideZonelessChangeDetection,
+  signal,
 } from '@angular/core';
 import { createApplication } from '@angular/platform-browser';
 import { createCustomElement } from '@angular/elements';
@@ -30,21 +29,23 @@ const PRODUCTS = [
 
 @Component({
   selector: 'angular-mfe-view',
-  standalone: true,
-  imports: [CommonModule],
   template: `
-    <div class="announce" *ngIf="announcement" role="status">
-      <span class="from">From the shell portal{{ announcement.direct ? ' · only to you' : '' }}</span>{{ announcement.text }}
-    </div>
+    @if (announcement(); as a) {
+      <div class="announce" role="status">
+        <span class="from">From the shell portal{{ a.direct ? ' · only to you' : '' }}</span>{{ a.text }}
+      </div>
+    }
     <p class="intro">Pick a product. The catalog announces it; whoever cares (the cart) reacts.</p>
     <ul class="products">
-      <li *ngFor="let p of products">
+      @for (p of products; track p.sku) {
+      <li>
         <span class="name">{{ p.name }}</span>
         <span class="price">€{{ p.price }}</span>
-        <button type="button" (click)="add(p)" [class.done]="justAdded === p.sku">
-          {{ justAdded === p.sku ? 'Added ✓' : 'Add to cart' }}
+        <button type="button" (click)="add(p)" [class.done]="justAdded() === p.sku">
+          {{ justAdded() === p.sku ? 'Added ✓' : 'Add to cart' }}
         </button>
       </li>
+      }
     </ul>
   `,
   styles: [
@@ -69,8 +70,9 @@ class AngularMfeComponent implements OnInit, OnDestroy {
   private timer?: ReturnType<typeof setTimeout>;
   private announceTimer?: ReturnType<typeof setTimeout>;
   readonly products = PRODUCTS;
-  justAdded?: string;
-  announcement?: { text: string; direct: boolean };
+  // Signals drive change detection, so the app needs no zone.js.
+  readonly justAdded = signal<string | undefined>(undefined);
+  readonly announcement = signal<{ text: string; direct: boolean } | undefined>(undefined);
 
   ngOnInit(): void {
     this.bus = connect({
@@ -78,12 +80,12 @@ class AngularMfeComponent implements OnInit, OnDestroy {
       name: 'Product catalog',
       version: '1.0.0',
       // Read at runtime, so the shell shows the version this bundle really ships.
-      meta: { framework: `Angular ${VERSION.full}` },
+      meta: { framework: `Angular ${VERSION.full}`, element: 'Angular Elements' },
     });
     this.bus.subscribe('portal:announcement', (msg) => {
-      this.announcement = { text: (msg.payload as { text: string }).text, direct: msg.to === 'angular-mfe' };
+      this.announcement.set({ text: (msg.payload as { text: string }).text, direct: msg.to === 'angular-mfe' });
       clearTimeout(this.announceTimer);
-      this.announceTimer = setTimeout(() => (this.announcement = undefined), 6000);
+      this.announceTimer = setTimeout(() => this.announcement.set(undefined), 6000);
     });
   }
 
@@ -95,15 +97,15 @@ class AngularMfeComponent implements OnInit, OnDestroy {
 
   add(product: (typeof PRODUCTS)[number]) {
     this.bus?.publish('cart:item-added', { sku: product.sku, name: product.name, price: product.price });
-    this.justAdded = product.sku;
+    this.justAdded.set(product.sku);
     clearTimeout(this.timer);
-    this.timer = setTimeout(() => (this.justAdded = undefined), 1200);
+    this.timer = setTimeout(() => this.justAdded.set(undefined), 1200);
   }
 }
 
 async function defineAngularElement() {
   if (customElements.get('angular-mfe')) return;
-  const app = await createApplication({ providers: [] });
+  const app = await createApplication({ providers: [provideZonelessChangeDetection()] });
   const element = createCustomElement(AngularMfeComponent, {
     injector: app.injector,
   });

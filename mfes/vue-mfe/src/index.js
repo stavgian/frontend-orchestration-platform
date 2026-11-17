@@ -34,7 +34,7 @@ const ShippingApp = {
         name: "Shipping",
         version: "1.0.0",
         // Read at runtime, so the shell shows the version this bundle really ships.
-        meta: { framework: `Vue ${version}` },
+        meta: { framework: `Vue ${version}`, element: "Vue defineCustomElement" },
       });
       bus.subscribe("cart:updated", (msg) => {
         total.value = msg.payload.total;

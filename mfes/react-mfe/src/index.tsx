@@ -43,7 +43,7 @@ const App: React.FC = () => {
       id: 'react-mfe',
       name: 'Shopping cart',
       version: '1.0.0',
-      meta: { framework: `React ${React.version}` },
+      meta: { framework: `React ${React.version}`, element: 'React root in a custom element' },
     });
 
     connection.subscribe('cart:item-added', ({ payload: item }) => {
