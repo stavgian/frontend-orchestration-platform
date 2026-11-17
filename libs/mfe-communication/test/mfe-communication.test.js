@@ -77,6 +77,13 @@ test('newcomers announce themselves and discover existing peers', () => {
   assert.deepEqual(changes, [[], ['react-mfe']]);
 });
 
+test('peers can share string metadata, e.g. their framework', () => {
+  const portal = connect({ id: 'portal' });
+  connect({ id: 'vue-app', meta: { framework: 'Vue 3.5.0', junk: 42 } });
+
+  assert.deepEqual(portal.peers(), [{ id: 'vue-app', meta: { framework: 'Vue 3.5.0' } }]);
+});
+
 test('onPeersChange reports peers that were found before it was attached', () => {
   connect({ id: 'portal' });
   const late = connect({ id: 'late-app' }); // discovers the portal during connect()

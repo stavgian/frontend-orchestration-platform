@@ -28,35 +28,47 @@ import { Participant, participantForMfe } from './participants';
               <h3>{{ item.who.name }}</h3>
               <p>
                 <span class="live" [class.off]="!online" aria-hidden="true"></span>
-                {{ online ? 'Connected' : 'Not connected' }} · {{ item.who.tech }}
+                {{ online ? 'Connected' : 'Not connected' }}
               </p>
             </div>
             <span class="activity" aria-hidden="true"></span>
           </header>
           <app-mfe-host [definition]="item.mfe" />
+          <!-- Framework and web-component technique come from the app itself at runtime (presence metadata), not from the shell. -->
+          <footer class="built">
+            <span><span class="label">Built with</span> <strong>{{ feed.frameworks().get(item.mfe.id) ?? item.who.tech }}</strong></span>
+            @if (feed.elements().get(item.mfe.id); as element) {
+              <span><span class="label">As</span> <strong>{{ element }}</strong></span>
+            }
+          </footer>
         </section>
       }
     </div>
   `,
   styles: `
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; align-items: start; }
-    .card { position: relative; padding: 18px; border-top: 3px solid var(--c); }
+    .card { position: relative; padding: 20px; }
     header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
     .titles { flex: 1; min-width: 0; }
     .avatar {
       flex: none; width: 36px; height: 36px; border-radius: 50%;
       display: grid; place-items: center; background: var(--c);
-      font: 700 12px var(--font-display); color: #0a0f16;
+      font: 700 12px var(--font-sans); color: var(--on-color);
     }
-    h3 { margin: 0; font: 600 16px/1.2 var(--font-display); }
+    h3 { margin: 0; font: 600 17px/1.3 var(--font-sans); letter-spacing: -0.01em; }
     p { margin: 3px 0 0; color: var(--subtle); font-size: 12px; display: flex; align-items: center; gap: 6px; }
-    .live { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 6px #4ade80; }
-    .live.off { background: transparent; box-shadow: none; border: 1.5px solid var(--subtle); }
     .activity {
       position: absolute; top: 14px; right: 14px; pointer-events: none;
       padding: 2px 8px; border-radius: 99px; font: 600 11px var(--font-mono); white-space: nowrap;
-      color: #0a0f16; background: var(--pulse, var(--c)); opacity: 0;
+      color: var(--on-color); background: var(--pulse, var(--c)); opacity: 0;
     }
+    .built {
+      display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px;
+      margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border);
+      font-size: 13px; color: var(--text-secondary);
+    }
+    .label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-right: 4px; }
+    .built strong { color: var(--text); font-weight: 600; }
     .error { padding: 16px; margin-bottom: 16px; color: var(--danger); }
   `,
 })

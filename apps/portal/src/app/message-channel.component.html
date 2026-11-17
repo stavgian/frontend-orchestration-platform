@@ -32,7 +32,7 @@
 
   <p class="caption" aria-live="polite">
     @if (showPings()) {
-      <strong style="color: var(--portal)">Shell portal</strong> pinged every app. Each one answered on its own.
+      <strong style="color: var(--accent)">Shell portal</strong> pinged every app. Each one answered on its own.
     } @else {
       @if (msg(); as m) {
         <strong [style.color]="m.sender.color">{{ m.sender.name }}</strong>
@@ -73,14 +73,14 @@
             <span class="live" aria-hidden="true"></span>{{ node.name }}
           </div>
           <div class="tech">
-            {{ online ? node.tech : 'Not connected' }}
+            {{ online ? (frameworks().get(node.id) ?? node.tech) : 'Not connected' }}
             @if (ping !== undefined) {
               <span class="ping" [class.failed]="ping === 'timeout'">{{ ping === 'timeout' ? 'no answer' : ping + ' ms' }}</span>
             }
           </div>
           @if (showPings() && ping !== undefined) {
             <span class="status ping-result" [class.failed]="ping === 'timeout'">
-              {{ ping === 'timeout' ? 'No answer' : 'Answered · ' + ping + ' ms' }}
+              @if (ping === 'timeout') { No answer } @else { <span class="long">Answered · </span>{{ ping }} ms }
             </span>
           } @else {
             <span class="status" aria-hidden="true">{{ sending ? senderLabel(msg()!) : msg()?.target ? 'Received' : 'Heard it' }}</span>

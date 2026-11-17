@@ -18,15 +18,13 @@
     "build:angular-mfe": "npm run build -w angular-mfe",
     "build:react-mfe": "npm run build -w react-mfe",
     "build:js-mfe": "npm run build -w js-mfe",
-    "serve:all": "npm run build:mfe-communication && concurrently -k -n ANG,REACT,JS,PORTAL -c cyan,magenta,yellow,green \"npm:serve:angular-mfe\" \"npm:serve:react-mfe\" \"npm:serve:js-mfe\" \"NX_DAEMON=false npm run serve:portal\"",
+    "build:vue-mfe": "npm run build -w vue-mfe",
+    "serve:all": "npm run build:mfe-communication && concurrently -k -n ANG,REACT,JS,VUE,PORTAL -c cyan,magenta,yellow,blue,green \"npm:serve:angular-mfe\" \"npm:serve:react-mfe\" \"npm:serve:js-mfe\" \"npm:serve:vue-mfe\" \"NX_DAEMON=false npm run serve:portal\"",
     "serve:portal": "nx serve portal",
     "serve:angular-mfe": "npm run serve -w angular-mfe",
     "serve:react-mfe": "npm run serve -w react-mfe",
     "serve:js-mfe": "npm run serve -w js-mfe",
-    "serve:mfe-a": "nx serve mfe-a",
-    "serve:mfe-b": "nx serve mfe-b",
-    "build:mfe-a": "nx build mfe-a",
-    "build:mfe-b": "nx build mfe-b"
+    "serve:vue-mfe": "npm run serve -w vue-mfe"
   },
   "dependencies": {
     "@angular/animations": "^18.2.14",

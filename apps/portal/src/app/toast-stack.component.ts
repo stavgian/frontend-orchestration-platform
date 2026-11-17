@@ -35,7 +35,7 @@ import { MessageFeedService } from './message-feed.service';
     .avatar {
       flex: none; width: 28px; height: 28px; border-radius: 50%;
       display: grid; place-items: center; background: var(--c);
-      font: 700 10px var(--font-display); color: #0a0f16;
+      font: 700 10px var(--font-sans); color: var(--on-color);
     }
     .body { flex: 1; min-width: 0; }
     .who { font-size: 12px; color: var(--subtle); }

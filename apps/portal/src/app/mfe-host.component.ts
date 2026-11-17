@@ -84,6 +84,11 @@ export class MfeHostComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
+  /** After a failed load, fetches the app again (the loader forgets failed scripts). */
+  retry(): void {
+    if (this.definition) void this.loadDefinition(this.definition);
+  }
+
   private loadDefinition(definition: MfeDefinition) {
     this.loading = true;
     this.error = undefined;

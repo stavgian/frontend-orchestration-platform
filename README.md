@@ -19,8 +19,9 @@ Microfrontends are discovered via a JSON manifest, loaded dynamically by URL, mo
 
 - Portal
   - Loads a runtime manifest
-  - Builds navigation dynamically
-  - Loads and mounts MFEs by URL and custom element name
+  - Loads and mounts every MFE on one page, by URL and custom element name, and draws the frame around each one
+  - If an app fails to load (for example, its server is down), its frame says so and offers **Try again**, which fetches the app again; the other apps keep working
+  - A single app can also be opened on its own at `/mfe/<id>`
   - Does not import or reference MFE code at build time
 
 - Microfrontends (MFEs)
@@ -29,9 +30,12 @@ Microfrontends are discovered via a JSON manifest, loaded dynamically by URL, mo
   - Communicate only through the published `@stavgian/mfe-communication` package
   - Render only their own content; the portal draws the frame around each one
   - Current MFEs, together forming a small shop:
-    - **Product catalog** (Angular, module federation)
-    - **Shopping cart** (React, script)
-    - **Checkout** (plain JS, script)
+    - **Product catalog** (Angular 22, zoneless with signals, Angular Elements): loaded as a Module Federation–style remote container
+    - **Shopping cart** (React 19, a React root inside a custom element): loaded with a script tag
+    - **Checkout** (plain JavaScript, a native Web Component): loaded with a script tag
+    - **Shipping** (Vue 3.5, `defineCustomElement`): loaded with a script tag; listens to the cart and shows progress towards free shipping
+  - Each app reports its framework and version at runtime (presence `meta`, e.g. `Angular 22.2.6`); the shell shows it in the app's "Built with" footer without knowing it at build time
+  - Each app also reports how it becomes a web component, so the demo shows four techniques side by side: Angular Elements, a React root inside a custom element, Vue's `defineCustomElement`, and a native Web Component
 
 - Shared library
   - [`@stavgian/mfe-communication`](libs/mfe-communication) (published to npm): events, requests with answers, and presence over browser-native events. The only code the portal and the MFEs share.
@@ -42,9 +46,10 @@ Microfrontends are discovered via a JSON manifest, loaded dynamically by URL, mo
 The portal reads a JSON manifest at runtime that describes available MFEs.
 
 Current dev manifest (`apps/portal/src/assets/manifest.dev.json`):
-- Angular MFE (module federation): http://localhost:4301/remoteEntry.js
+- Angular MFE (Module Federation–style remote): http://localhost:4301/remoteEntry.js
 - React MFE (script): http://localhost:4302/react-mfe.js
 - JS MFE (script): http://localhost:4303/js-mfe.js
+- Vue MFE (script): http://localhost:4304/vue-mfe.js
 
 The portal uses this information to load and render MFEs without compile-time coupling.
 
@@ -69,7 +74,7 @@ How it works:
 
 On one page, the shell portal shows everything live:
 - the manifest it loaded the apps from: which apps, how each one is loaded, and from where
-- which apps are connected
+- which apps are connected (floating in the top corner) and, in each app's footer, what it is built with
 - a channel diagram showing who sent, who was asked, and who answered
 - a full-height message log sidebar you can toggle and filter
 - toasts while the log is closed
@@ -82,11 +87,23 @@ See the [package README](libs/mfe-communication/README.md) for the full API.
 
 ```
 @stavgian/mfe-communication  (npm, semver)
-   ▲        ▲          ▲          ▲
-portal  angular-mfe  react-mfe  js-mfe     ← each pins its own version range
+   ▲        ▲          ▲          ▲         ▲
+portal  angular-mfe  react-mfe  js-mfe  vue-mfe    ← each pins its own version range
 ```
 
 In this repo, npm workspaces link the local library source to each app, as long as the library's version satisfies that app's range. An app can stay on `^1` while the library moves to `2.x`, in which case it installs `1.x` from npm instead.
+
+## Adding an app
+
+An app is anything that registers a custom element and talks through `@stavgian/mfe-communication`. To add one, for example a second Angular app on another Angular version:
+
+1. Create `mfes/<name>/` with its own `package.json`. Its dependencies are its own, so a second Angular app can pin a different major version than the first; npm installs it inside that workspace.
+2. Build it into a single script that defines the custom element (see the existing `build.mjs` files).
+3. Call `connect({ id, name, meta: { framework: …, element: … } })` and use events, requests or presence like the others.
+4. Add an entry to `apps/portal/src/assets/manifest.dev.json` and `manifest.prod.json`. The shell needs nothing else: it reads the manifest at runtime.
+5. Optionally, give it a friendly name and colour in `apps/portal/src/app/participants.ts`. Without one it uses the manifest's `displayName`.
+
+Two Angular versions already share this page: the shell portal runs Angular 18 with zone.js, and `angular-mfe` runs Angular 22 without zone.js (zoneless change detection with signals). Each brings its own runtime inside its own bundle, so neither upgrade blocks the other.
 
 ## Repository structure
 
@@ -101,6 +118,57 @@ mfes/
   angular-mfe/
   react-mfe/
   js-mfe/
+  vue-mfe/
+```
+
+## The apps
+
+Each app builds and serves on its own.
+
+### JS MFE (native Web Component)
+
+Plain JavaScript, no framework. A tiny esbuild step bundles `@stavgian/mfe-communication` into a single file:
+
+```bash
+npm run build:js-mfe   # produces mfes/js-mfe/dist/js-mfe.js
+npm run serve:js-mfe   # builds then serves on http://localhost:4303/js-mfe.js
+```
+
+The portal manifest points to http://localhost:4303/js-mfe.js.
+
+### React MFE (React root in a custom element)
+
+React 19. A small `HTMLElement` class creates a React root when the element is attached and unmounts it when the element is removed.
+
+Build and serve it:
+
+```bash
+npm run build:react-mfe   # produces mfes/react-mfe/dist/react-mfe.js
+npm run serve:react-mfe   # builds then serves on http://localhost:4302/react-mfe.js
+```
+
+The portal manifest (`apps/portal/src/assets/manifest.dev.json`) points to http://localhost:4302/react-mfe.js.
+
+### Angular MFE (Angular Elements, Module Federation–style remote)
+
+Angular 22, zoneless, with signals. esbuild bundles it into `remoteEntry.js`, which registers a small container on `window.angularMfe`; the portal calls its `./bootstrap` module, which defines the custom element with Angular Elements. It is the same shape as a Module Federation remote, without webpack.
+
+Build and serve it:
+
+```bash
+npm run build:angular-mfe   # outputs mfes/angular-mfe/dist/remoteEntry.js
+npm run serve:angular-mfe   # builds then serves on http://localhost:4301/remoteEntry.js
+```
+
+The portal manifest (`apps/portal/src/assets/manifest.dev.json`) points to http://localhost:4301/remoteEntry.js with `remoteName: angularMfe`, `exposedModule: ./bootstrap`, `customElement: angular-mfe`.
+
+### Vue MFE (`defineCustomElement`)
+
+Vue 3.5, written with render functions, turned into a custom element by Vue's `defineCustomElement`:
+
+```bash
+npm run build:vue-mfe   # produces mfes/vue-mfe/dist/vue-mfe.js
+npm run serve:vue-mfe   # builds then serves on http://localhost:4304/vue-mfe.js
 ```
 
 ## Releasing `@stavgian/mfe-communication`
@@ -122,26 +190,32 @@ Run the library's tests locally with `npm run test:mfe-communication`.
 ```bash
 npm run serve:all
 ```
-Starts Angular MFE (4301), React MFE (4302), JS MFE (4303), and the portal with prefixed logs.
+Starts Angular MFE (4301), React MFE (4302), JS MFE (4303), Vue MFE (4304), and the portal with prefixed logs.
 
 ### Manual start (individual terminals)
 ```bash
 npm run serve:angular-mfe   # 4301 -> remoteEntry.js
 npm run serve:react-mfe     # 4302 -> react-mfe.js
 npm run serve:js-mfe        # 4303 -> js-mfe.js
+npm run serve:vue-mfe       # 4304 -> vue-mfe.js
 NX_DAEMON=false npm run serve:portal
 ```
 
 The portal manifest (`apps/portal/src/assets/manifest.dev.json`) points to those URLs. Adjust the URLs there if you change ports.
 
+`serve:all` stops every server when one of them stops. To see the "Could not load this app" state and **Try again**, start the servers individually, leave one out, then start it and press **Try again**.
+
 ## Deploying to GitHub Pages
 
-This repo now builds a single Pages artifact with separate URLs for the portal and each MFE.
+This repo builds a single Pages artifact with separate URLs for the portal and each MFE.
 
 - Portal: `/REPOSITORY_NAME/`
 - Angular MFE: `/REPOSITORY_NAME/angular-mfe/`
 - React MFE: `/REPOSITORY_NAME/react-mfe/`
 - JS MFE: `/REPOSITORY_NAME/js-mfe/`
+- Vue MFE: `/REPOSITORY_NAME/vue-mfe/`
+
+Each MFE folder also has a standalone page that runs the app on its own.
 
 Build the Pages artifact locally:
 
@@ -166,7 +240,9 @@ PAGES_BASE_PATH=/ npm run build:github-pages
 
 The workflow in `.github/workflows/deploy-pages.yml` publishes `dist/github-pages` to GitHub Pages on pushes to `main`.
 
-## Deploying to Cloudflare
+## Deploying to Cloudflare (not active yet)
+
+GitHub Pages is the live deployment. Cloudflare is prepared for later and is not connected right now.
 
 The same static build also runs on Cloudflare, served from the site root. [`wrangler.jsonc`](wrangler.jsonc) tells Cloudflare where the built files are and sends unknown paths (deep links like `/mfe/react-mfe`) to the shell portal.
 
@@ -198,46 +274,4 @@ npx wrangler dev                # serves it locally
 
 ## License
 
-MIT
-  
-
-## JS MFE (plain JS)
-
-Plain JavaScript, no framework. A tiny esbuild step bundles `@stavgian/mfe-communication` into a single file:
-
-```bash
-npm run build:js-mfe   # produces mfes/js-mfe/dist/js-mfe.js
-npm run serve:js-mfe   # builds then serves on http://localhost:4303/js-mfe.js
-```
-
-The portal manifest points to http://localhost:4303/js-mfe.js.
-
-## React MFE (custom element)
-
-Build and serve the React custom-element bundle:
-
-```bash
-npm run build:react-mfe   # produces mfes/react-mfe/dist/react-mfe.js
-npm run serve:react-mfe   # builds then serves on http://localhost:4302/dist/react-mfe.js
-```
-
-The portal manifest (`apps/portal/src/assets/manifest.dev.json`) points to http://localhost:4302/react-mfe.js.
-
-## Angular MFE (custom element via Module Federation)
-
-Build and serve the Angular custom-element remote:
-
-```bash
-npm run build:angular-mfe   # outputs mfes/angular-mfe/dist/remoteEntry.js
-npm run serve:angular-mfe   # builds then serves on http://localhost:4301/dist/remoteEntry.js
-```
-
-The portal manifest (`apps/portal/src/assets/manifest.dev.json`) points to http://localhost:4301/remoteEntry.js with `remoteName: angularMfe`, `exposedModule: ./bootstrap`, `customElement: angular-mfe`.
-
-## Run everything at once
-
-From the repo root:
-```bash
-npm run serve:all
-```
-Runs Angular MFE (4301), React MFE (4302), JS MFE (4303), and the portal (default config, daemon disabled) in parallel with prefixed logs.
+MIT. See [LICENSE](LICENSE).

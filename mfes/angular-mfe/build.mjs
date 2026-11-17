@@ -17,7 +17,12 @@ export async function buildBundle() {
     minify: false,
     define: {
       'process.env.NODE_ENV': '"development"',
+      // Build-time flags the Angular CLI normally sets; plain esbuild has to define them.
       ngDevMode: 'false',
+      ngServerMode: 'false',
+      ngHmrMode: 'false',
+      ngJitMode: 'true',
+      ngI18nClosureMode: 'false',
     },
   });
 

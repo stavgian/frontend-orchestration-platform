@@ -55,7 +55,12 @@ export class MfeLoaderService {
       script.async = true;
       script.type = type;
       script.onload = () => resolve();
-      script.onerror = () => reject(new Error(`Failed to load script ${url}`));
+      script.onerror = () => {
+        // Forget the failure so a retry fetches the script again.
+        this.scriptCache.delete(url);
+        script.remove();
+        reject(new Error(`Failed to load script ${url}`));
+      };
       document.head.appendChild(script);
     });
 
