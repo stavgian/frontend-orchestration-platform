@@ -111,12 +111,14 @@ function createStandaloneHtml(title, elementTag, scriptFiles) {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>${title}</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" />
     <style>
+      /* stavgian.de design system: light, Inter, sky gradient. */
       :root {
-        color-scheme: dark;
-        font-family: Inter, system-ui, sans-serif;
-        background: radial-gradient(circle at top, #21314b 0%, #08111d 55%, #050a13 100%);
-        color: #f6f8fb;
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+        color: #171a20;
+        background: #ffffff radial-gradient(ellipse at 50% -60%, #d6e6f2 0%, #e9f0f6 38%, #f6f8fa 58%, rgba(255, 255, 255, 0) 80%) no-repeat;
       }
 
       body {
@@ -136,20 +138,22 @@ function createStandaloneHtml(title, elementTag, scriptFiles) {
 
       .hero {
         padding: 20px 24px;
-        border-radius: 18px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        background: rgba(8, 17, 29, 0.72);
-        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        background: #ffffff;
+        box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 12px 32px -16px rgba(16, 24, 40, 0.12);
       }
 
       h1 {
         margin: 0 0 8px;
         font-size: clamp(2rem, 5vw, 3rem);
+        font-weight: 700;
+        letter-spacing: -0.035em;
       }
 
       p {
         margin: 0;
-        color: #9fb1c9;
+        color: #5a6578;
       }
     </style>
     ${scripts}

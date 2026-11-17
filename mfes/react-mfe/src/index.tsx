@@ -95,7 +95,7 @@ const App: React.FC = () => {
       <style>{'@keyframes announce-in { from { opacity: 0; transform: translateY(-4px); } }'}</style>
       {announcement && (
         <div style={styles.announce} role="status">
-          <span style={styles.from}>📣 From the shell portal{announcement.direct ? ' · only to you' : ''}</span>
+          <span style={styles.from}>From the shell portal{announcement.direct ? ' · only to you' : ''}</span>
           {announcement.text}
         </div>
       )}
@@ -131,18 +131,18 @@ const App: React.FC = () => {
 };
 
 const styles: Record<string, React.CSSProperties> = {
-  root: { font: '14px/1.45 Inter, system-ui, sans-serif', color: '#e9eef5' },
-  empty: { margin: 0, padding: '18px 12px', textAlign: 'center', color: '#94a3b6', fontSize: 13, borderRadius: 12, border: '1px dashed rgba(255,255,255,0.14)' },
+  root: { font: '15px/1.5 var(--font-sans, Inter, system-ui, sans-serif)', color: 'var(--text, #171a20)' },
+  empty: { margin: 0, padding: '18px 12px', textAlign: 'center', color: 'var(--text-secondary, #5a6578)', fontSize: 14, borderRadius: 8, border: '1px dashed var(--border, #e5e7eb)' },
   list: { listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 6 },
-  line: { display: 'flex', gap: 10, padding: '8px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.04)' },
-  qty: { color: '#61dafb', fontWeight: 700, minWidth: 24 },
-  muted: { color: '#94a3b6', fontVariantNumeric: 'tabular-nums' },
-  footer: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 },
-  button: { font: 'inherit', fontSize: 13, fontWeight: 600, padding: '6px 12px', borderRadius: 999, cursor: 'pointer', color: '#e9eef5', background: 'transparent', border: '1px solid rgba(255,255,255,0.18)' },
-  note: { margin: '12px 0 0', fontSize: 13, color: '#94a3b6' },
-  primary: { font: 'inherit', fontSize: 13, fontWeight: 600, padding: '6px 12px', borderRadius: 999, cursor: 'pointer', color: '#0a0f16', background: '#61dafb', border: 0 },
-  announce: { display: 'flex', flexDirection: 'column', gap: 2, margin: '0 0 12px', padding: '10px 12px', borderRadius: 12, fontSize: 13, background: 'rgba(182,243,107,0.08)', border: '1px solid rgba(182,243,107,0.3)', animation: 'announce-in 250ms ease-out' },
-  from: { fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#b6f36b' },
+  line: { display: 'flex', gap: 10, padding: '8px 12px', borderRadius: 8, background: 'var(--surface, #f7f8fa)' },
+  qty: { color: '#6741d9', fontWeight: 700, minWidth: 24 },
+  muted: { color: 'var(--text-secondary, #5a6578)', fontVariantNumeric: 'tabular-nums' },
+  footer: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap', marginTop: 12 },
+  button: { font: 'inherit', fontSize: 13, fontWeight: 600, padding: '6px 14px', borderRadius: 9999, cursor: 'pointer', color: 'var(--text-secondary, #5a6578)', background: '#fff', border: '1px solid var(--border, #e5e7eb)' },
+  note: { margin: '12px 0 0', fontSize: 14, color: 'var(--text-secondary, #5a6578)' },
+  primary: { font: 'inherit', fontSize: 13, fontWeight: 600, padding: '6px 14px', borderRadius: 9999, cursor: 'pointer', color: '#fff', background: '#6741d9', border: 0 },
+  announce: { display: 'flex', flexDirection: 'column', gap: 2, margin: '0 0 12px', padding: '10px 12px', borderRadius: 8, fontSize: 14, background: 'rgba(4,149,212,0.07)', border: '1px solid rgba(4,149,212,0.3)', animation: 'announce-in 250ms ease-out' },
+  from: { fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--accent, #006ca0)' },
 };
 
 class ReactMfeElement extends HTMLElement {

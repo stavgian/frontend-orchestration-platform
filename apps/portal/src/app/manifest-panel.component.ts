@@ -55,11 +55,11 @@ import { participantForMfe } from './participants';
     .manifest > summary { display: flex; align-items: center; gap: 12px; padding: 14px 20px; }
     .icon {
       flex: none; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;
-      font: 600 13px var(--font-mono); color: var(--portal);
+      font: 600 13px var(--font-mono); color: var(--accent);
       background: color-mix(in srgb, var(--portal) 10%, transparent);
     }
     .titles { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-    strong { font: 600 15px var(--font-display); }
+    strong { font: 600 17px var(--font-sans); letter-spacing: -0.01em; }
     .sub { color: var(--subtle); font-size: 13px; }
     .chevron { color: var(--subtle); font-size: 20px; transition: rotate 150ms; }
     .manifest[open] > summary .chevron { rotate: 90deg; }
@@ -71,7 +71,8 @@ import { participantForMfe } from './participants';
     .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--c); margin-right: 8px; }
     .url { color: var(--subtle); }
     .raw { margin-top: 12px; font-size: 13px; color: var(--subtle); }
-    .raw a { color: var(--accent); }
+    .raw a { color: var(--text); font-weight: 500; }
+    .raw a:hover { color: var(--accent); }
   `,
 })
 export class ManifestPanelComponent {

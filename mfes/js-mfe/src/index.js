@@ -10,19 +10,21 @@ const escapeHtml = (value) =>
   String(value).replace(/[&<>"']/g, (ch) => `&#${ch.charCodeAt(0)};`);
 
 const STYLES = `
-  :host { display: block; font: 14px/1.45 Inter, system-ui, sans-serif; color: #e9eef5; }
-  .status { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #94a3b6; margin-bottom: 12px; }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 6px #4ade80; }
-  .dot.off { background: transparent; box-shadow: none; border: 1.5px solid #94a3b6; }
-  .total { padding: 12px 14px; border-radius: 12px; background: rgba(255,255,255,0.04); margin-bottom: 12px; }
-  .total strong { font-size: 22px; }
-  .muted { color: #94a3b6; font-size: 12px; }
-  button { font: inherit; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 999px; cursor: pointer; border: 0; color: #0a0f16; background: #f5d742; }
+  :host { display: block; font: 15px/1.5 var(--font-sans, Inter, system-ui, sans-serif); color: var(--text, #171a20); }
+  .status { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-secondary, #5a6578); margin-bottom: 12px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok, #15803d); }
+  .dot.off { background: transparent; border: 1.5px solid var(--text-secondary, #5a6578); }
+  .total { padding: 12px 14px; border-radius: 8px; background: var(--surface, #f7f8fa); margin-bottom: 12px; }
+  .total strong { font-size: 24px; letter-spacing: -0.02em; }
+  .muted { color: var(--text-secondary, #5a6578); font-size: 13px; }
+  button { font: inherit; font-size: 14px; font-weight: 600; padding: 8px 18px; border-radius: 9999px; cursor: pointer; border: 0; color: #fff; background: #c2410c; transition: background-color 150ms; }
+  button:hover:not(:disabled) { background: #9a3412; }
+  button:focus-visible { outline: 2px solid #0495d4; outline-offset: 3px; }
   button:disabled { opacity: 0.4; cursor: not-allowed; }
-  .error { margin: 12px 0 0; color: #ff8fa8; font-size: 13px; }
-  .note { margin: 12px 0 0; font-size: 13px; color: #94a3b6; }
-  .announce { display: flex; flex-direction: column; gap: 2px; margin: 0 0 12px; padding: 10px 12px; border-radius: 12px; font-size: 13px; background: rgba(182,243,107,0.08); border: 1px solid rgba(182,243,107,0.3); animation: announce-in 250ms ease-out; }
-  .from { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #b6f36b; }
+  .error { margin: 12px 0 0; color: var(--danger, #c92a2a); font-size: 14px; }
+  .note { margin: 12px 0 0; font-size: 14px; color: var(--text-secondary, #5a6578); }
+  .announce { display: flex; flex-direction: column; gap: 2px; margin: 0 0 12px; padding: 10px 12px; border-radius: 8px; font-size: 14px; background:rgba(4,149,212,0.07); border:1px solid rgba(4,149,212,0.3); animation: announce-in 250ms ease-out; }
+  .from { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent, #006ca0); }
   @keyframes announce-in { from { opacity: 0; transform: translateY(-4px); } }
 `;
 
@@ -107,7 +109,7 @@ class JsMfe extends HTMLElement {
         note: `Order placed: ${items(confirmed.count)}, €${confirmed.total}. Total confirmed by the cart in ${ms} ms.`,
       });
     } catch (err) {
-      const error = err.code === "timeout" ? "The cart didn't confirm in time. Order not placed." : err.message;
+      const error = err.code === "timeout" ? "The cart did not confirm in time. The order was not placed." : err.message;
       this.update({ busy: false, error });
     }
   }
@@ -119,7 +121,7 @@ class JsMfe extends HTMLElement {
 
     this.shadowRoot.innerHTML = `
       <style>${STYLES}</style>
-      ${announcement ? `<div class="announce" role="status"><span class="from">📣 From ${escapeHtml(announcement.from)}${announcement.direct ? " · only to you" : ""}</span>${escapeHtml(announcement.text)}</div>` : ""}
+      ${announcement ? `<div class="announce" role="status"><span class="from">From ${escapeHtml(announcement.from)}${announcement.direct ? " · only to you" : ""}</span>${escapeHtml(announcement.text)}</div>` : ""}
       <div class="status">
         <span class="dot ${cartOnline ? "" : "off"}"></span>
         ${cartOnline ? "Cart app is online" : "Cart app is offline"}

@@ -1,10 +1,10 @@
 <div class="shell" [class.log-open]="logOpen()">
   <div class="main">
     <header class="topbar">
-      <div class="brand">
-        <span class="p-badge" aria-hidden="true">P</span>
-        <span>Shell portal <span class="brand-sub">· Frontend Orchestration</span></span>
-      </div>
+      <a class="brand" href="https://stavgian.de" target="_blank" rel="noopener" title="stavgian.de">
+        <img src="ys-logo.svg" alt="" height="28" />
+        <span><strong>Shell portal</strong> <span class="brand-sub">Frontend Orchestration</span></span>
+      </a>
       <div class="topbar-actions">
         @if (mfes.length) {
           <span class="online" title="Apps connected to the message channel">
@@ -30,7 +30,8 @@
 
     <div class="page">
       <section class="hero">
-        <h1>One page, built from <span class="hl">independent apps</span></h1>
+        <p class="eyebrow">Frontend architecture · Live demo</p>
+        <h1>One page, built from <span class="hl">independent apps.</span></h1>
         <p class="lede">
           A catalog, a cart and a checkout, each built with a different technology and deployed on its own.
           The shell portal reads a manifest, loads them at runtime, and gives them one shared message channel. That channel is the only way they work together.
@@ -38,7 +39,7 @@
         <ol class="steps">
           <li><strong>Events</strong> “Something happened”: the catalog announces a product; the cart announces its new total.</li>
           <li><strong>Requests</strong> “I need an answer”: checkout confirms the total with the cart before ordering.</li>
-          <li><strong>Presence</strong> “Who's here?”: checkout notices when the cart comes online and catches up.</li>
+          <li><strong>Presence</strong> “Who is here?”: checkout notices when the cart comes online and catches up.</li>
         </ol>
       </section>
 
@@ -46,7 +47,7 @@
         <div class="panel notice">Finding available apps…</div>
       } @else if (manifestError) {
         <div class="panel notice error">
-          Couldn't load the list of apps.
+          Could not load the list of apps.
           <small>{{ manifestError }}</small>
         </div>
       } @else {

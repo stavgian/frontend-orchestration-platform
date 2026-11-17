@@ -12,10 +12,10 @@ export interface Participant {
 }
 
 const KNOWN: Record<string, Omit<Participant, 'id'>> = {
-  [PORTAL_ID]: { name: 'Shell portal', tech: 'The host', initials: 'P', color: '#b6f36b' },
-  'angular-mfe': { name: 'Product catalog', tech: 'Angular', initials: 'A', color: '#ff6b8b' },
-  'react-mfe': { name: 'Shopping cart', tech: 'React', initials: 'R', color: '#61dafb' },
-  'js-mfe': { name: 'Checkout', tech: 'Plain JavaScript', initials: 'JS', color: '#f5d742' },
+  [PORTAL_ID]: { name: 'Shell portal', tech: 'The host', initials: 'P', color: '#006ca0' },
+  'angular-mfe': { name: 'Product catalog', tech: 'Angular', initials: 'A', color: '#c2255c' },
+  'react-mfe': { name: 'Shopping cart', tech: 'React', initials: 'R', color: '#6741d9' },
+  'js-mfe': { name: 'Checkout', tech: 'Plain JavaScript', initials: 'JS', color: '#c2410c' },
 };
 
 export function participantFor(id: string | undefined, displayName?: string): Participant {
@@ -29,7 +29,7 @@ export function participantFor(id: string | undefined, displayName?: string): Pa
     name,
     tech: 'Independent app',
     initials: name.slice(0, 2).toUpperCase(),
-    color: '#9aa7b8',
+    color: '#5a6578',
   };
 }
 

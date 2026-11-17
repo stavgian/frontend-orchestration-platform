@@ -22,9 +22,9 @@ declare module '@stavgian/mfe-communication' {
 }
 
 const PRODUCTS = [
-  { sku: 'mug', name: 'Coffee mug', emoji: '☕', price: 12 },
-  { sku: 'tee', name: 'T-shirt', emoji: '👕', price: 25 },
-  { sku: 'cap', name: 'Cap', emoji: '🧢', price: 18 },
+  { sku: 'mug', name: 'Coffee mug', price: 12 },
+  { sku: 'tee', name: 'T-shirt', price: 25 },
+  { sku: 'cap', name: 'Cap', price: 18 },
 ];
 
 @Component({
@@ -33,12 +33,11 @@ const PRODUCTS = [
   imports: [CommonModule],
   template: `
     <div class="announce" *ngIf="announcement" role="status">
-      <span class="from">📣 From the shell portal{{ announcement.direct ? ' · only to you' : '' }}</span>{{ announcement.text }}
+      <span class="from">From the shell portal{{ announcement.direct ? ' · only to you' : '' }}</span>{{ announcement.text }}
     </div>
     <p class="intro">Pick a product. The catalog announces it; whoever cares (the cart) reacts.</p>
     <ul class="products">
       <li *ngFor="let p of products">
-        <span class="emoji" aria-hidden="true">{{ p.emoji }}</span>
         <span class="name">{{ p.name }}</span>
         <span class="price">€{{ p.price }}</span>
         <button type="button" (click)="add(p)" [class.done]="justAdded === p.sku">
@@ -48,18 +47,18 @@ const PRODUCTS = [
     </ul>
   `,
   styles: [
-    `:host { display:block; font: 14px/1.45 Inter, system-ui, sans-serif; color:#e9eef5; }
-     .intro { margin:0 0 12px; color:#94a3b6; font-size:13px; }
+    `:host { display:block; font: 15px/1.5 var(--font-sans, Inter, system-ui, sans-serif); color:var(--text, #171a20); }
+     .intro { margin:0 0 12px; color:var(--text-secondary, #5a6578); font-size:14px; }
      .products { list-style:none; margin:0; padding:0; display:grid; gap:8px; }
-     li { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,0.04); }
-     .emoji { font-size:20px; }
+     li { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; background:var(--surface, #f7f8fa); }
      .name { flex:1; min-width:0; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-     .price { color:#94a3b6; font-variant-numeric:tabular-nums; }
-     button { font:inherit; font-size:13px; font-weight:600; padding:6px 10px; border-radius:999px; cursor:pointer; border:0; color:#0a0f16; background:#ff6b8b; min-width:96px; flex:none; transition:background 150ms; }
-     button:hover { background:#ff8aa3; }
-     button.done { background:#4ade80; }
-     .announce { display:flex; flex-direction:column; gap:2px; margin:0 0 12px; padding:10px 12px; border-radius:12px; font-size:13px; background:rgba(182,243,107,0.08); border:1px solid rgba(182,243,107,0.3); animation:announce-in 250ms ease-out; }
-     .from { font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#b6f36b; }
+     .price { color:var(--text-secondary, #5a6578); font-variant-numeric:tabular-nums; }
+     button { font:inherit; font-size:13px; font-weight:600; padding:6px 12px; border-radius:9999px; cursor:pointer; border:0; color:#fff; background:#c2255c; min-width:100px; flex:none; transition:background-color 150ms; }
+     button:hover { background:#a61e4d; }
+     button:focus-visible { outline:2px solid #0495d4; outline-offset:3px; }
+     button.done { background:var(--ok, #15803d); }
+     .announce { display:flex; flex-direction:column; gap:2px; margin:0 0 12px; padding:10px 12px; border-radius:8px; font-size:14px; background:rgba(4,149,212,0.07); border:1px solid rgba(4,149,212,0.3); animation:announce-in 250ms ease-out; }
+     .from { font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--accent, #006ca0); }
      @keyframes announce-in { from { opacity:0; transform:translateY(-4px); } }
     `,
   ],
