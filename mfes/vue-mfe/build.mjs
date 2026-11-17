@@ -14,7 +14,7 @@ export async function buildBundle() {
     platform: 'browser',
     target: ['es2020'],
     sourcemap: true,
-    minify: false,
+    minify: true,
     // Flags Vue's bundler build expects; production mode keeps the bundle small.
     define: {
       'process.env.NODE_ENV': '"production"',
