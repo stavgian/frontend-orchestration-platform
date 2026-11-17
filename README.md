@@ -71,10 +71,10 @@ The demo shop uses all three patterns:
 
 | Pattern | In the demo |
 | --- | --- |
-| **Event**: "something happened" | The catalog publishes `cart:item-added`; the cart adds the item and publishes `cart:updated` with its new total, which checkout shows live. The shipping app reacts with `shipping:quoted`, and checkout adds that cost to the total. Checkout publishes `order:placed`; the cart empties. |
-| **Request**: "I need an answer" | On "Place order", checkout confirms the total with the cart itself: `request('cart:get-summary', …, { to: 'react-mfe' })`. The cart answers with `respond()`. A checkout that loads after the shipping app asks it for the current quote the same way (`shipping:get-quote`). |
+| **Event**: "something happened" | The catalog publishes `cart:item-added`; the cart adds the item and publishes `cart:updated` with its new total, which checkout shows live. The shipping app reacts with `shipping:quoted`, and checkout adds that cost to the total. Checkout publishes `order:placed` with the items total, the shipping and the grand total (for example 49, 5 and 54); the cart empties. |
+| **Request**: "I need an answer" | On "Place order", checkout confirms the total with the cart itself: `request('cart:get-summary', …, { to: 'react-mfe' })`. The cart answers with `respond()`. It asks the shipping app for the shipping cost the same way (`shipping:get-quote`), when the shipping app appears and again on "Place order", so the order never goes out with a missing or stale shipping cost. |
 | **Direct message**: "just for you" | "Checkout →" in the cart sends `checkout:start` only to checkout (`publish(…, { to: 'js-mfe' })`); the catalog never receives it. |
-| **Presence**: "who's here?" | When the cart comes online, checkout asks it once for its current total. Events only report changes, so this covers apps that load late. Checkout only allows ordering while the cart is connected. The shell portal's "Check who's online" uses presence to ask every app to answer and shows its response time. |
+| **Presence**: "who's here?" | When the cart comes online, checkout asks it once for its current total. Events only report changes, so this covers apps that load late. Checkout only allows ordering while the cart and the shipping app are connected. The shell portal's "Check who's online" uses presence to ask every app to answer and shows its response time. |
 
 How it works:
 - Each app calls `connect({ id })`, which announces it on the channel (`system:ready`) and discovers apps already connected (`system:present`). `disconnect()` announces `system:left`.

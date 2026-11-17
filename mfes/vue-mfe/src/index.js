@@ -55,7 +55,8 @@ const ShippingApp = {
       };
       bus.subscribe("cart:updated", (msg) => applyCart(msg.payload));
       bus.subscribe("order:placed", (msg) => {
-        const { free } = quoteFor(msg.payload.total, msg.payload.count);
+        // The order carries the shipping it was charged, so the note says what the customer was actually told.
+        const free = msg.payload.shipping === 0;
         note.value = `Order received. It ships within two days${free ? ", free of charge" : ""}.`;
       });
       // Apps that load after the basket changed ask for the current quote.
