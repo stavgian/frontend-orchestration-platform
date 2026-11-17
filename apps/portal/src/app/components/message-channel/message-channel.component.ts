@@ -8,13 +8,13 @@ import {
   signal,
   ChangeDetectionStrategy,
 } from '@angular/core';
-import { MfeDefinition } from './manifest';
+import { MfeDefinition } from '../../core/manifest/manifest';
 import {
   FeedMessage,
   MessageFeedService,
   isRecipient,
-} from './message-feed.service';
-import { PORTAL_ID, participantForMfe } from './participants';
+} from '../../core/messaging/message-feed.service';
+import { PORTAL_ID, participantForMfe } from '../../core/participants/participants';
 
 /**
  * The portal's message channel. The portal is drawn as the bus itself, the host every app

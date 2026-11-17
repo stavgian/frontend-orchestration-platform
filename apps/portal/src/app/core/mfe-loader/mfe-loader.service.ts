@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Manifest, MfeDefinition } from './manifest';
-import { manifestUrl } from './manifest-url';
+import { Manifest, MfeDefinition } from '../manifest/manifest';
+import { manifestUrl } from '../manifest/manifest-url';
 
 @Injectable({ providedIn: 'root' })
 export class MfeLoaderService {

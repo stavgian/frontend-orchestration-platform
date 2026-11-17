@@ -35,8 +35,8 @@
         "production": {
           "fileReplacements": [
             {
-              "replace": "apps/portal/src/app/manifest-url.ts",
-              "with": "apps/portal/src/app/manifest-url.prod.ts"
+              "replace": "apps/portal/src/app/core/manifest/manifest-url.ts",
+              "with": "apps/portal/src/app/core/manifest/manifest-url.prod.ts"
             }
           ],
           "budgets": [

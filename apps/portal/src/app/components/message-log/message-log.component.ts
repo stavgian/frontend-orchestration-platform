@@ -12,7 +12,7 @@ import {
   viewChild,
   ChangeDetectionStrategy
 } from '@angular/core';
-import { FeedKind, MessageFeedService } from './message-feed.service';
+import { FeedKind, MessageFeedService } from '../../core/messaging/message-feed.service';
 
 type Filter = 'all' | 'events' | 'requests' | 'presence';
 
