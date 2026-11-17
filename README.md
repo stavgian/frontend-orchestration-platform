@@ -70,7 +70,7 @@ How it works:
 - Each app calls `connect({ id })`, which announces it on the channel (`system:ready`) and discovers apps already connected (`system:present`). `disconnect()` announces `system:left`.
 - Every message is an envelope `{ specversion, id, type, source, time, payload }`. Apps choose their own types and declare the payloads they use with TypeScript declaration merging. No shared types package is needed.
 - Subscriptions take an exact type, a namespace (`cart:*`) or everything (`*`).
-- The portal and every MFE depend on the package by version (`^1.0.0`), never on each other's code. Each connection keeps only its own state, so apps on different library versions still talk as long as they share the same `specversion`.
+- The portal and every MFE depend on the package by version (`^2.0.0`), never on each other's code. Each connection keeps only its own state, so apps on different library versions still talk as long as they share the same `specversion`.
 
 On one page, the shell portal shows everything live:
 - the manifest it loaded the apps from: which apps, how each one is loaded, and from where
@@ -91,7 +91,7 @@ See the [package README](libs/mfe-communication/README.md) for the full API.
 portal  angular-mfe  react-mfe  js-mfe  vue-mfe    ← each pins its own version range
 ```
 
-In this repo, npm workspaces link the local library source to each app, as long as the library's version satisfies that app's range. An app can stay on `^1` while the library moves to `2.x`, in which case it installs `1.x` from npm instead.
+In this repo, npm workspaces link the local library source to each app, as long as the library's version satisfies that app's range. An app can stay on `^2` while the library moves to `3.x`, in which case it installs `2.x` from npm instead.
 
 ## Adding an app
 

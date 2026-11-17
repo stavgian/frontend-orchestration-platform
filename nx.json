@@ -12,7 +12,7 @@
       "projectChangelogs": true
     },
     "git": {
-      "commitMessage": "chore(release): @stavgian/mfe-communication@{version}"
+      "commitMessage": "chore: release @stavgian/mfe-communication@{version}"
     }
   },
   "workspaceLayout": {
