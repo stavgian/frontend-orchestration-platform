@@ -12,6 +12,7 @@
     "postinstall": "npm run build -w @stavgian/mfe-communication",
     "build": "nx run-many --target=build --all",
     "build:github-pages": "node scripts/build-github-pages.mjs",
+    "build:cloudflare": "PAGES_BASE_PATH=/ node scripts/build-github-pages.mjs",
     "build:mfe-communication": "nx run mfe-communication:build",
     "test:mfe-communication": "nx run mfe-communication:test",
     "build:angular-mfe": "npm run build -w angular-mfe",

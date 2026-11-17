@@ -1,0 +1,12 @@
+// Cloudflare deployment: a static site served by Workers Static Assets (no Worker code).
+// Build with `npm run build:cloudflare`, which outputs the shell portal and every MFE at the site root.
+{
+  // Must match the Worker's name in the Cloudflare dashboard.
+  "name": "frontend-orchestration-platform",
+  "compatibility_date": "2025-10-01",
+  "assets": {
+    "directory": "./dist/github-pages",
+    // Unknown paths (e.g. /mfe/react-mfe) load the shell portal, which then routes them.
+    "not_found_handling": "single-page-application"
+  }
+}
