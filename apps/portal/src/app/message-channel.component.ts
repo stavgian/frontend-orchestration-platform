@@ -1,14 +1,20 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, OnDestroy, computed, inject, input, signal } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  computed,
+  inject,
+  input,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { MfeDefinition } from './manifest';
-import { FeedMessage, MessageFeedService, isRecipient } from './message-feed.service';
+import {
+  FeedMessage,
+  MessageFeedService,
+  isRecipient,
+} from './message-feed.service';
 import { PORTAL_ID, participantForMfe } from './participants';
-
-const PORTAL_LINES = [
-  'Hello from the shell portal. Welcome, everyone.',
-  'Shell portal here: all apps are loaded and listening.',
-  'A quick check from the shell portal: can everyone hear me?',
-];
 
 /**
  * The portal's message channel. The portal is drawn as the bus itself, the host every app
@@ -19,11 +25,11 @@ const PORTAL_LINES = [
   standalone: true,
   imports: [NgTemplateOutlet],
   templateUrl: './message-channel.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './message-channel.component.scss',
 })
 export class MessageChannelComponent implements OnDestroy {
   private readonly feed = inject(MessageFeedService);
-  private sentCount = 0;
 
   readonly mfes = input<MfeDefinition[]>([]);
   readonly msg = this.feed.latest;
@@ -31,8 +37,6 @@ export class MessageChannelComponent implements OnDestroy {
   readonly pings = this.feed.pings;
   readonly frameworks = this.feed.frameworks;
   readonly pinging = signal(false);
-  /** Announcement target: '' for everyone, or an app id. */
-  readonly announceTo = signal('');
   /** Briefly true after a ping round, to show every app's answer at once. */
   readonly showPings = signal(false);
   private pingTimer?: ReturnType<typeof setTimeout>;
@@ -57,15 +61,11 @@ export class MessageChannelComponent implements OnDestroy {
   readonly waveSpan = computed(() => {
     const m = this.msg();
     if (!m?.target) return { from: 0, to: 100 };
-    const [a, b] = [this.senderX(), this.xOf(m.target.id)].sort((x, y) => x - y);
+    const [a, b] = [this.senderX(), this.xOf(m.target.id)].sort(
+      (x, y) => x - y
+    );
     return { from: a, to: b };
   });
-
-  announce(): void {
-    const to = this.announceTo() || undefined;
-    const text = to ? 'This one is just for you, from the shell portal.' : PORTAL_LINES[this.sentCount++ % PORTAL_LINES.length];
-    this.feed.announce(text, to);
-  }
 
   async ping(): Promise<void> {
     this.pinging.set(true);
@@ -81,15 +81,27 @@ export class MessageChannelComponent implements OnDestroy {
   }
 
   /** Whether a node receives the latest message: its target if addressed, otherwise every connected app. */
-  receives(m: FeedMessage | undefined, nodeId: string, online: boolean): boolean {
+  receives(
+    m: FeedMessage | undefined,
+    nodeId: string,
+    online: boolean
+  ): boolean {
     return online && isRecipient(m, nodeId);
   }
 
   senderLabel(m: FeedMessage): string {
-    return m.kind === 'request' ? 'Asked' : m.kind === 'reply' ? 'Answered' : 'Sent';
+    return m.kind === 'request'
+      ? 'Asked'
+      : m.kind === 'reply'
+      ? 'Answered'
+      : 'Sent';
   }
 
   verb(m: FeedMessage): string {
-    return m.kind === 'request' ? 'asked' : m.kind === 'reply' ? 'answered' : 'sent';
+    return m.kind === 'request'
+      ? 'asked'
+      : m.kind === 'reply'
+      ? 'answered'
+      : 'sent';
   }
 }
