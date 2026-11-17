@@ -14,6 +14,7 @@ import { MessageChannelComponent } from './components/message-channel/message-ch
 import { MessageFeedService } from './core/messaging/message-feed.service';
 import { MessageLogComponent } from './components/message-log/message-log.component';
 import { MfeLoaderService } from './core/mfe-loader/mfe-loader.service';
+import { ProjectLinksComponent } from './components/project-links/project-links.component';
 import { ToastStackComponent } from './components/toast-stack/toast-stack.component';
 import { version } from '../../package.json';
 
@@ -27,6 +28,7 @@ const LOG_PREF_KEY = 'portal.message-log';
     ManifestPanelComponent,
     MessageChannelComponent,
     MessageLogComponent,
+    ProjectLinksComponent,
     ToastStackComponent,
   ],
   templateUrl: './app.component.html',
@@ -39,7 +41,7 @@ export class AppComponent implements OnInit {
   readonly feed = inject(MessageFeedService);
 
   readonly year = new Date().getFullYear();
-  /** The portal's own release version, bumped by `nx release` (tag portal@x.y.z). */
+  /** The shell portal's own release version, bumped by `nx release` (tag portal@x.y.z). */
   readonly version = version;
   readonly manifestUrl = manifestUrl;
   manifest?: Manifest;
