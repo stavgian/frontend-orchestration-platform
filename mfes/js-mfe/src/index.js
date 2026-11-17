@@ -47,9 +47,6 @@ class JsMfe extends HTMLElement {
 
     // Events keep the total current: the cart announces every change.
     this.bus.subscribe("cart:updated", (msg) => this.update({ summary: msg.payload, error: null }));
-    this.bus.subscribe("portal:announcement", (msg) =>
-      this.showBanner({ from: "the shell portal", direct: msg.to === "js-mfe", text: String(msg.payload?.text ?? "") })
-    );
     // A direct message from the cart: only checkout receives it.
     this.bus.subscribe("checkout:start", (msg) => {
       const { count, total } = msg.payload;

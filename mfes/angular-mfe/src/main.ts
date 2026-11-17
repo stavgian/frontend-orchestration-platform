@@ -6,6 +6,7 @@ import {
   OnDestroy,
   OnInit,
   VERSION,
+  ViewEncapsulation,
   provideZonelessChangeDetection,
   signal,
 } from '@angular/core';
@@ -29,12 +30,9 @@ const PRODUCTS = [
 
 @Component({
   selector: 'angular-mfe-view',
+  // Own shadow root, like the other apps: the portal's CSS can't reach in and this app's CSS can't leak out.
+  encapsulation: ViewEncapsulation.ShadowDom,
   template: `
-    @if (announcement(); as a) {
-      <div class="announce" role="status">
-        <span class="from">From the shell portal{{ a.direct ? ' · only to you' : '' }}</span>{{ a.text }}
-      </div>
-    }
     <p class="intro">Pick a product. The catalog announces it; whoever cares (the cart) reacts.</p>
     <ul class="products">
       @for (p of products; track p.sku) {
@@ -59,20 +57,15 @@ const PRODUCTS = [
      button:hover { background:#a61e4d; }
      button:focus-visible { outline:2px solid #0495d4; outline-offset:3px; }
      button.done { background:var(--ok, #15803d); }
-     .announce { display:flex; flex-direction:column; gap:2px; margin:0 0 12px; padding:10px 12px; border-radius:8px; font-size:14px; background:rgba(4,149,212,0.07); border:1px solid rgba(4,149,212,0.3); animation:announce-in 250ms ease-out; }
-     .from { font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--accent, #006ca0); }
-     @keyframes announce-in { from { opacity:0; transform:translateY(-4px); } }
     `,
   ],
 })
 class AngularMfeComponent implements OnInit, OnDestroy {
   private bus?: Connection;
   private timer?: ReturnType<typeof setTimeout>;
-  private announceTimer?: ReturnType<typeof setTimeout>;
   readonly products = PRODUCTS;
   // Signals drive change detection, so the app needs no zone.js.
   readonly justAdded = signal<string | undefined>(undefined);
-  readonly announcement = signal<{ text: string; direct: boolean } | undefined>(undefined);
 
   ngOnInit(): void {
     this.bus = connect({
@@ -82,16 +75,10 @@ class AngularMfeComponent implements OnInit, OnDestroy {
       // Read at runtime, so the shell shows the version this bundle really ships.
       meta: { framework: `Angular ${VERSION.full}`, element: 'Angular Elements' },
     });
-    this.bus.subscribe('portal:announcement', (msg) => {
-      this.announcement.set({ text: (msg.payload as { text: string }).text, direct: msg.to === 'angular-mfe' });
-      clearTimeout(this.announceTimer);
-      this.announceTimer = setTimeout(() => this.announcement.set(undefined), 6000);
-    });
   }
 
   ngOnDestroy(): void {
     clearTimeout(this.timer);
-    clearTimeout(this.announceTimer);
     this.bus?.disconnect();
   }
 

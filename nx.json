@@ -2,17 +2,30 @@
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "npmScope": "frontend",
   "affected": {
-    "defaultBase": "main"
+    "defaultBase": "main",
+    "legacy": true
   },
   "release": {
-    "projects": ["mfe-communication"],
-    "releaseTagPattern": "mfe-communication@{version}",
     "changelog": {
       "workspaceChangelog": false,
       "projectChangelogs": true
     },
-    "git": {
-      "commitMessage": "chore: release @stavgian/mfe-communication@{version}"
+    "groups": {
+      "mfe-communication": {
+        "projects": ["mfe-communication"],
+        "releaseTag": {
+          "pattern": "mfe-communication@{version}"
+        }
+      },
+      "portal": {
+        "projects": ["portal"],
+        "releaseTag": {
+          "pattern": "portal@{version}"
+        }
+      }
+    },
+    "version": {
+      "updateDependents": "never"
     }
   },
   "workspaceLayout": {
@@ -30,28 +43,6 @@
       "cache": true,
       "dependsOn": ["^build"],
       "inputs": ["default", "^default"]
-    },
-    "@nx/eslint:lint": {
-      "cache": true,
-      "inputs": [
-        "default",
-        "{workspaceRoot}/.eslintrc.json",
-        "{workspaceRoot}/.eslintignore",
-        "{workspaceRoot}/eslint.config.js"
-      ]
-    },
-    "@nx/jest:jest": {
-      "cache": true,
-      "inputs": ["default", "^default", "{workspaceRoot}/jest.preset.js"],
-      "options": {
-        "passWithNoTests": true
-      },
-      "configurations": {
-        "ci": {
-          "ci": true,
-          "codeCoverage": true
-        }
-      }
     }
   },
   "plugins": [
@@ -66,6 +57,12 @@
       "options": {
         "targetName": "lint"
       }
+    },
+    {
+      "plugin": "@nx/jest/plugin",
+      "options": {
+        "targetName": "test"
+      }
     }
   ],
   "generators": {
@@ -74,6 +71,54 @@
       "linter": "eslint",
       "style": "scss",
       "unitTestRunner": "jest"
+    },
+    "@nx/angular:component": {
+      "type": "component"
+    },
+    "@schematics/angular:component": {
+      "type": "component"
+    },
+    "@nx/angular:directive": {
+      "type": "directive"
+    },
+    "@schematics/angular:directive": {
+      "type": "directive"
+    },
+    "@nx/angular:service": {
+      "type": "service"
+    },
+    "@schematics/angular:service": {
+      "type": "service"
+    },
+    "@nx/angular:guard": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:guard": {
+      "typeSeparator": "."
+    },
+    "@nx/angular:interceptor": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:interceptor": {
+      "typeSeparator": "."
+    },
+    "@nx/angular:module": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:module": {
+      "typeSeparator": "."
+    },
+    "@nx/angular:pipe": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:pipe": {
+      "typeSeparator": "."
+    },
+    "@nx/angular:resolver": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:resolver": {
+      "typeSeparator": "."
     }
   }
 }
