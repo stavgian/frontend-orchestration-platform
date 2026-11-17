@@ -6,7 +6,7 @@
   display: flex; flex-wrap: wrap; gap: 14px;
   align-items: flex-end; justify-content: space-between;
 }
-h2 { margin: 0 0 2px; font: 600 16px/1.2 var(--font-display); }
+h2 { margin: 0 0 2px; font: 600 17px/1.2 var(--font-sans); letter-spacing: -0.01em; }
 p { margin: 0; color: var(--subtle); font-size: 13px; }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .send-group { display: flex; align-items: center; gap: 6px; }
@@ -19,8 +19,8 @@ p { margin: 0; color: var(--subtle); font-size: 13px; }
 }
 .ping {
   margin-left: 4px; padding: 0 6px; border-radius: 99px; font: 11px var(--font-mono);
-  color: #4ade80; background: rgba(74, 222, 128, 0.12);
-  &.failed { color: var(--danger); background: rgba(255, 143, 168, 0.12); }
+  color: var(--ok); background: rgba(21, 128, 61, 0.1);
+  &.failed { color: var(--danger); background: rgba(201, 42, 42, 0.08); }
 }
 
 .diagram { margin-top: 18px; }
@@ -33,15 +33,13 @@ p { margin: 0; color: var(--subtle); font-size: 13px; }
 .avatar {
   width: 38px; height: 38px; border-radius: 50%;
   display: grid; place-items: center;
-  font: 700 14px var(--font-display); color: #0a0f16;
+  font: 700 14px var(--font-sans); color: var(--on-color);
   background: var(--c);
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 18%, transparent);
 }
 .name { margin-top: 6px; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 6px; }
-.live { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 6px #4ade80; }
 .offline {
   .avatar { opacity: 0.35; filter: grayscale(1); }
-  .live { background: transparent; box-shadow: none; border: 1.5px solid var(--subtle); }
 }
 .tech { color: var(--subtle); font-size: 12px; }
 .stub { width: 2px; height: 12px; margin-top: 6px; background: var(--border-strong); }
@@ -49,11 +47,11 @@ p { margin: 0; color: var(--subtle); font-size: 13px; }
 .status {
   position: absolute; top: -12px; left: 50%; translate: -50% 0;
   padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 600; white-space: nowrap;
-  background: var(--c); color: #0a0f16; opacity: 0; pointer-events: none;
+  background: var(--c); color: var(--on-color); opacity: 0; pointer-events: none;
   z-index: 2; /* above the avatar ring animation */
 }
 .ping-result {
-  opacity: 1; background: #4ade80; animation: pop-in 250ms ease-out;
+  opacity: 1; background: var(--ok); animation: pop-in 250ms ease-out;
   &.failed { background: var(--danger); }
 }
 
@@ -74,7 +72,7 @@ p { margin: 0; color: var(--subtle); font-size: 13px; }
 }
 .bus-label {
   position: relative; z-index: 1; display: flex; align-items: center; gap: 8px;
-  font-size: 12px; font-weight: 600; color: var(--portal); white-space: nowrap;
+  font-size: 12px; font-weight: 600; color: var(--accent); white-space: nowrap;
 }
 .wave {
   position: absolute; inset: 0; background: color-mix(in srgb, var(--c) 35%, transparent);
@@ -118,6 +116,8 @@ p { margin: 0; color: var(--subtle); font-size: 13px; }
   .status { font-size: 10px; padding: 1px 6px; top: -16px; }
   .bus-label { font-size: 11px; }
   .long { display: none; }
+  .send-group { flex-wrap: wrap; width: 100%; }
+  .to { flex: 1; select { width: 100%; } }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,0 +1,17 @@
+{
+  "name": "vue-mfe",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "serve": "node server.mjs"
+  },
+  "dependencies": {
+    "@stavgian/mfe-communication": "^1.0.0",
+    "vue": "^3.5.45"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
+}
