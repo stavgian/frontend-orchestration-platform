@@ -2,7 +2,7 @@
   <div class="head">
     <div>
       <h2 id="channel-title">Live message channel</h2>
-      <p>Provided by the shell portal. Who sends, who is asked, who answers.</p>
+      <p>Apps talk to each other directly. The shell portal observes: who sends, who is asked, who answers.</p>
     </div>
     <div class="actions">
       <button type="button" class="btn-ghost" (click)="ping()" [disabled]="pinging()">
@@ -95,7 +95,7 @@
       }
       <span class="bus-label">
         <span class="p-badge" aria-hidden="true">P</span>
-        Shell portal<span class="long"> · the channel every app plugs into</span>
+        Shell portal<span class="long"> · hosts the page the channel runs on</span>
       </span>
     </div>
   </div>
