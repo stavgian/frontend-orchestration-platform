@@ -9,6 +9,8 @@ export interface Participant {
   name: string;
   initials: string;
   color: string;
+  /** Image shown next to the framework an app reports; apps without one show text only. */
+  logo?: string;
 }
 
 export const PORTAL: Participant = { id: PORTAL_ID, name: 'Shell portal', initials: 'P', color: '#006ca0' };

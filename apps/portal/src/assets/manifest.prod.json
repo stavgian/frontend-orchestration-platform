@@ -6,7 +6,8 @@
       "display": {
         "name": "Product catalog",
         "initials": "A",
-        "color": "#c2255c"
+        "color": "#c2255c",
+        "logo": "logos/angular.svg"
       },
       "route": "angular-mfe",
       "type": "module-federation",
@@ -20,7 +21,8 @@
       "display": {
         "name": "Shopping cart",
         "initials": "R",
-        "color": "#6741d9"
+        "color": "#6741d9",
+        "logo": "logos/react.svg"
       },
       "route": "react-mfe",
       "type": "script",
@@ -34,7 +36,8 @@
       "display": {
         "name": "Checkout",
         "initials": "JS",
-        "color": "#c2410c"
+        "color": "#c2410c",
+        "logo": "logos/javascript.svg"
       },
       "route": "js-mfe",
       "type": "script",
@@ -48,7 +51,8 @@
       "display": {
         "name": "Shipping",
         "initials": "V",
-        "color": "#1e7a3c"
+        "color": "#1e7a3c",
+        "logo": "logos/vue.svg"
       },
       "route": "vue-mfe",
       "type": "script",
