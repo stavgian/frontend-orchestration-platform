@@ -32,9 +32,22 @@
           The shell portal reads a manifest, loads them at runtime, and gives them one shared message channel. That channel is the only way they work together.
         </p>
         <ol class="steps">
-          <li><strong>Events</strong> “Something happened”: the catalog announces a product; the cart announces its new total.</li>
-          <li><strong>Requests</strong> “I need an answer”: checkout confirms the total with the cart before ordering.</li>
-          <li><strong>Presence</strong> “Who is here?”: checkout notices when the cart comes online and catches up.</li>
+          <li>
+            <strong>Events</strong> “Something happened.” The sender does not know who is listening.
+            <span class="try">Add a product: the cart, checkout and shipping all react.</span>
+          </li>
+          <li>
+            <strong>Direct messages</strong> “This is for you.” The same message, addressed to a single app.
+            <span class="try">“Checkout →” in the cart reaches checkout only. The catalog never sees it.</span>
+          </li>
+          <li>
+            <strong>Requests</strong> “I need an answer.” One app asks, and the app that knows replies.
+            <span class="try">On “Place order”, checkout asks the cart to confirm the total.</span>
+          </li>
+          <li>
+            <strong>Presence</strong> “Who is here?” Apps announce when they join and when they leave.
+            <span class="try">Checkout waits for the cart, and “Ping all apps” asks everyone at once.</span>
+          </li>
         </ol>
       </section>
 
