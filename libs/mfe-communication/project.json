@@ -1,0 +1,21 @@
+{
+  "name": "mfe-communication",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "root": "libs/mfe-communication",
+  "sourceRoot": "libs/mfe-communication/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "nx:run-script",
+      "options": { "script": "build" },
+      "cache": true,
+      "inputs": ["{projectRoot}/src/**/*", "{projectRoot}/tsconfig.lib.json"],
+      "outputs": ["{projectRoot}/dist"]
+    },
+    "test": {
+      "executor": "nx:run-script",
+      "options": { "script": "test" },
+      "dependsOn": ["build"]
+    }
+  }
+}

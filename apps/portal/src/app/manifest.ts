@@ -29,17 +29,3 @@ export interface Manifest {
   version: string;
   mfes: MfeDefinition[];
 }
-
-export const EVENT_NAMES = {
-  statusMessage: "statusMessage",
-} as const;
-
-export interface StatusMessagePayload {
-  text: string;
-  source?: string;
-  emittedAt?: string;
-}
-
-export type EventPayloadMap = {
-  [EVENT_NAMES.statusMessage]: StatusMessagePayload;
-};

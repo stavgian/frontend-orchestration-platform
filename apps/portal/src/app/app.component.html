@@ -1,33 +1,38 @@
-<ng-container *ngIf="!loadingManifest; else loading">
-  <div class="page single-column">
-    <section class="workspace full">
-      <router-outlet></router-outlet>
-    </section>
+<div class="page">
+  <header class="hero">
+    <span class="eyebrow">Live demo · Frontend orchestration</span>
+    <h1>One page, built from <span class="hl">independent apps</span></h1>
+    <p class="lede">
+      Each box below is a separate app, built with a different technology and deployed on its own.
+      The portal finds them at runtime, puts them on the page, and lets them talk through one shared
+      message channel.
+    </p>
+    <ol class="steps">
+      <li><span>1</span><div><strong>Discover</strong> The portal reads a list of available apps.</div></li>
+      <li><span>2</span><div><strong>Load</strong> Each app is fetched and placed on the page.</div></li>
+      <li><span>3</span><div><strong>Talk</strong> Apps broadcast messages; everyone listening hears them.</div></li>
+    </ol>
+  </header>
 
-    <section class="event-log">
-      <header>
-        <div class="title">Event Log</div>
-        <div class="subtitle">Listening to status messages</div>
-      </header>
-      <div class="log-list">
-        <div class="log-empty" *ngIf="!logs.length">No events yet.</div>
-        <div class="log-entry" *ngFor="let log of logs">
-          <div class="log-meta">
-            <span class="badge">{{ log.name }}</span>
-            <span class="time">{{ log.timestamp | date: 'shortTime' }}</span>
-          </div>
-          <div class="message" *ngIf="log.message">{{ log.message }}</div>
-          <div class="source" *ngIf="log.source || log.emittedAt">
-            {{ log.source || 'unknown source' }}
-            <ng-container *ngIf="log.emittedAt"> · {{ log.emittedAt | date:'shortTime' }}</ng-container>
-          </div>
-          <pre>{{ log.payload | json }}</pre>
-        </div>
-      </div>
-    </section>
-  </div>
-</ng-container>
+  @if (loadingManifest) {
+    <div class="panel notice">Finding available apps…</div>
+  } @else if (manifestError) {
+    <div class="panel notice error">
+      Couldn't load the list of apps.
+      <small>{{ manifestError }}</small>
+    </div>
+  } @else {
+    <app-message-channel class="panel" [mfes]="mfes" />
 
-<ng-template #loading>
-  <div class="loading-state">Loading manifest…</div>
-</ng-template>
+    <div class="layout">
+      <main class="apps">
+        <router-outlet />
+      </main>
+      <aside class="panel side">
+        <app-message-log />
+      </aside>
+    </div>
+  }
+</div>
+
+<app-toast-stack />

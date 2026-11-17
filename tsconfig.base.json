@@ -3,10 +3,6 @@
   "compilerOptions": {
     "rootDir": ".",
     "baseUrl": ".",
-    "paths": {
-      "@frontend/shared-contract": ["libs/shared-contract/src/index.ts"],
-      "@frontend/shared-event-bus": ["libs/shared-event-bus/src/index.ts"]
-    },
     "target": "ES2020",
     "module": "ESNext",
     "moduleResolution": "Bundler",

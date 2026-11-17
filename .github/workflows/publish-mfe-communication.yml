@@ -1,0 +1,66 @@
+name: Publish @stavgian/mfe-communication
+
+# Runs only when a release tag is pushed, e.g. `mfe-communication@1.1.0` (created by `npx nx release`).
+on:
+  push:
+    tags:
+      - 'mfe-communication@*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-mfe-communication
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    # Create this environment in repo settings with yourself as a required reviewer,
+    # so every publish waits for your approval.
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write # lets npm verify this workflow (trusted publishing + provenance); no npm token is stored
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24 # ships npm 11, required for trusted publishing
+          registry-url: https://registry.npmjs.org
+          # No dependency cache in the publish job, to rule out cache poisoning.
+
+      - name: Install dependencies (no install scripts)
+        run: npm ci --ignore-scripts
+
+      - name: Check tag matches package version
+        run: |
+          version=$(node -p "require('./libs/mfe-communication/package.json').version")
+          if [ "$GITHUB_REF_NAME" != "mfe-communication@$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match package version $version"
+            exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      - name: Build and test
+        run: |
+          npm run build -w @stavgian/mfe-communication
+          npm test -w @stavgian/mfe-communication
+
+      - name: Check whether this version is already on npm
+        id: registry
+        run: |
+          if npm view "@stavgian/mfe-communication@$VERSION" version > /dev/null 2>&1; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::@stavgian/mfe-communication@$VERSION is already on npm, skipping publish"
+          fi
+
+      - name: Publish to npm
+        if: steps.registry.outputs.published != 'true'
+        run: npm publish -w @stavgian/mfe-communication

@@ -10,7 +10,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { MfeDefinition } from '@frontend/shared-contract';
+import { MfeDefinition } from './manifest';
 import { MfeLoaderService } from './mfe-loader.service';
 import { Subscription, from, of } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';

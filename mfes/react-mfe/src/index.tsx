@@ -1,48 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 
-type StatusMessage = { text: string; source?: string; emittedAt?: string };
-
-const EVENT_NAMES = {
-  customerSelected: 'customerSelected',
-  statusMessage: 'statusMessage',
-} as const;
-
-const requiredFields: Record<string, string[]> = {
-  [EVENT_NAMES.statusMessage]: ['text'],
-};
-
-function validate(eventName: string, payload: Record<string, unknown>) {
-  const missing = requiredFields[eventName]?.filter(
-    (key) => typeof payload[key] !== 'string' || !payload[key]
-  );
-  if (missing?.length) {
-    throw new Error(`Invalid payload for ${eventName}: missing string fields ${missing.join(',')}`);
-  }
-}
+// The only thing this app shares with the others: the published message library.
+import { EVENT_NAMES, StatusMessagePayload, publish, subscribe } from '@stavgian/mfe-communication';
 
 function publishStatus(text: string) {
-  const payload: StatusMessage = {
+  publish(EVENT_NAMES.statusMessage, {
     text,
     source: 'react-mfe',
     emittedAt: new Date().toISOString(),
-  };
-  validate(EVENT_NAMES.statusMessage, payload);
-  window.dispatchEvent(new CustomEvent<StatusMessage>(EVENT_NAMES.statusMessage, { detail: payload }));
+  });
 }
 
 const App: React.FC = () => {
-  const [lastHeard, setLastHeard] = useState<StatusMessage | null>(null);
+  const [lastHeard, setLastHeard] = useState<StatusMessagePayload | null>(null);
 
-  useEffect(() => {
-    const listener = (event: Event) => {
-      const msg = (event as CustomEvent<StatusMessage>).detail;
-      if (!msg?.text) return;
-      setLastHeard(msg);
-    };
-    window.addEventListener(EVENT_NAMES.statusMessage, listener as EventListener);
-    return () => window.removeEventListener(EVENT_NAMES.statusMessage, listener as EventListener);
-  }, []);
+  // subscribe() returns its own cleanup, which React runs on unmount.
+  useEffect(() => subscribe(EVENT_NAMES.statusMessage, setLastHeard), []);
 
   const handleHi = () => {
     publishStatus('Hi from React MFE — saying hello to everyone!');

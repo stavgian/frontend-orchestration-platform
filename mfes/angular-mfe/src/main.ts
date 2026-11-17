@@ -11,61 +11,8 @@ import {
 } from '@angular/core';
 import { createApplication } from '@angular/platform-browser';
 import { createCustomElement } from '@angular/elements';
-
-// Event contract (mirrors shared-contract but kept local to avoid compile-time coupling)
-const EVENT_NAMES = {
-  statusMessage: 'statusMessage',
-} as const;
-
-type StatusMessagePayload = { text: string; source?: string; emittedAt?: string };
-type EventPayloadMap = {
-  [EVENT_NAMES.statusMessage]: StatusMessagePayload;
-};
-
-function validate<K extends keyof EventPayloadMap>(
-  eventName: K,
-  payload: EventPayloadMap[K]
-) {
-  const required = {
-    [EVENT_NAMES.statusMessage]: ['text'],
-  } as const;
-
-  const missing = required[eventName].filter(
-    (key) => typeof payload[key as keyof typeof payload] !== 'string' || !payload[key as keyof typeof payload]
-  );
-
-  if (missing.length) {
-    throw new Error(
-      `Invalid payload for ${eventName}: missing string fields ${missing.join(',')}`
-    );
-  }
-}
-
-function publish<K extends keyof EventPayloadMap>(
-  eventName: K,
-  payload: EventPayloadMap[K]
-) {
-  validate(eventName, payload);
-  window.dispatchEvent(new CustomEvent(eventName, { detail: payload }));
-}
-
-function subscribe<K extends keyof EventPayloadMap>(
-  eventName: K,
-  handler: (payload: EventPayloadMap[K]) => void
-): () => void {
-  const listener = (event: Event) => {
-    const custom = event as CustomEvent<EventPayloadMap[K]>;
-    try {
-      validate(eventName, custom.detail);
-      handler(custom.detail);
-    } catch (err) {
-      console.warn(err);
-    }
-  };
-
-  window.addEventListener(eventName, listener as EventListener);
-  return () => window.removeEventListener(eventName, listener as EventListener);
-}
+// The only thing this app shares with the others: the published message library.
+import { EVENT_NAMES, StatusMessagePayload, publish, subscribe } from '@stavgian/mfe-communication';
 
 @Component({
   selector: 'angular-mfe-view',

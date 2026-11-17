@@ -1,20 +1,26 @@
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, resolve } from 'node:path';
+import { buildBundle } from './build.mjs';
 
 const PORT = 4303;
-const ROOT = resolve(new URL('.', import.meta.url).pathname);
+const ROOT = resolve(new URL('.', import.meta.url).pathname, 'dist');
+
+await buildBundle();
 
 const mime = {
   '.js': 'application/javascript',
-  '.json': 'application/json',
-  '.html': 'text/html',
+  '.map': 'application/json',
 };
 
 const server = createServer(async (req, res) => {
   const url = req.url?.split('?')[0] || '/';
   const file = url === '/' ? '/js-mfe.js' : url;
   const filePath = resolve(ROOT, `.${file}`);
+  if (!filePath.startsWith(ROOT)) {
+    res.writeHead(403).end();
+    return;
+  }
 
   try {
     const data = await readFile(filePath);

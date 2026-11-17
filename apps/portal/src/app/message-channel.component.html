@@ -1,0 +1,41 @@
+<section class="channel" aria-labelledby="channel-title">
+  <div class="head">
+    <div>
+      <h2 id="channel-title">Live message channel</h2>
+      <p>Everyone shares one channel. When someone speaks, everyone else hears it.</p>
+    </div>
+    <button type="button" class="btn-primary" (click)="send()">Send a message from the portal</button>
+  </div>
+
+  @for (key of renderKey(); track key) {
+    <div class="diagram" [style.--n]="nodes().length">
+      <div class="nodes">
+        @for (node of nodes(); track node.id) {
+          @let sending = msg()?.sender?.id === node.id;
+          @let receiving = !!msg() && !sending;
+          <div class="node" [class.sending]="sending" [class.receiving]="receiving" [style.--c]="node.color">
+            <div class="avatar" aria-hidden="true">{{ node.initials }}</div>
+            <div class="name">{{ node.name }}</div>
+            <div class="tech">{{ node.tech }}</div>
+            <span class="status" aria-hidden="true">{{ sending ? 'Sent' : 'Heard it' }}</span>
+            <div class="stub"></div>
+          </div>
+        }
+      </div>
+      <div class="bus">
+        @if (msg(); as m) {
+          <div class="wave" [style.--x]="senderX() + '%'" [style.--c]="m.sender.color"></div>
+        }
+      </div>
+    </div>
+
+    <p class="caption" aria-live="polite">
+      @if (msg(); as m) {
+        <strong [style.color]="m.sender.color">{{ m.sender.name }}</strong> said
+        <q>{{ m.text }}</q> to everyone
+      } @else {
+        Waiting for the first message — press <em>Say hi</em> in any app below.
+      }
+    </p>
+  }
+</section>

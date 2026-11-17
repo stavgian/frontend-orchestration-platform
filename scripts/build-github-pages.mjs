@@ -33,13 +33,15 @@ const standalonePages = [
     title: 'Vanilla JS MFE',
     elementTag: 'js-mfe',
     scriptFiles: ['js-mfe.js'],
-    sourceDir: join(workspaceRoot, 'mfes/js-mfe'),
+    sourceDir: join(workspaceRoot, 'mfes/js-mfe/dist'),
   },
 ];
 
+run('npx', ['nx', 'build', 'mfe-communication']);
 run('npx', ['nx', 'build', 'portal', '--configuration', 'production', '--base-href', baseHref]);
 run('node', ['mfes/angular-mfe/build.mjs']);
 run('node', ['mfes/react-mfe/build.mjs']);
+run('node', ['mfes/js-mfe/build.mjs']);
 
 rmSync(outputDir, { force: true, recursive: true });
 mkdirSync(outputDir, { recursive: true });

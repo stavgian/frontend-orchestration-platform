@@ -1,128 +1,46 @@
-import { CommonModule, DatePipe, JsonPipe } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import {
-  NavigationEnd,
-  Router,
-  RouterLink,
-  RouterLinkActive,
-  RouterOutlet,
-} from '@angular/router';
-import {
-  EVENT_NAMES,
-  EventPayloadMap,
-  Manifest,
-  MfeDefinition,
-  StatusMessagePayload,
-} from '@frontend/shared-contract';
-import { subscribe } from '@frontend/shared-event-bus';
-import { filter } from 'rxjs/operators';
-import { Subscription } from 'rxjs';
+import { Component, OnInit, inject } from '@angular/core';
+import { Router, RouterOutlet } from '@angular/router';
+import { MfeDefinition } from './manifest';
+import { MessageChannelComponent } from './message-channel.component';
+import { MessageLogComponent } from './message-log.component';
 import { MfeLoaderService } from './mfe-loader.service';
-
-type EventLogEntry = {
-  name: keyof EventPayloadMap;
-  payload: StatusMessagePayload;
-  timestamp: number;
-  source?: string;
-  emittedAt?: string;
-  message?: string;
-};
+import { ToastStackComponent } from './toast-stack.component';
 
 @Component({
   standalone: true,
   selector: 'app-root',
-  imports: [
-    CommonModule,
-    RouterOutlet,
-    RouterLink,
-    RouterLinkActive,
-    JsonPipe,
-    DatePipe,
-  ],
+  imports: [RouterOutlet, MessageChannelComponent, MessageLogComponent, ToastStackComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })
-export class AppComponent implements OnInit, OnDestroy {
+export class AppComponent implements OnInit {
+  private readonly loader = inject(MfeLoaderService);
+  private readonly router = inject(Router);
+
   mfes: MfeDefinition[] = [];
-  manifestVersion?: Manifest['version'];
-  logs: EventLogEntry[] = [];
   loadingManifest = true;
   manifestError?: string;
-  activeMfeId?: string;
-
-  private eventUnsubscribers: Array<() => void> = [];
-  private navSub?: Subscription;
-
-  constructor(
-    private readonly loader: MfeLoaderService,
-    private readonly router: Router
-  ) {}
 
   async ngOnInit(): Promise<void> {
-    this.navSub = this.router.events
-      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
-      .subscribe(() => (this.activeMfeId = this.currentRouteId()));
-
     try {
       const manifest = await this.loader.getManifest();
       this.mfes = manifest.mfes;
-      this.manifestVersion = manifest.version;
-      this.activeMfeId = this.currentRouteId();
-
-      const isMfeRoute = this.router.url.startsWith('/mfe/');
-      if (isMfeRoute && (!this.activeMfeId || !this.findMfe(this.activeMfeId))) {
-        const first = manifest.mfes[0];
-        if (first) {
-          this.router.navigate(['mfe', first.route ?? first.id]);
-        }
-      }
+      this.redirectUnknownMfeRoute();
     } catch (err) {
       this.manifestError = (err as Error)?.message ?? 'Unable to load manifest';
     } finally {
       this.loadingManifest = false;
     }
-
-    this.setupEventLog();
   }
 
-  ngOnDestroy(): void {
-    this.eventUnsubscribers.forEach((fn) => fn());
-    this.navSub?.unsubscribe();
-  }
+  private redirectUnknownMfeRoute(): void {
+    if (!this.router.url.startsWith('/mfe/')) return;
 
-  navLink(mfe: MfeDefinition) {
-    return ['/mfe', mfe.route ?? mfe.id];
-  }
-
-  trackById = (_: number, mfe: MfeDefinition) => mfe.id;
-
-  private setupEventLog(): void {
-    this.eventUnsubscribers.push(
-      subscribe(EVENT_NAMES.statusMessage, (payload) =>
-        this.addLog(EVENT_NAMES.statusMessage, payload)
-      )
-    );
-  }
-
-  private addLog(name: keyof EventPayloadMap, payload: StatusMessagePayload): void {
-    const entry: EventLogEntry = {
-      name,
-      payload,
-      timestamp: Date.now(),
-      source: (payload as any).source,
-      emittedAt: (payload as any).emittedAt,
-      message: (payload as any).text,
-    };
-    this.logs = [entry, ...this.logs].slice(0, 50);
-  }
-
-  private currentRouteId(): string | undefined {
-    const child = this.router.routerState.snapshot.root.firstChild;
-    return child?.params['id'];
-  }
-
-  private findMfe(id?: string): MfeDefinition | undefined {
-    if (!id) return undefined;
-    return this.mfes.find((mfe) => mfe.id === id || mfe.route === id);
+    const id = this.router.routerState.snapshot.root.firstChild?.params['id'];
+    const known = this.mfes.some((mfe) => mfe.id === id || mfe.route === id);
+    const first = this.mfes[0];
+    if (!known && first) {
+      this.router.navigate(['mfe', first.route ?? first.id]);
+    }
   }
 }

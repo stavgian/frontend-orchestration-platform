@@ -24,14 +24,14 @@ Microfrontends are discovered via a JSON manifest, loaded dynamically by URL, mo
   - Does not import or reference MFE code at build time
 
 - Microfrontends (MFEs)
-  - Independently buildable and servable
+  - Independently buildable and servable, each with its own `package.json`
   - Expose a custom element as their public API
-  - Communicate only via shared event contracts
+  - Communicate only through the published `@stavgian/mfe-communication` package
   - Current MFEs: Angular (module federation), React (script), JS (script)
 
-- Shared libraries
-  - shared-contract: manifest schema, event names, payload types
-  - shared-event-bus: publish / subscribe abstraction over browser-native events
+- Shared library
+  - [`@stavgian/mfe-communication`](libs/mfe-communication) (published to npm): message names, payload types, and publish / subscribe over browser-native events. The only code the portal and the MFEs share.
+  - The manifest format lives in the portal ([`manifest.ts`](apps/portal/src/app/manifest.ts)), because only the portal reads it.
 
 ## Runtime manifest
 
@@ -46,11 +46,22 @@ The portal uses this information to load and render MFEs without compile-time co
 
 ## Cross-microfrontend communication
 
-Communication is based on browser-native `CustomEvent`s published on `window`.
+Communication is based on browser-native `CustomEvent`s published on `window`, wrapped by the [`@stavgian/mfe-communication`](libs/mfe-communication) package.
 
 - Single event: `statusMessage` → `{ text: string; source?: string; emittedAt?: string }`
-- MFEs publish/subscribe via the lightweight `shared-event-bus`.
-- The portal listens and logs every status with its source and emitted time; the dashboard header also shows the last heard message.
+- The portal and every MFE depend on the package by version (`^1.0.0`), never on each other's code.
+- The library keeps no state, so apps bundling different versions of it still hear each other as long as the payload format is compatible.
+- The portal shows every message live: a channel diagram, a conversation log, and toasts. It can also send messages itself.
+
+### How the pieces depend on each other
+
+```
+@stavgian/mfe-communication  (npm, semver)
+   ▲        ▲          ▲          ▲
+portal  angular-mfe  react-mfe  js-mfe     ← each pins its own version range
+```
+
+In this repo, npm workspaces link the local library source to each app, as long as the library's version satisfies that app's range. An app can stay on `^1` while the library moves to `2.x`, in which case it installs `1.x` from npm instead.
 
 ## Repository structure
 
@@ -59,14 +70,26 @@ apps/
   portal/
 
 libs/
-  shared-contract/
-  shared-event-bus/
+  mfe-communication/   ← published to npm as @stavgian/mfe-communication
 
 mfes/
   angular-mfe/
   react-mfe/
   js-mfe/
 ```
+
+## Releasing `@stavgian/mfe-communication`
+
+Releases are made from this repo. A pushed tag triggers [`.github/workflows/publish-mfe-communication.yml`](.github/workflows/publish-mfe-communication.yml), which builds, tests and publishes with npm trusted publishing (no npm token stored, provenance attached).
+
+```bash
+npx nx release minor --skip-publish   # or patch / major: bumps version, writes CHANGELOG, commits, tags mfe-communication@x.y.z
+git push --follow-tags                # the tag starts the publish workflow
+```
+
+Pick the bump by what changed in the payload format: patch for fixes, minor for new events or optional fields, major for renamed/removed fields or new required fields.
+
+Run the library's tests locally with `npm run test:mfe-communication`.
 
 ## Running locally
 
@@ -133,13 +156,14 @@ MIT
 
 ## JS MFE (plain JS)
 
-Run the lightweight dev server (serves the built single file):
+Plain JavaScript, no framework. A tiny esbuild step bundles `@stavgian/mfe-communication` into a single file:
 
 ```bash
-npm run serve:js-mfe
+npm run build:js-mfe   # produces mfes/js-mfe/dist/js-mfe.js
+npm run serve:js-mfe   # builds then serves on http://localhost:4303/js-mfe.js
 ```
 
-Listens on http://localhost:4303/js-mfe.js (portal manifest points here).
+The portal manifest points to http://localhost:4303/js-mfe.js.
 
 ## React MFE (custom element)
 

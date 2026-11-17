@@ -1,0 +1,36 @@
+<section class="log" aria-labelledby="log-title">
+  <header>
+    <div>
+      <h2 id="log-title">Conversation</h2>
+      <p>{{ feed.messages().length }} {{ feed.messages().length === 1 ? 'message' : 'messages' }}</p>
+    </div>
+    @if (feed.messages().length) {
+      <button type="button" class="btn-ghost" (click)="feed.clear()">Clear</button>
+    }
+  </header>
+
+  <ol class="list" tabindex="0" aria-label="Messages, newest first">
+    @for (m of feed.messages(); track m.id) {
+      <li class="entry" [style.--c]="m.sender.color">
+        <div class="avatar" aria-hidden="true">{{ m.sender.initials }}</div>
+        <div class="body">
+          <div class="meta">
+            <strong>{{ m.sender.name }}</strong>
+            <span class="to">→ everyone</span>
+            <time [attr.datetime]="m.receivedAt.toISOString()">{{ m.receivedAt | date: 'HH:mm:ss' }}</time>
+          </div>
+          <div class="bubble">{{ m.text }}</div>
+          <details>
+            <summary>Technical details</summary>
+            <pre>{{ { event: 'statusMessage', payload: m.payload } | json }}</pre>
+          </details>
+        </div>
+      </li>
+    } @empty {
+      <li class="empty">
+        <span aria-hidden="true">💬</span>
+        Nothing said yet. Press <em>Say hi</em> in any app, or send a message from the portal.
+      </li>
+    }
+  </ol>
+</section>

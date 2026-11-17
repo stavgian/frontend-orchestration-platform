@@ -1,76 +1,58 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
-import { EVENT_NAMES, Manifest, MfeDefinition, StatusMessagePayload } from '@frontend/shared-contract';
-import { subscribe } from '@frontend/shared-event-bus';
+import { Component, OnInit, inject } from '@angular/core';
+import { MfeDefinition } from './manifest';
 import { MfeHostComponent } from './mfe-host.component';
 import { MfeLoaderService } from './mfe-loader.service';
+import { Participant, participantForMfe } from './participants';
 
 @Component({
   selector: 'app-all-mfes',
   standalone: true,
-  imports: [CommonModule, MfeHostComponent],
+  imports: [MfeHostComponent],
   template: `
-    <div class="all-wrapper">
-      <div class="all-header">
-        <div class="title">Dashboards</div>
-        <div class="subtitle" *ngIf="manifestVersion">Manifest v{{ manifestVersion }}</div>
-        <div class="error" *ngIf="error">{{ error }}</div>
-        <div class="last-status" *ngIf="lastStatus">
-          Last heard: {{ lastStatus.text }} <span class="from">({{ lastStatus.source || 'unknown' }})</span>
-        </div>
-      </div>
-      <div class="all-grid">
-        <section *ngFor="let mfe of mfes" class="card">
+    @if (error) {
+      <div class="panel error">{{ error }}</div>
+    }
+    <div class="grid">
+      @for (item of items; track item.mfe.id) {
+        <section class="panel card" [style.--c]="item.who.color">
           <header>
-            <div class="name">{{ mfe.displayName }}</div>
-            <div class="meta">/{{ mfe.route || mfe.id }} · {{ mfe.customElement }}</div>
+            <div class="avatar" aria-hidden="true">{{ item.who.initials }}</div>
+            <div>
+              <h3>{{ item.who.name }}</h3>
+              <p>{{ item.who.tech }}</p>
+            </div>
           </header>
-          <app-mfe-host [definition]="mfe"></app-mfe-host>
+          <app-mfe-host [definition]="item.mfe" />
         </section>
-      </div>
+      }
     </div>
   `,
-  styles: [
-    `
-      .all-wrapper { display:flex; flex-direction:column; gap:16px; }
-      .all-header { display:flex; gap:12px; align-items:center; }
-      .title { font-size:20px; font-weight:700; }
-      .subtitle { color:#9fb1c9; font-size:12px; }
-      .last-status { color:#9fb1c9; font-size:12px; }
-      .last-status .from { color:#6bdcff; }
-      .error { color:#ff9cb3; font-size:12px; }
-      .all-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(340px,1fr)); gap:16px; }
-      .card { background: var(--panel, #0f1621); border:1px solid var(--border, rgba(255,255,255,0.08)); border-radius:12px; padding:12px; box-shadow: var(--shadow, 0 10px 40px rgba(0,0,0,0.35)); }
-      header { margin-bottom:8px; }
-      .name { font-weight:700; }
-      .meta { color:#9fb1c9; font-size:12px; }
-    `,
-  ],
+  styles: `
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+    .card { padding: 18px; border-top: 3px solid var(--c); }
+    header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .avatar {
+      flex: none; width: 36px; height: 36px; border-radius: 50%;
+      display: grid; place-items: center; background: var(--c);
+      font: 700 12px var(--font-display); color: #0a0f16;
+    }
+    h3 { margin: 0; font: 600 16px/1.2 var(--font-display); }
+    p { margin: 2px 0 0; color: var(--subtle); font-size: 13px; }
+    .error { padding: 16px; margin-bottom: 16px; color: var(--danger); }
+  `,
 })
 export class AllMfesComponent implements OnInit {
-  mfes: MfeDefinition[] = [];
-  manifestVersion?: Manifest['version'];
-  error?: string;
-  lastStatus?: StatusMessagePayload;
-  private unsubscribeStatus?: () => void;
+  private readonly loader = inject(MfeLoaderService);
 
-  constructor(private readonly loader: MfeLoaderService) {}
+  items: { mfe: MfeDefinition; who: Participant }[] = [];
+  error?: string;
 
   async ngOnInit(): Promise<void> {
     try {
       const manifest = await this.loader.getManifest();
-      this.mfes = manifest.mfes;
-      this.manifestVersion = manifest.version;
+      this.items = manifest.mfes.map((mfe) => ({ mfe, who: participantForMfe(mfe) }));
     } catch (err) {
       this.error = (err as Error)?.message ?? 'Unable to load manifest';
     }
-
-    this.unsubscribeStatus = subscribe(EVENT_NAMES.statusMessage, (msg) => {
-      this.lastStatus = msg;
-    });
-  }
-
-  ngOnDestroy(): void {
-    this.unsubscribeStatus?.();
   }
 }

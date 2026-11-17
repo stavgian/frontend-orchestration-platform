@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Manifest, MfeDefinition } from '@frontend/shared-contract';
+import { Manifest, MfeDefinition } from './manifest';
 import { manifestUrl } from './manifest-url';
 
 @Injectable({ providedIn: 'root' })
