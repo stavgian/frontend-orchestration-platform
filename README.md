@@ -259,30 +259,6 @@ PAGES_BASE_PATH=/ npm run build:github-pages
 
 The workflow in `.github/workflows/deploy-pages.yml` publishes `dist/github-pages` to GitHub Pages on pushes to `main`.
 
-## Deploying to Cloudflare (not active yet)
-
-GitHub Pages is the live deployment. Cloudflare is prepared for later and is not connected right now.
-
-The same static build also runs on Cloudflare, served from the site root. [`wrangler.jsonc`](wrangler.jsonc) tells Cloudflare where the built files are and sends unknown paths (deep links like `/mfe/react-mfe`) to the shell portal.
-
-In the Cloudflare dashboard, go to **Workers & Pages → Create → Import a repository**, pick this repo, and set:
-
-| Setting | Value |
-| --- | --- |
-| Build command | `npm run build:cloudflare` |
-| Deploy command | `npx wrangler deploy` (the default) |
-| Worker name | `frontend-orchestration-platform` (must match `name` in `wrangler.jsonc`) |
-
-`build:cloudflare` builds with `PAGES_BASE_PATH=/`. The GitHub Pages build instead uses `/<repository-name>/`, which would break every asset URL on Cloudflare.
-
-To check a build locally the way Cloudflare serves it:
-
-```bash
-npm run build:cloudflare
-npx wrangler deploy --dry-run   # validates the config and files, uploads nothing
-npx wrangler dev                # serves it locally
-```
-
 ## Design principles
 
 - No compile-time coupling between the shell portal and the MFEs
