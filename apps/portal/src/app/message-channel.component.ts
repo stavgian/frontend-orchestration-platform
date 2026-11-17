@@ -1,7 +1,7 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { MfeDefinition } from './manifest';
-import { MessageFeedService } from './message-feed.service';
+import { FeedMessage, MessageFeedService } from './message-feed.service';
 import { PORTAL_ID, participantFor, participantForMfe } from './participants';
 
 const PORTAL_LINES = [
@@ -25,6 +25,8 @@ export class MessageChannelComponent {
   readonly mfes = input<MfeDefinition[]>([]);
   readonly msg = this.feed.latest;
   readonly connectedIds = this.feed.connectedIds;
+  readonly pings = this.feed.pings;
+  readonly pinging = signal(false);
   readonly portalId = PORTAL_ID;
   readonly nodes = computed(() => [
     participantFor(PORTAL_ID),
@@ -40,7 +42,27 @@ export class MessageChannelComponent {
     return index < 0 ? 50 : ((index + 0.5) / nodes.length) * 100;
   });
 
-  send(): void {
-    this.feed.sendFromPortal(PORTAL_LINES[this.sentCount++ % PORTAL_LINES.length]);
+  announce(): void {
+    this.feed.announce(PORTAL_LINES[this.sentCount++ % PORTAL_LINES.length]);
+  }
+
+  async ping(): Promise<void> {
+    this.pinging.set(true);
+    await this.feed.pingAll();
+    this.pinging.set(false);
+  }
+
+  /** Whether a node receives the latest message: its target if addressed, otherwise every connected app. */
+  receives(m: FeedMessage | undefined, nodeId: string, online: boolean): boolean {
+    if (!m || m.sender.id === nodeId || !online) return false;
+    return m.target ? m.target.id === nodeId : true;
+  }
+
+  senderLabel(m: FeedMessage): string {
+    return m.kind === 'request' ? 'Asked' : m.kind === 'reply' ? 'Answered' : 'Sent';
+  }
+
+  verb(m: FeedMessage): string {
+    return m.kind === 'request' ? 'asked' : m.kind === 'reply' ? 'answered' : 'sent';
   }
 }

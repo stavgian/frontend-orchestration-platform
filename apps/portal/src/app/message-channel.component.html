@@ -2,9 +2,14 @@
   <div class="head">
     <div>
       <h2 id="channel-title">Live message channel</h2>
-      <p>Everyone shares one channel. When someone speaks, everyone else hears it.</p>
+      <p>Everything the apps say travels here. Watch who sends, who's asked, and who answers.</p>
     </div>
-    <button type="button" class="btn-primary" (click)="send()">Send a message from the portal</button>
+    <div class="actions">
+      <button type="button" class="btn-ghost" (click)="ping()" [disabled]="pinging()">
+        {{ pinging() ? 'Pinging…' : 'Ping all apps' }}
+      </button>
+      <button type="button" class="btn-primary" (click)="announce()">Send announcement</button>
+    </div>
   </div>
 
   <!-- Alternating between two identical branches re-creates the diagram on every message, so its CSS animations replay. -->
@@ -16,14 +21,19 @@
 
   <p class="caption" aria-live="polite">
     @if (msg(); as m) {
-      <strong [style.color]="m.sender.color">{{ m.sender.name }}</strong> sent
-      <code>{{ m.type }}</code>
-      @if (m.text) {
-        <q>{{ m.text }}</q>
+      <strong [style.color]="m.sender.color">{{ m.sender.name }}</strong>
+      {{ verb(m) }}
+      <code>{{ m.kind === 'reply' ? (m.requestType ?? 'request') : m.type }}</code>
+      @if (m.summary) {
+        <q>{{ m.summary }}</q>
       }
-      to everyone
+      @if (m.target) {
+        to <strong [style.color]="m.target.color">{{ m.target.name }}</strong>
+      } @else {
+        to everyone
+      }
     } @else {
-      Waiting for the first message — press <em>Say hi</em> in any app below.
+      Waiting for the first message. Add a product in the catalog below.
     }
   </p>
 </section>
@@ -34,7 +44,8 @@
       @for (node of nodes(); track node.id) {
         @let online = node.id === portalId || connectedIds().has(node.id);
         @let sending = msg()?.sender?.id === node.id;
-        @let receiving = !!msg() && !sending && online;
+        @let receiving = receives(msg(), node.id, online);
+        @let ping = pings().get(node.id);
         <div
           class="node"
           [class.offline]="!online"
@@ -46,8 +57,13 @@
           <div class="name">
             <span class="live" aria-hidden="true"></span>{{ node.name }}
           </div>
-          <div class="tech">{{ online ? 'Connected · ' + node.tech : 'Not connected' }}</div>
-          <span class="status" aria-hidden="true">{{ sending ? 'Sent' : 'Heard it' }}</span>
+          <div class="tech">
+            {{ online ? node.tech : 'Not connected' }}
+            @if (ping !== undefined) {
+              <span class="ping" [class.failed]="ping === 'timeout'">{{ ping === 'timeout' ? 'no answer' : ping + ' ms' }}</span>
+            }
+          </div>
+          <span class="status" aria-hidden="true">{{ sending ? senderLabel(msg()!) : msg()?.target ? 'Received' : 'Heard it' }}</span>
           <div class="stub"></div>
         </div>
       }

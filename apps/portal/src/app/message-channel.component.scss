@@ -8,6 +8,12 @@
 }
 h2 { margin: 0 0 4px; font: 600 18px/1.2 var(--font-display); }
 p { margin: 0; color: var(--subtle); font-size: 14px; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.ping {
+  margin-left: 4px; padding: 0 6px; border-radius: 99px; font: 11px var(--font-mono);
+  color: #4ade80; background: rgba(74, 222, 128, 0.12);
+  &.failed { color: var(--danger); background: rgba(255, 143, 168, 0.12); }
+}
 
 .diagram { margin-top: 26px; }
 .nodes { display: grid; grid-template-columns: repeat(var(--n), 1fr); }

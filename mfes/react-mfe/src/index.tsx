@@ -1,106 +1,109 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 
 // The only thing this app shares with the others: the published message library.
-import { Connection, PeerInfo, connect } from '@stavgian/mfe-communication';
+import { Connection, connect } from '@stavgian/mfe-communication';
 
-// The messages this app sends. Other apps declare their own; nothing is shared but the names.
+// The messages this app understands. Other apps declare their own; nothing is shared but the names.
+type Item = { sku: string; name: string; price: number };
+type Summary = { count: number; total: number };
+
 declare module '@stavgian/mfe-communication' {
   interface MessageMap {
-    'chat:hello': { text: string };
+    'cart:item-added': Item;
+    'cart:cleared': Record<string, never>;
+    'order:placed': Summary;
+  }
+  interface RequestMap {
+    'cart:get-summary': { request: void; response: Summary };
   }
 }
 
-type Heard = { text: string; from: string; type: string };
+type Line = Item & { qty: number };
+
+const summarize = (lines: Line[]): Summary => ({
+  count: lines.reduce((n, l) => n + l.qty, 0),
+  total: lines.reduce((sum, l) => sum + l.qty * l.price, 0),
+});
 
 const App: React.FC = () => {
   const [bus, setBus] = useState<Connection | null>(null);
-  const [lastHeard, setLastHeard] = useState<Heard | null>(null);
-  const [peers, setPeers] = useState<PeerInfo[]>([]);
+  const [lines, setLines] = useState<Line[]>([]);
+  const [note, setNote] = useState<string | null>(null);
+  // The responder reads the latest cart without re-registering on every change.
+  const linesRef = useRef(lines);
+  linesRef.current = lines;
 
-  // Connect on mount; disconnect() on unmount announces we left and removes every subscription.
   useEffect(() => {
-    const connection = connect({ id: 'react-mfe', name: 'React app', version: '1.0.0' });
-    connection.subscribe('*', (msg) => {
-      const text = (msg.payload as { text?: unknown } | undefined)?.text;
-      if (typeof text === 'string') setLastHeard({ text, from: msg.source, type: msg.type });
+    const connection = connect({ id: 'react-mfe', name: 'Shopping cart', version: '1.0.0' });
+
+    connection.subscribe('cart:item-added', ({ payload: item }) => {
+      setNote(null);
+      setLines((current) => {
+        const existing = current.find((l) => l.sku === item.sku);
+        return existing
+          ? current.map((l) => (l === existing ? { ...l, qty: l.qty + 1 } : l))
+          : [...current, { ...item, qty: 1 }];
+      });
     });
-    connection.onPeersChange(setPeers);
+    connection.subscribe('order:placed', ({ payload }) => {
+      setLines([]);
+      setNote(`Order placed: ${payload.count} items, €${payload.total}. Cart emptied.`);
+    });
+    connection.subscribe('portal:announcement', (msg) => setNote(`📣 ${(msg.payload as { text: string }).text}`));
+
+    // Answer questions from other apps, e.g. the checkout asking for the total.
+    connection.respond('cart:get-summary', () => summarize(linesRef.current));
+
     setBus(connection);
     return () => connection.disconnect();
   }, []);
 
-  const handleHi = () => {
-    bus?.publish('chat:hello', { text: 'Hi from React MFE — saying hello to everyone!' });
+  const clear = () => {
+    setLines([]);
+    bus?.publish('cart:cleared', {});
   };
 
+  const { count, total } = summarize(lines);
+
   return (
-    <div style={styles.card}>
-      <p style={styles.title}>React MFE</p>
-      <p style={styles.subtitle}>Says hi and listens to every message.</p>
-
-      <button style={styles.secondaryButton} onClick={handleHi}>
-        Say hi to everyone
-      </button>
-
-      {lastHeard && (
-        <div style={styles.lastBox}>
-          <div style={styles.lastTitle}>Last heard</div>
-          <div>{lastHeard.text}</div>
-          <div style={{ color: '#9fb1c9', fontSize: 12 }}>
-            from {lastHeard.from} · {lastHeard.type}
-          </div>
-        </div>
+    <div style={styles.root}>
+      {lines.length === 0 ? (
+        <p style={styles.empty}>Your cart is empty. Add something from the catalog.</p>
+      ) : (
+        <ul style={styles.list}>
+          {lines.map((l) => (
+            <li key={l.sku} style={styles.line}>
+              <span style={styles.qty}>{l.qty}×</span>
+              <span style={{ flex: 1 }}>{l.name}</span>
+              <span style={styles.muted}>€{l.qty * l.price}</span>
+            </li>
+          ))}
+        </ul>
       )}
-      <div style={styles.lastBox}>Connected with: {peers.map((p) => p.id).join(', ') || 'nobody yet'}</div>
+      <div style={styles.footer}>
+        <span>
+          <strong>{count}</strong> items · <strong>€{total}</strong>
+        </span>
+        <button style={styles.button} onClick={clear} disabled={!lines.length}>
+          Clear cart
+        </button>
+      </div>
+      {note && <p style={styles.note}>{note}</p>}
     </div>
   );
 };
 
-const styles: Record<string, any> = {
-  card: {
-    fontFamily: 'Inter, system-ui, sans-serif',
-    color: '#f6f8fb',
-    background: 'linear-gradient(180deg, #101827, #0b1220)',
-    border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: 12,
-    padding: 16,
-    boxShadow: '0 12px 30px rgba(0,0,0,0.25)',
-    width: '100%',
-    boxSizing: 'border-box',
-  },
-  title: { margin: '0 0 6px', fontSize: 16, fontWeight: 700 },
-  subtitle: { margin: '0 0 14px', color: '#9fb1c9', fontSize: 13 },
-  button: {
-    marginTop: 4,
-    padding: '10px 14px',
-    borderRadius: 10,
-    border: 'none',
-    fontWeight: 700,
-    color: '#0b1220',
-    cursor: 'pointer',
-    background: 'linear-gradient(90deg, #6bdcff, #9b8cff)',
-  },
-  lastBox: {
-    marginTop: 14,
-    padding: 10,
-    borderRadius: 10,
-    background: 'transparent',
-    color: '#9fb1c9',
-    fontSize: 12,
-  },
-  lastTitle: { fontWeight: 700, marginBottom: 4 },
-  secondaryButton: {
-    marginTop: 12,
-    padding: '10px 14px',
-    borderRadius: 10,
-    border: '1px solid rgba(255,255,255,0.08)',
-    background: 'linear-gradient(90deg, #6bdcff, #9b8cff)',
-    color: '#0b1220',
-    fontWeight: 700,
-    cursor: 'pointer',
-    boxShadow: '0 6px 24px rgba(107, 220, 255, 0.12)',
-  },
+const styles: Record<string, React.CSSProperties> = {
+  root: { font: '14px/1.45 Inter, system-ui, sans-serif', color: '#e9eef5' },
+  empty: { margin: 0, padding: '18px 12px', textAlign: 'center', color: '#94a3b6', fontSize: 13, borderRadius: 12, border: '1px dashed rgba(255,255,255,0.14)' },
+  list: { listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 6 },
+  line: { display: 'flex', gap: 10, padding: '8px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.04)' },
+  qty: { color: '#61dafb', fontWeight: 700, minWidth: 24 },
+  muted: { color: '#94a3b6', fontVariantNumeric: 'tabular-nums' },
+  footer: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 },
+  button: { font: 'inherit', fontSize: 13, fontWeight: 600, padding: '6px 12px', borderRadius: 999, cursor: 'pointer', color: '#e9eef5', background: 'transparent', border: '1px solid rgba(255,255,255,0.18)' },
+  note: { margin: '12px 0 0', fontSize: 13, color: '#94a3b6' },
 };
 
 class ReactMfeElement extends HTMLElement {

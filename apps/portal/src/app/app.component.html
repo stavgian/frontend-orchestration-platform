@@ -1,38 +1,73 @@
-<div class="page">
-  <header class="hero">
-    <span class="eyebrow">Live demo · Frontend orchestration</span>
-    <h1>One page, built from <span class="hl">independent apps</span></h1>
-    <p class="lede">
-      Each box below is a separate app, built with a different technology and deployed on its own.
-      The portal finds them at runtime, puts them on the page, and lets them talk through one shared
-      message channel.
-    </p>
-    <ol class="steps">
-      <li><span>1</span><div><strong>Discover</strong> The portal reads a list of available apps.</div></li>
-      <li><span>2</span><div><strong>Load</strong> Each app is fetched and placed on the page.</div></li>
-      <li><span>3</span><div><strong>Talk</strong> Apps broadcast messages; everyone listening hears them.</div></li>
-    </ol>
-  </header>
+<div class="shell" [class.log-open]="logOpen()">
+  <div class="main">
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo" aria-hidden="true"></span>
+        Frontend Orchestration
+      </div>
+      <div class="topbar-actions">
+        @if (mfes.length) {
+          <span class="online" title="Apps connected to the message channel">
+            <span class="live" aria-hidden="true"></span>
+            {{ feed.connectedCount() }} of {{ mfes.length }} apps connected
+          </span>
+        }
+        <button
+          type="button"
+          class="btn-ghost log-toggle"
+          [class.active]="logOpen()"
+          [attr.aria-expanded]="logOpen()"
+          aria-controls="message-log"
+          (click)="toggleLog()"
+        >
+          Message log
+          @if (unread()) {
+            <span class="badge" [attr.aria-label]="unread() + ' new'">{{ unread() }}</span>
+          }
+        </button>
+      </div>
+    </header>
 
-  @if (loadingManifest) {
-    <div class="panel notice">Finding available apps…</div>
-  } @else if (manifestError) {
-    <div class="panel notice error">
-      Couldn't load the list of apps.
-      <small>{{ manifestError }}</small>
-    </div>
-  } @else {
-    <app-message-channel class="panel" [mfes]="mfes" />
+    <div class="page">
+      <section class="hero">
+        <h1>One page, built from <span class="hl">independent apps</span></h1>
+        <p class="lede">
+          A catalog, a cart and a checkout, each built with a different technology and deployed on its own.
+          The portal loads them at runtime; they work together only by talking over one shared message channel.
+        </p>
+        <ol class="steps">
+          <li><strong>Events</strong> “Something happened”: the catalog announces a product was added.</li>
+          <li><strong>Requests</strong> “I need an answer”: checkout asks the cart for its total.</li>
+          <li><strong>Presence</strong> “Who's here?”: every app knows who is connected.</li>
+        </ol>
+      </section>
 
-    <div class="layout">
-      <main class="apps">
+      @if (loadingManifest) {
+        <div class="panel notice">Finding available apps…</div>
+      } @else if (manifestError) {
+        <div class="panel notice error">
+          Couldn't load the list of apps.
+          <small>{{ manifestError }}</small>
+        </div>
+      } @else {
+        <app-message-channel class="panel" [mfes]="mfes" />
         <router-outlet />
-      </main>
-      <aside class="panel side">
-        <app-message-log />
-      </aside>
+      }
     </div>
-  }
+  </div>
+
+  <aside
+    id="message-log"
+    class="log-panel"
+    [class.open]="logOpen()"
+    [attr.inert]="logOpen() ? null : ''"
+    aria-label="Message log"
+  >
+    <app-message-log (closed)="toggleLog(false)" />
+  </aside>
+  <div class="backdrop" (click)="toggleLog(false)" aria-hidden="true"></div>
 </div>
 
-<app-toast-stack />
+@if (!logOpen()) {
+  <app-toast-stack />
+}

@@ -1,48 +1,68 @@
-:host { display: block; min-height: 100vh; }
+:host { display: block; }
+
+/* Main content beside a log column that animates between 0 and its full width. */
+.shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 0;
+  min-height: 100dvh;
+  transition: grid-template-columns 220ms ease;
+  &.log-open { grid-template-columns: minmax(0, 1fr) var(--log-width); }
+  --log-width: 440px;
+}
+
+.main { min-width: 0; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 28px;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+.brand { display: flex; align-items: center; gap: 10px; font: 600 15px var(--font-display); }
+.logo {
+  width: 18px; height: 18px; border-radius: 5px; rotate: 45deg;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+}
+.topbar-actions { display: flex; align-items: center; gap: 12px; }
+.online { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--subtle); }
+.live { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 6px #4ade80; }
+.log-toggle {
+  display: flex; align-items: center; gap: 6px;
+  &.active { color: var(--text); background: var(--panel-raised); }
+}
+.badge {
+  min-width: 18px; padding: 0 5px; border-radius: 99px; font-size: 11px; line-height: 18px;
+  text-align: center; color: #0a0f16; background: var(--accent);
+}
 
 .page {
-  max-width: 1400px; margin: 0 auto;
-  padding: 40px 28px 56px;
+  max-width: 1280px; margin: 0 auto; padding: 28px 28px 56px;
   display: flex; flex-direction: column; gap: 20px;
 }
 
-.hero { padding: 8px 4px 12px; }
-.eyebrow {
-  display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--accent);
-}
-h1 {
-  margin: 10px 0 12px; max-width: 18ch;
-  font: 600 clamp(30px, 5vw, 48px)/1.08 var(--font-display); letter-spacing: -0.02em;
-}
+.hero { padding: 4px 2px; }
+h1 { margin: 0 0 8px; font: 600 clamp(26px, 3.6vw, 38px)/1.1 var(--font-display); letter-spacing: -0.02em; }
 .hl {
   background: linear-gradient(90deg, var(--accent), var(--accent-2));
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
-.lede { margin: 0; max-width: 62ch; color: var(--subtle); font-size: 16px; line-height: 1.6; }
-
+.lede { margin: 0; max-width: 70ch; color: var(--subtle); font-size: 15px; line-height: 1.6; }
 .steps {
-  list-style: none; margin: 22px 0 0; padding: 0;
+  list-style: none; margin: 16px 0 0; padding: 0;
   display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;
-  li { display: flex; gap: 12px; align-items: flex-start; font-size: 14px; color: var(--subtle); line-height: 1.45; }
-  span {
-    flex: none; width: 26px; height: 26px; border-radius: 50%;
-    display: grid; place-items: center; font-weight: 700; font-size: 13px;
-    color: var(--text); border: 1px solid var(--border-strong);
-  }
-  strong { display: block; color: var(--text); }
+  li { font-size: 13px; color: var(--subtle); line-height: 1.45; padding-left: 12px; border-left: 2px solid var(--border-strong); }
+  strong { display: block; color: var(--text); font-size: 14px; }
 }
 
-.layout {
-  display: grid; grid-template-columns: minmax(0, 1fr) 380px;
-  gap: 20px; align-items: start;
+/* Full-height log with its own scrolling. */
+.log-panel {
+  position: sticky; top: 0; height: 100dvh; overflow: hidden;
+  background: var(--panel); border-left: 1px solid var(--border);
+  > * { width: var(--log-width); }
 }
-
-.side {
-  position: sticky; top: 20px;
-  height: calc(100vh - 40px); max-height: 760px; min-height: 420px;
-  overflow: hidden;
-}
+.backdrop { display: none; }
 
 .notice {
   padding: 28px; text-align: center; color: var(--subtle);
@@ -50,12 +70,26 @@ h1 {
   small { display: block; margin-top: 6px; color: var(--subtle); }
 }
 
-@media (max-width: 1100px) {
-  .layout { grid-template-columns: 1fr; }
-  .side { position: static; height: 460px; }
+/* Narrow screens: the log slides over the page instead of beside it. */
+@media (max-width: 999px) {
+  .shell, .shell.log-open { grid-template-columns: minmax(0, 1fr); }
+  .log-panel {
+    position: fixed; right: 0; top: 0; bottom: 0; z-index: 40; height: auto;
+    width: min(var(--log-width), 100vw); box-shadow: var(--shadow);
+    transform: translateX(100%); transition: transform 220ms ease;
+    &.open { transform: none; }
+    > * { width: 100%; }
+  }
+  .log-open .backdrop { display: block; position: fixed; inset: 0; z-index: 30; background: rgba(0, 0, 0, 0.5); }
 }
 
 @media (max-width: 700px) {
-  .page { padding: 24px 16px 40px; }
+  .topbar { padding: 10px 16px; }
+  .online { display: none; }
+  .page { padding: 20px 16px 40px; }
   .steps { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell, .log-panel { transition: none; }
 }

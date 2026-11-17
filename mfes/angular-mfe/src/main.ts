@@ -12,61 +12,78 @@ import {
 import { createApplication } from '@angular/platform-browser';
 import { createCustomElement } from '@angular/elements';
 // The only thing this app shares with the others: the published message library.
-import { Connection, Message, PeerInfo, connect } from '@stavgian/mfe-communication';
+import { Connection, connect } from '@stavgian/mfe-communication';
 
 // The messages this app sends. Other apps declare their own; nothing is shared but the names.
 declare module '@stavgian/mfe-communication' {
   interface MessageMap {
-    'chat:hello': { text: string };
+    'cart:item-added': { sku: string; name: string; price: number };
   }
 }
+
+const PRODUCTS = [
+  { sku: 'mug', name: 'Coffee mug', emoji: '☕', price: 12 },
+  { sku: 'tee', name: 'T-shirt', emoji: '👕', price: 25 },
+  { sku: 'cap', name: 'Cap', emoji: '🧢', price: 18 },
+];
 
 @Component({
   selector: 'angular-mfe-view',
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="card">
-      <p class="title">Angular MFE</p>
-      <p class="subtitle">Says hi and listens to every message.</p>
-
-      <button class="btn ghost" (click)="sayHi()">Say hi to everyone</button>
-      <div class="note" *ngIf="last">Last heard: {{ last.text }} ({{ last.from }} · {{ last.type }})</div>
-      <div class="note">Connected with: {{ peerNames || 'nobody yet' }}</div>
-    </div>
+    <p class="intro">Pick a product. The catalog announces it; whoever cares (the cart) reacts.</p>
+    <ul class="products">
+      <li *ngFor="let p of products">
+        <span class="emoji" aria-hidden="true">{{ p.emoji }}</span>
+        <span class="name">{{ p.name }}</span>
+        <span class="price">€{{ p.price }}</span>
+        <button type="button" (click)="add(p)" [class.done]="justAdded === p.sku">
+          {{ justAdded === p.sku ? 'Added ✓' : 'Add to cart' }}
+        </button>
+      </li>
+    </ul>
+    <p class="note" *ngIf="announcement">📣 {{ announcement }}</p>
   `,
   styles: [
-    `:host { display:block; font-family: 'Inter', system-ui, sans-serif; color:#f6f8fb; }
-     .card { background: linear-gradient(180deg, #101827, #0b1220); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:16px; box-shadow:0 12px 30px rgba(0,0,0,0.25); }
-     .title { margin:0 0 6px; font-weight:700; font-size:16px; }
-     .subtitle { margin:0 0 12px; color:#9fb1c9; font-size:13px; }
-     .btn { margin-top:12px; padding:10px 14px; border:none; border-radius:10px; font-weight:700; color:#0b1220; background:linear-gradient(90deg, #6bdcff, #9b8cff); cursor:pointer; }
-     .note { margin-top:10px; color:#9fb1c9; font-size:12px; }
+    `:host { display:block; font: 14px/1.45 Inter, system-ui, sans-serif; color:#e9eef5; }
+     .intro { margin:0 0 12px; color:#94a3b6; font-size:13px; }
+     .products { list-style:none; margin:0; padding:0; display:grid; gap:8px; }
+     li { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,0.04); }
+     .emoji { font-size:20px; }
+     .name { flex:1; font-weight:600; }
+     .price { color:#94a3b6; font-variant-numeric:tabular-nums; }
+     button { font:inherit; font-size:13px; font-weight:600; padding:6px 12px; border-radius:999px; cursor:pointer; border:0; color:#0a0f16; background:#ff6b8b; min-width:104px; transition:background 150ms; }
+     button:hover { background:#ff8aa3; }
+     button.done { background:#4ade80; }
+     .note { margin:12px 0 0; font-size:13px; color:#94a3b6; }
     `,
   ],
 })
 class AngularMfeComponent implements OnInit, OnDestroy {
   private bus?: Connection;
-  last?: { text: string; from: string; type: string };
-  peerNames = '';
+  private timer?: ReturnType<typeof setTimeout>;
+  readonly products = PRODUCTS;
+  justAdded?: string;
+  announcement?: string;
 
   ngOnInit(): void {
-    this.bus = connect({ id: 'angular-mfe', name: 'Angular app', version: '1.0.0' });
-    this.bus.subscribe('*', (msg: Message) => {
-      const text = (msg.payload as { text?: unknown } | undefined)?.text;
-      if (typeof text === 'string') this.last = { text, from: msg.source, type: msg.type };
-    });
-    this.bus.onPeersChange((peers: PeerInfo[]) => {
-      this.peerNames = peers.map((p) => p.id).join(', ');
+    this.bus = connect({ id: 'angular-mfe', name: 'Product catalog', version: '1.0.0' });
+    this.bus.subscribe('portal:announcement', (msg) => {
+      this.announcement = (msg.payload as { text: string }).text;
     });
   }
 
   ngOnDestroy(): void {
+    clearTimeout(this.timer);
     this.bus?.disconnect();
   }
 
-  sayHi() {
-    this.bus?.publish('chat:hello', { text: 'Hi from Angular MFE — waving at everyone!' });
+  add(product: (typeof PRODUCTS)[number]) {
+    this.bus?.publish('cart:item-added', { sku: product.sku, name: product.name, price: product.price });
+    this.justAdded = product.sku;
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => (this.justAdded = undefined), 1200);
   }
 }
 

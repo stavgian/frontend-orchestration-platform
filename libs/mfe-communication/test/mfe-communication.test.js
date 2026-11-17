@@ -2,7 +2,7 @@ import { test, beforeEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 
 // Tests run against the built package, exactly as consumers receive it.
-const { connect, DOM_EVENT, SPEC_VERSION } = await import('../dist/index.js');
+const { connect, DOM_EVENT, SPEC_VERSION, RequestError } = await import('../dist/index.js');
 
 beforeEach(() => {
   globalThis.window = new EventTarget();
@@ -143,6 +143,78 @@ test('a throwing handler does not stop the others', () => {
   assert.equal(reached, true);
   assert.equal(error.mock.callCount(), 1);
   error.mock.restore();
+});
+
+test('request resolves with the responder answer', async () => {
+  const cart = connect({ id: 'cart' });
+  const checkout = connect({ id: 'checkout' });
+  cart.respond('cart:get-summary', async () => ({ count: 2, total: 30 }));
+
+  assert.deepEqual(await checkout.request('cart:get-summary', undefined), { count: 2, total: 30 });
+});
+
+test('requests with `to` are answered only by that app', async () => {
+  const a = connect({ id: 'a' });
+  const b = connect({ id: 'b' });
+  const asker = connect({ id: 'asker' });
+  a.respond('who:are-you', () => 'a');
+  b.respond('who:are-you', () => 'b');
+
+  assert.equal(await asker.request('who:are-you', undefined, { to: 'b' }), 'b');
+});
+
+test('a throwing responder rejects the request with its message', async () => {
+  const cart = connect({ id: 'cart' });
+  const checkout = connect({ id: 'checkout' });
+  cart.respond('cart:get-summary', () => {
+    throw new Error('cart is locked');
+  });
+
+  await assert.rejects(checkout.request('cart:get-summary', undefined), (err) => {
+    assert.ok(err instanceof RequestError);
+    assert.equal(err.code, 'rejected');
+    assert.equal(err.message, 'cart is locked');
+    return true;
+  });
+});
+
+test('a request nobody answers times out', async () => {
+  const lonely = connect({ id: 'lonely' });
+  await assert.rejects(lonely.request('nobody:home', {}, { timeout: 20 }), (err) => err.code === 'timeout');
+});
+
+test('only the first answer counts', async () => {
+  const a = connect({ id: 'a' });
+  const b = connect({ id: 'b' });
+  const asker = connect({ id: 'asker' });
+  a.respond('pick:one', () => 'a');
+  b.respond('pick:one', () => 'b');
+
+  assert.equal(await asker.request('pick:one', undefined), 'a');
+});
+
+test('ping measures a round trip to a live peer', async () => {
+  connect({ id: 'cart' });
+  const portal = connect({ id: 'portal' });
+
+  const ms = await portal.ping('cart');
+  assert.equal(typeof ms, 'number');
+  assert.ok(ms >= 0);
+  await assert.rejects(portal.ping('gone', { timeout: 20 }), (err) => err.code === 'timeout');
+});
+
+test('disconnect rejects pending requests', async () => {
+  const asker = connect({ id: 'asker' });
+  const pending = asker.request('slow:thing', {}, { timeout: 1000 });
+  asker.disconnect();
+  await assert.rejects(pending, (err) => err.code === 'disconnected');
+});
+
+test('one responder per type per connection, and system types are reserved', () => {
+  const a = connect({ id: 'a' });
+  a.respond('cart:get-summary', () => ({}));
+  assert.throws(() => a.respond('cart:get-summary', () => ({})), /already responds/);
+  assert.throws(() => a.respond('system:ping', () => ({})), /reserved/);
 });
 
 test('connect requires an id', () => {

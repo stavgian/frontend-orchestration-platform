@@ -1,44 +1,66 @@
 <section class="log" aria-labelledby="log-title">
   <header>
-    <div>
-      <h2 id="log-title">Conversation</h2>
-      <p>{{ feed.messages().length }} {{ feed.messages().length === 1 ? 'event' : 'events' }}</p>
+    <div class="title-row">
+      <h2 id="log-title">Message log</h2>
+      <span class="count">{{ feed.messages().length }}</span>
+      <span class="spacer"></span>
+      @if (feed.messages().length) {
+        <button type="button" class="btn-ghost" (click)="feed.clear()">Clear</button>
+      }
+      <button type="button" class="close" (click)="closed.emit()" aria-label="Close message log">×</button>
     </div>
-    @if (feed.messages().length) {
-      <button type="button" class="btn-ghost" (click)="feed.clear()">Clear</button>
-    }
+    <div class="filters" role="group" aria-label="Show">
+      @for (f of filters; track f.id) {
+        <button type="button" [class.active]="filter() === f.id" [attr.aria-pressed]="filter() === f.id" (click)="filter.set(f.id)">
+          {{ f.label }}
+        </button>
+      }
+    </div>
   </header>
 
-  <ol class="list" tabindex="0" aria-label="Messages, newest first">
-    @for (m of feed.messages(); track m.id) {
-      @if (m.kind === 'message') {
-        <li class="entry" [style.--c]="m.sender.color">
-          <div class="avatar" aria-hidden="true">{{ m.sender.initials }}</div>
-          <div class="body">
-            <div class="meta">
-              <strong>{{ m.sender.name }}</strong>
-              <span class="type">{{ m.type }}</span>
-              <time [attr.datetime]="m.receivedAt.toISOString()">{{ m.receivedAt | date: 'HH:mm:ss' }}</time>
+  <ol #list class="list" tabindex="0" aria-label="Messages, oldest first" aria-live="polite" (scroll)="onScroll()">
+    @for (m of visible(); track m.id) {
+      <li class="row" [class]="m.kind" [style.--c]="m.sender.color">
+        <details>
+          <summary>
+            <time [attr.datetime]="m.receivedAt.toISOString()">{{ m.receivedAt | date: 'HH:mm:ss' }}</time>
+            <div class="content">
+              <div class="line">
+                <span class="dot" aria-hidden="true"></span>
+                <strong>{{ m.sender.name }}</strong>
+                @switch (m.kind) {
+                  @case ('joined') { <span class="verb">connected</span> }
+                  @case ('left') { <span class="verb">disconnected</span> }
+                  @default {
+                    <span class="arrow" aria-hidden="true">→</span>
+                    <span class="target">{{ m.target?.name ?? 'everyone' }}</span>
+                  }
+                }
+              </div>
+              @if (m.kind !== 'joined' && m.kind !== 'left') {
+                <div class="line">
+                  @switch (m.kind) {
+                    @case ('event') { <span class="kind">event</span> <code>{{ m.type }}</code> }
+                    @case ('request') { <span class="kind">asks</span> <code>{{ m.type }}</code> }
+                    @case ('reply') {
+                      <span class="kind" [class.failed]="!m.ok">{{ m.ok ? 'answers' : 'fails' }}</span>
+                      <code>{{ m.requestType ?? 'request' }}</code>
+                      @if (m.latencyMs !== undefined) { <span class="ms">{{ m.latencyMs }} ms</span> }
+                    }
+                  }
+                </div>
+              }
+              @if (m.summary) {
+                <div class="summary">{{ m.summary }}</div>
+              }
             </div>
-            <div class="bubble">{{ m.text ?? 'Sent a ' + m.type + ' message' }}</div>
-            <details>
-              <summary>Technical details</summary>
-              <pre>{{ m.envelope | json }}</pre>
-            </details>
-          </div>
-        </li>
-      } @else {
-        <li class="presence" [class.left]="m.kind === 'left'" [style.--c]="m.sender.color">
-          <span class="dot" aria-hidden="true"></span>
-          <strong>{{ m.sender.name }}</strong>
-          {{ m.kind === 'joined' ? 'connected and is listening' : 'disconnected' }}
-          <time [attr.datetime]="m.receivedAt.toISOString()">{{ m.receivedAt | date: 'HH:mm:ss' }}</time>
-        </li>
-      }
+          </summary>
+          <pre>{{ m.envelope | json }}</pre>
+        </details>
+      </li>
     } @empty {
       <li class="empty">
-        <span aria-hidden="true">💬</span>
-        Nothing said yet. Press <em>Say hi</em> in any app, or send a message from the portal.
+        Nothing yet. Add a product in the catalog, or ask the cart for its total from checkout.
       </li>
     }
   </ol>

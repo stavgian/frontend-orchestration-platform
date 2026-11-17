@@ -27,10 +27,14 @@ Microfrontends are discovered via a JSON manifest, loaded dynamically by URL, mo
   - Independently buildable and servable, each with its own `package.json`
   - Expose a custom element as their public API
   - Communicate only through the published `@stavgian/mfe-communication` package
-  - Current MFEs: Angular (module federation), React (script), JS (script)
+  - Render only their own content; the portal draws the frame around each one
+  - Current MFEs, together forming a small shop:
+    - **Product catalog** (Angular, module federation)
+    - **Shopping cart** (React, script)
+    - **Checkout** (plain JS, script)
 
 - Shared library
-  - [`@stavgian/mfe-communication`](libs/mfe-communication) (published to npm): message names, payload types, and publish / subscribe over browser-native events. The only code the portal and the MFEs share.
+  - [`@stavgian/mfe-communication`](libs/mfe-communication) (published to npm): events, requests with answers, and presence over browser-native events. The only code the portal and the MFEs share.
   - The manifest format lives in the portal ([`manifest.ts`](apps/portal/src/app/manifest.ts)), because only the portal reads it.
 
 ## Runtime manifest
@@ -48,17 +52,27 @@ The portal uses this information to load and render MFEs without compile-time co
 
 Communication is based on browser-native `CustomEvent`s published on `window`, wrapped by the [`@stavgian/mfe-communication`](libs/mfe-communication) package.
 
-- Each app calls `connect({ id })`, which announces it on the channel (`system:ready`) and discovers apps already connected (`system:present`). `disconnect()` announces `system:left`.
-- Every message is an envelope `{ specversion, id, type, source, time, payload }`. Apps choose their own types (`chat:hello`, `portal:announcement`) and declare their payloads with TypeScript declaration merging. No shared types package is needed.
-- Subscriptions take an exact type, a namespace (`chat:*`) or everything (`*`).
-- The portal and every MFE depend on the package by version (`^1.0.0`), never on each other's code. Each connection keeps only its own state, so apps on different library versions still talk as long as they share the same `specversion`.
-- The portal shows it all live:
-  - which apps are connected
-  - a channel diagram
-  - a conversation log with connect/leave events
-  - toasts
+The demo shop uses all three patterns:
 
-  It can also send messages itself.
+| Pattern | In the demo |
+| --- | --- |
+| **Event**: "something happened" | The catalog publishes `cart:item-added`; the cart adds the item. Checkout publishes `order:placed`; the cart empties. |
+| **Request**: "I need an answer" | Checkout asks the cart directly: `request('cart:get-summary', …, { to: 'react-mfe' })`. The cart answers with `respond()`. Checkout keeps no copy of the cart. |
+| **Presence**: "who's here?" | Checkout only offers to ask while the cart is connected. The portal's "Ping all apps" checks every app and shows its response time. |
+
+How it works:
+- Each app calls `connect({ id })`, which announces it on the channel (`system:ready`) and discovers apps already connected (`system:present`). `disconnect()` announces `system:left`.
+- Every message is an envelope `{ specversion, id, type, source, time, payload }`. Apps choose their own types and declare the payloads they use with TypeScript declaration merging. No shared types package is needed.
+- Subscriptions take an exact type, a namespace (`cart:*`) or everything (`*`).
+- The portal and every MFE depend on the package by version (`^1.0.0`), never on each other's code. Each connection keeps only its own state, so apps on different library versions still talk as long as they share the same `specversion`.
+
+On one page, the portal shows everything live:
+- which apps are connected
+- a channel diagram showing who sent, who was asked, and who answered
+- a full-height message log sidebar you can toggle and filter
+- toasts while the log is closed
+
+It can also send announcements itself.
 
 See the [package README](libs/mfe-communication/README.md) for the full API.
 

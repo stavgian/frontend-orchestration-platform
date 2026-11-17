@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { MessageFeedService } from './message-feed.service';
 
 /** Short-lived pop-ups for each new message on the channel. */
@@ -7,12 +7,12 @@ import { MessageFeedService } from './message-feed.service';
   standalone: true,
   template: `
     <div class="stack" role="status" aria-live="polite">
-      @for (t of feed.toasts(); track t.id) {
+      @for (t of toasts(); track t.id) {
         <div class="toast" [style.--c]="t.sender.color">
           <div class="avatar" aria-hidden="true">{{ t.sender.initials }}</div>
           <div class="body">
             <div class="who">{{ t.sender.name }} says</div>
-            <div class="text">{{ t.text ?? 'Sent a ' + t.type + ' message' }}</div>
+            <div class="text">{{ t.summary || t.type }}</div>
           </div>
           <button type="button" class="close" (click)="feed.dismissToast(t.id)" aria-label="Dismiss">×</button>
         </div>
@@ -46,8 +46,6 @@ import { MessageFeedService } from './message-feed.service';
     }
     .close:hover { color: var(--text); }
     @keyframes slide { from { opacity: 0; transform: translateY(10px); } }
-    /* On wide screens the Conversation panel is always in view, so toasts would only duplicate it. */
-    @media (min-width: 1101px) { .stack { display: none; } }
     @media (max-width: 600px) {
       .stack { right: 16px; bottom: 16px; }
       .toast:nth-child(n + 2) { display: none; }
@@ -57,4 +55,7 @@ import { MessageFeedService } from './message-feed.service';
 })
 export class ToastStackComponent {
   readonly feed = inject(MessageFeedService);
+  /** Only messages that arrive while toasts are shown (i.e. after the log was closed). */
+  private readonly since = Date.now();
+  readonly toasts = computed(() => this.feed.toasts().filter((t) => t.receivedAt.getTime() >= this.since));
 }

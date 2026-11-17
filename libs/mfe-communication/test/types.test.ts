@@ -5,6 +5,9 @@ declare module '../src/index' {
   interface MessageMap {
     'cart:item-added': { sku: string; qty: number };
   }
+  interface RequestMap {
+    'cart:get-summary': { request: { currency: string }; response: { count: number; total: number } };
+  }
 }
 
 const bus = connect({ id: 'types-test' });
@@ -31,6 +34,21 @@ bus.subscribe('cart:*', (msg: Message) => {
   // @ts-expect-error payload is unknown until narrowed
   void msg.payload.sku;
 });
+
+// Declared requests: typed question and typed answer.
+async function requests() {
+  const summary = await bus.request('cart:get-summary', { currency: 'EUR' });
+  const total: number = summary.total;
+  void total;
+  // @ts-expect-error currency is missing
+  await bus.request('cart:get-summary', {});
+  bus.respond('cart:get-summary', (req) => ({ count: req.currency.length, total: 0 }));
+  // @ts-expect-error total is missing from the answer
+  bus.respond('cart:get-summary', () => ({ count: 1 }));
+  const ms: number = await bus.ping('someone');
+  void ms;
+}
+void requests;
 
 // Presence payloads are typed.
 bus.subscribe('system:ready', (msg) => {
