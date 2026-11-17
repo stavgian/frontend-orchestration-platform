@@ -1,5 +1,5 @@
 import { JsonPipe } from '@angular/common';
-import { Component, input } from '@angular/core';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import { Manifest, MfeDefinition } from './manifest';
 import { participantForMfe } from './participants';
 
@@ -12,47 +12,69 @@ import { participantForMfe } from './participants';
   standalone: true,
   imports: [JsonPipe],
   template: `
-    <details class="panel manifest">
-      <summary>
+    <section class="manifest">
+      <header>
         <span class="icon" aria-hidden="true">{{ '{ }' }}</span>
         <span class="titles">
           <strong>Manifest</strong>
           <span class="sub">
-            Read at startup from <code>{{ fileName() }}</code> (v{{ manifest().version }}). This file, not the code, tells the shell which apps exist.
+            Read at startup from <code>{{ fileName() }}</code> (v{{
+              manifest().version
+            }}). This file, not the code, tells the shell which apps exist.
           </span>
         </span>
-        <span class="chevron" aria-hidden="true">›</span>
-      </summary>
+      </header>
 
       <div class="body">
         <table>
           <thead>
-            <tr><th>App</th><th>Loaded as</th><th>From</th><th>Custom element</th></tr>
+            <tr>
+              <th>App</th>
+              <th>Loaded as</th>
+              <th>From</th>
+              <th>Custom element</th>
+            </tr>
           </thead>
           <tbody>
-            @for (mfe of manifest().mfes; track mfe.id) {
-              @let who = participant(mfe);
-              <tr [style.--c]="who.color">
-                <td><span class="dot" aria-hidden="true"></span>{{ who.name }}</td>
-                <td>{{ mfe.type === 'module-federation' ? 'Module Federation' : 'Script tag' }}</td>
-                <td><code class="url">{{ entryOf(mfe) }}</code></td>
-                <td><code>&lt;{{ mfe.customElement }}&gt;</code></td>
-              </tr>
+            @for (mfe of manifest().mfes; track mfe.id) { @let who =
+            participant(mfe);
+            <tr [style.--c]="who.color">
+              <td>
+                <span class="dot" aria-hidden="true"></span>{{ who.name }}
+              </td>
+              <td>
+                {{
+                  mfe.type === 'module-federation'
+                    ? 'Remote container'
+                    : 'Script tag'
+                }}
+              </td>
+              <td>
+                <code class="url">{{ entryOf(mfe) }}</code>
+              </td>
+              <td>
+                <code>&lt;{{ mfe.customElement }}&gt;</code>
+              </td>
+            </tr>
             }
           </tbody>
         </table>
         <details class="raw">
-          <summary>Raw JSON · <a [href]="url()" target="_blank" rel="noopener">open file</a></summary>
+          <summary>
+            Raw JSON ·
+            <a [href]="url()" target="_blank" rel="noopener">open file</a>
+          </summary>
           <pre>{{ manifest() | json }}</pre>
         </details>
       </div>
-    </details>
+    </section>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     .manifest { padding: 0; }
     summary { list-style: none; cursor: pointer; }
     summary::-webkit-details-marker { display: none; }
-    .manifest > summary { display: flex; align-items: center; gap: 12px; padding: 14px 20px; }
+    .manifest > header { display: flex; align-items: center; gap: 12px; padding: 14px 20px; }
     .icon {
       flex: none; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;
       font: 600 13px var(--font-mono); color: var(--accent);
@@ -61,10 +83,8 @@ import { participantForMfe } from './participants';
     .titles { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
     strong { font: 600 17px var(--font-sans); letter-spacing: -0.01em; }
     .sub { color: var(--subtle); font-size: 13px; }
-    .chevron { color: var(--subtle); font-size: 20px; transition: rotate 150ms; }
-    .manifest[open] > summary .chevron { rotate: 90deg; }
     code { font: 12px var(--font-mono); color: var(--text); }
-    .body { padding: 0 20px 16px; overflow-x: auto; }
+    .body { padding: 0 20px 20px; overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th { text-align: left; font-weight: 500; color: var(--subtle); padding: 6px 10px 6px 0; border-bottom: 1px solid var(--border); }
     td { padding: 8px 10px 8px 0; border-bottom: 1px solid var(--border); white-space: nowrap; }

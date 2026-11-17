@@ -33,7 +33,6 @@ const App: React.FC = () => {
   const [bus, setBus] = useState<Connection | null>(null);
   const [lines, setLines] = useState<Line[]>([]);
   const [note, setNote] = useState<string | null>(null);
-  const [announcement, setAnnouncement] = useState<{ text: string; direct: boolean } | null>(null);
   // The responder reads the latest cart without re-registering on every change.
   const linesRef = useRef(lines);
   linesRef.current = lines;
@@ -59,19 +58,12 @@ const App: React.FC = () => {
       setLines([]);
       setNote(`Order placed: ${payload.count} ${payload.count === 1 ? 'item' : 'items'}, €${payload.total}. Cart emptied.`);
     });
-    let announceTimer: ReturnType<typeof setTimeout> | undefined;
-    connection.subscribe('portal:announcement', (msg) => {
-      setAnnouncement({ text: (msg.payload as { text: string }).text, direct: msg.to === 'react-mfe' });
-      clearTimeout(announceTimer);
-      announceTimer = setTimeout(() => setAnnouncement(null), 6000);
-    });
 
     // Answer questions from other apps, e.g. the checkout asking for the total.
     connection.respond('cart:get-summary', () => summarize(linesRef.current));
 
     setBus(connection);
     return () => {
-      clearTimeout(announceTimer);
       connection.disconnect();
     };
   }, []);
@@ -97,13 +89,6 @@ const App: React.FC = () => {
 
   return (
     <div style={styles.root}>
-      <style>{'@keyframes announce-in { from { opacity: 0; transform: translateY(-4px); } }'}</style>
-      {announcement && (
-        <div style={styles.announce} role="status">
-          <span style={styles.from}>From the shell portal{announcement.direct ? ' · only to you' : ''}</span>
-          {announcement.text}
-        </div>
-      )}
       {lines.length === 0 ? (
         <p style={styles.empty}>Your cart is empty. Add something from the catalog.</p>
       ) : (
@@ -146,8 +131,6 @@ const styles: Record<string, React.CSSProperties> = {
   button: { font: 'inherit', fontSize: 13, fontWeight: 600, padding: '6px 14px', borderRadius: 9999, cursor: 'pointer', color: 'var(--text-secondary, #5a6578)', background: '#fff', border: '1px solid var(--border, #e5e7eb)' },
   note: { margin: '12px 0 0', fontSize: 14, color: 'var(--text-secondary, #5a6578)' },
   primary: { font: 'inherit', fontSize: 13, fontWeight: 600, padding: '6px 14px', borderRadius: 9999, cursor: 'pointer', color: '#fff', background: '#6741d9', border: 0 },
-  announce: { display: 'flex', flexDirection: 'column', gap: 2, margin: '0 0 12px', padding: '10px 12px', borderRadius: 8, fontSize: 14, background: 'rgba(4,149,212,0.07)', border: '1px solid rgba(4,149,212,0.3)', animation: 'announce-in 250ms ease-out' },
-  from: { fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--accent, #006ca0)' },
 };
 
 class ReactMfeElement extends HTMLElement {

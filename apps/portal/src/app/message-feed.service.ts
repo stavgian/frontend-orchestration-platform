@@ -1,14 +1,12 @@
 import { Injectable, OnDestroy, computed, signal } from '@angular/core';
-import { Message, PeerInfo, ReplyPayload, connect } from '@stavgian/mfe-communication';
+import {
+  Message,
+  PeerInfo,
+  ReplyPayload,
+  connect,
+} from '@stavgian/mfe-communication';
 import { Subject } from 'rxjs';
 import { PORTAL_ID, Participant, participantFor } from './participants';
-
-// The messages the portal sends. Each app declares its own; nothing is shared but the names.
-declare module '@stavgian/mfe-communication' {
-  interface MessageMap {
-    'portal:announcement': { text: string };
-  }
-}
 
 export type FeedKind = 'event' | 'request' | 'reply' | 'joined' | 'left';
 
@@ -37,7 +35,11 @@ const TOAST_MS = 4500;
 /** The portal's single connection to the shared message channel. */
 @Injectable({ providedIn: 'root' })
 export class MessageFeedService implements OnDestroy {
-  private readonly bus = connect({ id: PORTAL_ID, name: 'Portal', version: '1.0.0' });
+  private readonly bus = connect({
+    id: PORTAL_ID,
+    name: 'Portal',
+    version: '1.0.0',
+  });
   private readonly timers = new Set<ReturnType<typeof setTimeout>>();
   /** Request id → when and what was asked, to label replies. */
   private readonly requests = new Map<string, { type: string; at: number }>();
@@ -54,36 +56,42 @@ export class MessageFeedService implements OnDestroy {
   /** Ids of apps currently connected to the channel. */
   /** Apps currently connected, with what they told the channel about themselves. */
   readonly peers = signal<PeerInfo[]>([]);
-  readonly connectedIds = computed<ReadonlySet<string>>(() => new Set(this.peers().map((p) => p.id)));
+  readonly connectedIds = computed<ReadonlySet<string>>(
+    () => new Set(this.peers().map((p) => p.id))
+  );
   /** Framework each app reports at runtime, e.g. "Angular 22.2.6". The shell is never told at build time. */
-  readonly frameworks = computed(() => new Map(this.peers().map((p) => [p.id, p.meta?.['framework']])));
+  readonly frameworks = computed(
+    () => new Map(this.peers().map((p) => [p.id, p.meta?.['framework']]))
+  );
   /** How each app turns itself into a web component, e.g. "Angular Elements". Also reported by the app. */
-  readonly elements = computed(() => new Map(this.peers().map((p) => [p.id, p.meta?.['element']])));
+  readonly elements = computed(
+    () => new Map(this.peers().map((p) => [p.id, p.meta?.['element']]))
+  );
   /** Last ping round trip per app id, in ms, or 'timeout'. */
   readonly pings = signal<ReadonlyMap<string, number | 'timeout'>>(new Map());
   readonly connectedCount = computed(() => this.connectedIds().size);
 
   constructor() {
     // The portal watches all traffic, including messages addressed to one app.
-    this.bus.subscribe('*', (message) => this.add(message), { observeAll: true });
+    this.bus.subscribe('*', (message) => this.add(message), {
+      observeAll: true,
+    });
     this.bus.onPeersChange((peers) => this.peers.set(peers));
   }
 
   /** To everyone, or with `to` to one app only. */
-  announce(text: string, to?: string): void {
-    this.bus.publish('portal:announcement', { text }, { to });
-  }
-
   /** Request/response health check: asks every connected app to answer. */
   async pingAll(): Promise<void> {
     const results = await Promise.all(
-      this.bus.peers().map(async (peer): Promise<[string, number | 'timeout']> => {
-        try {
-          return [peer.id, await this.bus.ping(peer.id, { timeout: 2000 })];
-        } catch {
-          return [peer.id, 'timeout'];
-        }
-      })
+      this.bus
+        .peers()
+        .map(async (peer): Promise<[string, number | 'timeout']> => {
+          try {
+            return [peer.id, await this.bus.ping(peer.id, { timeout: 2000 })];
+          } catch {
+            return [peer.id, 'timeout'];
+          }
+        })
     );
     this.pings.set(new Map(results));
   }
@@ -110,22 +118,35 @@ export class MessageFeedService implements OnDestroy {
       kind,
       type: envelope.type,
       // Presence speaks for itself ("Checkout connected"); its payload is only shown in the details.
-      summary: kind === 'joined' || kind === 'left' ? '' : summarize(envelope.payload),
+      summary:
+        kind === 'joined' || kind === 'left' ? '' : summarize(envelope.payload),
       sender: participantFor(envelope.source),
       target: envelope.to ? participantFor(envelope.to) : undefined,
       receivedAt: new Date(),
       envelope,
     };
 
-    if (kind === 'request') this.requests.set(envelope.id, { type: envelope.type, at: performance.now() });
+    if (kind === 'request')
+      this.requests.set(envelope.id, {
+        type: envelope.type,
+        at: performance.now(),
+      });
     if (kind === 'reply') {
       const reply = envelope.payload as ReplyPayload;
-      const request = envelope.inReplyTo ? this.requests.get(envelope.inReplyTo) : undefined;
+      const request = envelope.inReplyTo
+        ? this.requests.get(envelope.inReplyTo)
+        : undefined;
       this.requests.delete(envelope.inReplyTo ?? '');
       entry.ok = reply.ok;
-      entry.summary = !reply.ok ? reply.error : request?.type === 'system:ping' ? '' : summarize(reply.value);
+      entry.summary = !reply.ok
+        ? reply.error
+        : request?.type === 'system:ping'
+        ? ''
+        : summarize(reply.value);
       entry.requestType = request?.type;
-      entry.latencyMs = request ? Math.round(performance.now() - request.at) : undefined;
+      entry.latencyMs = request
+        ? Math.round(performance.now() - request.at)
+        : undefined;
     }
 
     this.messages.update((list) => [...list, entry].slice(-MAX_MESSAGES));
@@ -148,7 +169,10 @@ export class MessageFeedService implements OnDestroy {
 }
 
 /** Whether `appId` receives `message`: its target if it was addressed, otherwise everyone but the sender. */
-export function isRecipient(message: FeedMessage | undefined, appId: string): boolean {
+export function isRecipient(
+  message: FeedMessage | undefined,
+  appId: string
+): boolean {
   if (!message || message.sender.id === appId) return false;
   return message.target ? message.target.id === appId : true;
 }
@@ -169,5 +193,9 @@ function summarize(payload: unknown): string {
   const text = (payload as { text?: unknown }).text;
   if (typeof text === 'string') return text;
   const json = JSON.stringify(payload);
-  return json === '{}' ? '' : json.length > 120 ? `${json.slice(0, 117)}…` : json;
+  return json === '{}'
+    ? ''
+    : json.length > 120
+    ? `${json.slice(0, 117)}…`
+    : json;
 }

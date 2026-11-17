@@ -10,6 +10,7 @@ import {
   output,
   signal,
   viewChild,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { FeedKind, MessageFeedService } from './message-feed.service';
 
@@ -28,6 +29,7 @@ const FILTERS: { id: Filter; label: string; kinds: FeedKind[] }[] = [
   standalone: true,
   imports: [DatePipe, JsonPipe],
   templateUrl: './message-log.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './message-log.component.scss',
 })
 export class MessageLogComponent {

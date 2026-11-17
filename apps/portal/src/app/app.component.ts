@@ -1,4 +1,11 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { Manifest, MfeDefinition } from './manifest';
 import { manifestUrl } from './manifest-url';
@@ -8,14 +15,22 @@ import { MessageFeedService } from './message-feed.service';
 import { MessageLogComponent } from './message-log.component';
 import { MfeLoaderService } from './mfe-loader.service';
 import { ToastStackComponent } from './toast-stack.component';
+import { version } from '../../package.json';
 
 const LOG_PREF_KEY = 'portal.message-log';
 
 @Component({
   standalone: true,
   selector: 'app-root',
-  imports: [RouterOutlet, ManifestPanelComponent, MessageChannelComponent, MessageLogComponent, ToastStackComponent],
+  imports: [
+    RouterOutlet,
+    ManifestPanelComponent,
+    MessageChannelComponent,
+    MessageLogComponent,
+    ToastStackComponent,
+  ],
   templateUrl: './app.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './app.component.scss',
 })
 export class AppComponent implements OnInit {
@@ -24,6 +39,8 @@ export class AppComponent implements OnInit {
   readonly feed = inject(MessageFeedService);
 
   readonly year = new Date().getFullYear();
+  /** The portal's own release version, bumped by `nx release` (tag portal@x.y.z). */
+  readonly version = version;
   readonly manifestUrl = manifestUrl;
   manifest?: Manifest;
   mfes: MfeDefinition[] = [];
@@ -33,7 +50,9 @@ export class AppComponent implements OnInit {
   readonly logOpen = signal(initialLogOpen());
   /** Messages that arrived while the log was closed. */
   private readonly seenCount = signal(0);
-  readonly unread = computed(() => (this.logOpen() ? 0 : this.feed.messageCount() - this.seenCount()));
+  readonly unread = computed(() =>
+    this.logOpen() ? 0 : this.feed.messageCount() - this.seenCount()
+  );
 
   async ngOnInit(): Promise<void> {
     try {

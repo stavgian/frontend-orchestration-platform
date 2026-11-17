@@ -6,6 +6,8 @@ Microfrontends are discovered via a JSON manifest, loaded dynamically by URL, mo
 
 ![Preview](./preview.png)
 
+> **This is a demo.** It exists to show a pattern and the reasoning behind it, not to be production software. Expect rough edges; if you find a bug, please [open an issue](https://github.com/stavgian/frontend-orchestration-platform/issues).
+
 ## What this project demonstrates
 
 - Runtime discovery and loading of microfrontends via a manifest
@@ -63,8 +65,8 @@ The demo shop uses all three patterns:
 | --- | --- |
 | **Event**: "something happened" | The catalog publishes `cart:item-added`; the cart adds the item and publishes `cart:updated` with its new total, which checkout shows live. Checkout publishes `order:placed`; the cart empties. |
 | **Request**: "I need an answer" | On "Place order", checkout confirms the total with the cart itself: `request('cart:get-summary', …, { to: 'react-mfe' })`. The cart answers with `respond()`. |
-| **Direct message**: "just for you" | "Checkout →" in the cart sends `checkout:start` only to checkout (`publish(…, { to: 'js-mfe' })`); the catalog never receives it. The shell portal can also send its announcement to one app only. |
-| **Presence**: "who's here?" | When the cart comes online, checkout asks it once for its current total. Events only report changes, so this covers apps that load late. Checkout only allows ordering while the cart is connected. The portal's "Ping all apps" checks every app and shows its response time. |
+| **Direct message**: "just for you" | "Checkout →" in the cart sends `checkout:start` only to checkout (`publish(…, { to: 'js-mfe' })`); the catalog never receives it. |
+| **Presence**: "who's here?" | When the cart comes online, checkout asks it once for its current total. Events only report changes, so this covers apps that load late. Checkout only allows ordering while the cart is connected. The portal's "Check who's online" uses presence to ask every app to answer and shows its response time. |
 
 How it works:
 - Each app calls `connect({ id })`, which announces it on the channel (`system:ready`) and discovers apps already connected (`system:present`). `disconnect()` announces `system:left`.
@@ -79,7 +81,7 @@ On one page, the shell portal shows everything live:
 - a full-height message log sidebar you can toggle and filter
 - toasts while the log is closed
 
-It can also send announcements itself.
+Every app renders inside its own Shadow DOM, so the portal's CSS can't reach in and an app's CSS can't leak out. The portal has no business logic. It never sends business messages; it only loads apps and observes the channel through the library. Everything the apps do, they do with each other.
 
 See the [package README](libs/mfe-communication/README.md) for the full API.
 
@@ -103,7 +105,7 @@ An app is anything that registers a custom element and talks through `@stavgian/
 4. Add an entry to `apps/portal/src/assets/manifest.dev.json` and `manifest.prod.json`. The shell needs nothing else: it reads the manifest at runtime.
 5. Optionally, give it a friendly name and colour in `apps/portal/src/app/participants.ts`. Without one it uses the manifest's `displayName`.
 
-Two Angular versions already share this page: the shell portal runs Angular 18 with zone.js, and `angular-mfe` runs Angular 22 without zone.js (zoneless change detection with signals). Each brings its own runtime inside its own bundle, so neither upgrade blocks the other.
+Two Angular apps already share this page: the shell portal runs with zone.js, and `angular-mfe` runs without it (zoneless change detection with signals). Each brings its own Angular runtime inside its own bundle, so they can be on different Angular versions and neither upgrade blocks the other.
 
 ## Repository structure
 
@@ -176,13 +178,22 @@ npm run serve:vue-mfe   # builds then serves on http://localhost:4304/vue-mfe.js
 Releases are made from this repo. A pushed tag triggers [`.github/workflows/publish-mfe-communication.yml`](.github/workflows/publish-mfe-communication.yml), which builds, tests and publishes with npm trusted publishing (no npm token stored, provenance attached).
 
 ```bash
-npx nx release minor --skip-publish   # or patch / major: bumps version, writes CHANGELOG, commits, tags mfe-communication@x.y.z
+npx nx release minor --skip-publish -g mfe-communication   # or patch / major: bumps version, writes CHANGELOG, commits, tags mfe-communication@x.y.z
 git push --follow-tags                # the tag starts the publish workflow
 ```
 
 Pick the bump by what changed in the payload format: patch for fixes, minor for new events or optional fields, major for renamed/removed fields or new required fields.
 
 Run the library's tests locally with `npm run test:mfe-communication`.
+
+## Releasing the portal
+
+The shell portal has its own semver version in [`apps/portal/package.json`](apps/portal/package.json), shown in the page footer. Bump it on every portal release:
+
+```bash
+npx nx release patch --skip-publish -g portal   # add --first-release the first time; or minor / major: bumps version, writes apps/portal/CHANGELOG.md, commits, tags portal@x.y.z
+git push --follow-tags
+```
 
 ## Running locally
 

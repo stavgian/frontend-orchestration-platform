@@ -2,91 +2,194 @@
   <div class="main">
     <!-- No header: the shell's status and the log toggle float in the top corner. -->
     <div class="corner" role="toolbar" aria-label="Shell portal status">
-        @if (mfes.length) {
-          <span class="online" title="Apps connected to the message channel">
-            <span class="live" aria-hidden="true"></span>
-            <span>{{ feed.connectedCount() }} of {{ mfes.length }}<span class="long"> apps connected</span></span>
-          </span>
-        }
-        <button
-          type="button"
-          class="btn-ghost log-toggle"
-          [class.active]="logOpen()"
-          [attr.aria-expanded]="logOpen()"
-          aria-controls="message-log"
-          (click)="toggleLog()"
+      @if (mfes.length) {
+      <span class="online" title="Apps connected to the message channel">
+        <span class="live" aria-hidden="true"></span>
+        <span
+          >{{ feed.connectedCount() }} of {{ mfes.length
+          }}<span class="long"> apps connected</span></span
         >
-          Message log
-          @if (unread()) {
-            <span class="badge" [attr.aria-label]="unread() + ' new'">{{ unread() }}</span>
-          }
-        </button>
+      </span>
+      } @if (manifest) {
+      <button
+        type="button"
+        class="btn-ghost"
+        aria-haspopup="dialog"
+        (click)="manifestDialog.showModal()"
+      >
+        Manifest
+      </button>
+      }
+      <button
+        type="button"
+        class="btn-ghost log-toggle"
+        [class.active]="logOpen()"
+        [attr.aria-expanded]="logOpen()"
+        aria-controls="message-log"
+        (click)="toggleLog()"
+      >
+        Message log @if (unread()) {
+        <span class="badge" [attr.aria-label]="unread() + ' new'">{{
+          unread()
+        }}</span>
+        }
+      </button>
     </div>
 
     <div class="page">
       <section class="hero">
         <p class="eyebrow">Frontend Orchestration Platform · Live demo</p>
         <!-- Non-breaking hyphen and space keep "micro-frontends" and "at runtime" together when the headline wraps. -->
-        <h1>Orchestrate micro&#8209;frontends <span class="hl">at&nbsp;runtime.</span></h1>
+        <h1>
+          Orchestrate micro&#8209;frontends
+          <span class="hl">at&nbsp;runtime.</span>
+        </h1>
         <p class="lede">
-          Any framework, deployed on its own, discovered from a manifest, loaded on demand and connected through one message channel.
-          This demo runs four of them: Angular, React, Vue and plain JavaScript.
+          Any framework, deployed on its own, discovered from a manifest, loaded
+          on demand and connected through one message channel. This demo runs
+          four of them: Angular, React, Vue and plain JavaScript.
         </p>
-        <ol class="steps">
-          <li>
-            <strong>Events</strong> “Something happened.” The sender does not know who is listening.
-            <span class="try">Add a product: the cart, checkout and shipping all react.</span>
-          </li>
-          <li>
-            <strong>Direct messages</strong> “This is for you.” The same message, addressed to a single app.
-            <span class="try">“Checkout →” in the cart reaches checkout only. The catalog never sees it.</span>
-          </li>
-          <li>
-            <strong>Requests</strong> “I need an answer.” One app asks, and the app that knows replies.
-            <span class="try">On “Place order”, checkout asks the cart to confirm the total.</span>
-          </li>
-          <li>
-            <strong>Presence</strong> “Who is here?” Apps announce when they join and when they leave.
-            <span class="try">Checkout waits for the cart, and “Ping all apps” asks everyone at once.</span>
-          </li>
-        </ol>
+        <button
+          type="button"
+          class="btn-ghost learn-more"
+          aria-haspopup="dialog"
+          (click)="howDialog.showModal()"
+        >
+          How it works: events, messages, requests, presence →
+        </button>
       </section>
 
       @if (loadingManifest) {
-        <div class="panel notice">Finding available apps…</div>
+      <div class="panel notice">Finding available apps…</div>
       } @else if (manifestError) {
-        <div class="panel notice error">
-          Could not load the list of apps.
-          <small>{{ manifestError }}</small>
-        </div>
+      <div class="panel notice error">
+        Could not load the list of apps.
+        <small>{{ manifestError }}</small>
+      </div>
       } @else {
-        <!-- Everything in this frame belongs to the shell portal: it hosts the page, loads the apps and provides the channel. -->
-        <section class="host" aria-label="Hosted by the shell portal">
-          <div class="host-label">
-            <span class="p-badge" aria-hidden="true">P</span>
-            Shell portal<span class="long"> · loads {{ mfes.length }} apps from the manifest and observes their channel</span>
-          </div>
-          @if (manifest) {
-            <app-manifest-panel [manifest]="manifest" [url]="manifestUrl" />
-          }
-          <app-message-channel class="panel" [mfes]="mfes" />
-          <router-outlet />
-        </section>
+      <!-- Everything in this frame belongs to the shell portal: it hosts the page, loads the apps and provides the channel. -->
+      <section class="host" aria-label="Hosted by the shell portal">
+        <div class="host-label">
+          <span class="p-badge" aria-hidden="true">P</span>
+          Shell portal<span class="long">
+            · loads {{ mfes.length }} apps from the manifest and observes their
+            channel</span
+          >
+        </div>
+        <app-message-channel class="panel" [mfes]="mfes" />
+        <router-outlet />
+      </section>
       }
     </div>
 
     <footer class="footer">
-      <a class="footer-logo" href="https://stavgian.de" target="_blank" rel="noopener" aria-label="stavgian.de">
+      <p class="disclaimer">
+        This is a demo to show a pattern, not production software. If you find a
+        bug,
+        <a
+          href="https://github.com/stavgian/frontend-orchestration-platform/issues"
+          target="_blank"
+          rel="noopener"
+          >open an issue</a
+        >.
+      </p>
+      <a
+        class="footer-logo"
+        href="https://stavgian.de"
+        target="_blank"
+        rel="noopener"
+        aria-label="stavgian.de"
+      >
         <img src="ys-logo.svg" alt="" height="28" />
       </a>
-      <span>© {{ year }} Yiannis Stavgianoudakis</span>
+      <span>© {{ year }} Yiannis Stavgianoudakis · Portal v{{ version }}</span>
       <nav aria-label="Links">
-        <a href="https://github.com/stavgian/frontend-orchestration-platform/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
-        <a href="https://stavgian.de" target="_blank" rel="noopener">stavgian.de</a>
-        <a href="https://github.com/stavgian/frontend-orchestration-platform" target="_blank" rel="noopener">GitHub</a>
+        <a
+          href="https://github.com/stavgian/frontend-orchestration-platform/blob/main/LICENSE"
+          target="_blank"
+          rel="noopener"
+          >MIT License</a
+        >
+        <a href="https://stavgian.de" target="_blank" rel="noopener"
+          >stavgian.de</a
+        >
+        <a
+          href="https://github.com/stavgian/frontend-orchestration-platform"
+          target="_blank"
+          rel="noopener"
+          >GitHub</a
+        >
       </nav>
     </footer>
   </div>
+
+  <dialog #howDialog class="sheet" aria-labelledby="how-title" closedby="any">
+    <div class="sheet-head">
+      <h2 id="how-title">How the apps talk</h2>
+      <button
+        type="button"
+        class="btn-ghost"
+        aria-label="Close"
+        (click)="howDialog.close()"
+      >
+        ✕
+      </button>
+    </div>
+    <ol class="steps">
+      <li>
+        <strong>Events</strong> “Something happened.” The sender does not know
+        who is listening.
+        <span class="try"
+          >Add a product: the cart, checkout and shipping all react.</span
+        >
+      </li>
+      <li>
+        <strong>Direct messages</strong> “This is for you.” The same message,
+        addressed to a single app.
+        <span class="try"
+          >“Checkout →” in the cart reaches checkout only. The catalog never
+          sees it.</span
+        >
+      </li>
+      <li>
+        <strong>Requests</strong> “I need an answer.” One app asks, and the app
+        that knows replies.
+        <span class="try"
+          >On “Place order”, checkout asks the cart to confirm the total.</span
+        >
+      </li>
+      <li>
+        <strong>Presence</strong> “Who is here?” Apps announce when they join
+        and when they leave.
+        <span class="try"
+          >Checkout waits for the cart, and “Check who’s online” asks everyone
+          at once.</span
+        >
+      </li>
+    </ol>
+  </dialog>
+
+  <dialog
+    #manifestDialog
+    class="sheet wide"
+    aria-label="Manifest"
+    closedby="any"
+  >
+    <div class="sheet-head">
+      <span></span>
+      <button
+        type="button"
+        class="btn-ghost"
+        aria-label="Close"
+        (click)="manifestDialog.close()"
+      >
+        ✕
+      </button>
+    </div>
+    @if (manifest) {
+    <app-manifest-panel [manifest]="manifest" [url]="manifestUrl" />
+    }
+  </dialog>
 
   <aside
     id="message-log"
@@ -101,5 +204,5 @@
 </div>
 
 @if (!logOpen()) {
-  <app-toast-stack />
+<app-toast-stack />
 }

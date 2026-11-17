@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { MessageFeedService } from './message-feed.service';
 
 /** Short-lived pop-ups for each new message on the channel. */
@@ -19,6 +19,7 @@ import { MessageFeedService } from './message-feed.service';
       }
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     .stack {
       position: fixed; right: 20px; bottom: 20px; z-index: 50;

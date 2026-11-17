@@ -7,8 +7,6 @@ const FREE_SHIPPING_FROM = 50;
 
 const STYLES = `
   :host { display: block; font: 15px/1.5 var(--font-sans, Inter, system-ui, sans-serif); color: var(--text, #171a20); }
-  .announce { display: flex; flex-direction: column; gap: 2px; margin: 0 0 12px; padding: 10px 12px; border-radius: 8px; font-size: 14px; background: rgba(4,149,212,0.07); border: 1px solid rgba(4,149,212,0.3); }
-  .from { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent, #006ca0); }
   .intro { margin: 0 0 12px; color: var(--text-secondary, #5a6578); font-size: 14px; }
   .goal { padding: 12px 14px; border-radius: 8px; background: var(--surface, #f7f8fa); }
   .goal strong { font-size: 17px; }
@@ -20,10 +18,8 @@ const STYLES = `
 const ShippingApp = {
   setup() {
     const total = ref(0);
-    const announcement = ref(null);
     const note = ref(null);
     let bus;
-    let announceTimer;
 
     const remaining = computed(() => Math.max(0, FREE_SHIPPING_FROM - total.value));
     const progress = computed(() => Math.min(100, (total.value / FREE_SHIPPING_FROM) * 100));
@@ -45,24 +41,13 @@ const ShippingApp = {
         const free = msg.payload.total >= FREE_SHIPPING_FROM;
         note.value = `Order received. It ships within two days${free ? ", free of charge" : ""}.`;
       });
-      bus.subscribe("portal:announcement", (msg) => {
-        announcement.value = { text: String(msg.payload?.text ?? ""), direct: msg.to === "vue-mfe" };
-        clearTimeout(announceTimer);
-        announceTimer = setTimeout(() => (announcement.value = null), 6000);
-      });
     });
 
     onUnmounted(() => {
-      clearTimeout(announceTimer);
       bus?.disconnect();
     });
 
     return () => [
-      announcement.value &&
-        h("div", { class: "announce", role: "status" }, [
-          h("span", { class: "from" }, `From the shell portal${announcement.value.direct ? " · only to you" : ""}`),
-          announcement.value.text,
-        ]),
       h("p", { class: "intro" }, `Listens to the cart. Free shipping from €${FREE_SHIPPING_FROM}.`),
       h("div", { class: "goal" }, [
         remaining.value === 0

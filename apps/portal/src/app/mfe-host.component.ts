@@ -8,6 +8,7 @@ import {
   OnChanges,
   SimpleChanges,
   ViewChild,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MfeDefinition } from './manifest';
@@ -20,6 +21,7 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './mfe-host.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './mfe-host.component.scss',
 })
 export class MfeHostComponent implements OnInit, OnChanges, OnDestroy {

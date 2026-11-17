@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, inject, viewChildren } from '@angular/core';
+import { Component, ElementRef, OnInit, inject, viewChildren, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MfeDefinition } from './manifest';
 import { FeedMessage, MessageFeedService, isRecipient } from './message-feed.service';
@@ -45,6 +45,7 @@ import { Participant, participantForMfe } from './participants';
       }
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; align-items: start; }
     .card { position: relative; padding: 20px; }
