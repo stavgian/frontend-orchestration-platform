@@ -58,18 +58,23 @@
 }
 .host-label {
   position: absolute;
-  top: -13px;
+  top: -16px;
   left: 20px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 3px 14px 3px 4px;
+  gap: 10px;
+  padding: 4px 18px 4px 5px;
   border-radius: 999px;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--accent);
   background: var(--background);
   border: 1px solid color-mix(in srgb, var(--bavaria) 30%, transparent);
+  .p-badge {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
 }
 .online {
   display: flex;
@@ -99,7 +104,7 @@
 }
 
 .page {
-  max-width: 1280px;
+  max-width: 1440px;
   margin: 0 auto;
   padding: 72px 28px 56px;
   display: flex;
@@ -136,10 +141,16 @@ h1 {
   font-size: 19px;
   line-height: 32px;
 }
-.learn-more {
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-top: 18px;
+}
+.learn-more {
   font-weight: 600;
   color: var(--accent);
+  text-decoration: none;
 }
 
 /* Popups (native <dialog>) for "How it works" and the manifest. */
@@ -218,7 +229,7 @@ h1 {
 }
 
 .footer {
-  max-width: 1280px;
+  max-width: 1440px;
   margin: 0 auto;
   padding: 28px 28px 32px;
   display: flex;

@@ -49,14 +49,30 @@
           on demand and connected through one message channel. This demo runs
           four of them: Angular, React, Vue and plain JavaScript.
         </p>
-        <button
-          type="button"
-          class="btn-ghost learn-more"
-          aria-haspopup="dialog"
-          (click)="howDialog.showModal()"
-        >
-          How it works: events, messages, requests, presence →
-        </button>
+        <div class="hero-actions">
+          <button
+            type="button"
+            class="btn-ghost learn-more"
+            aria-haspopup="dialog"
+            (click)="howDialog.showModal()"
+          >
+            How it works: events, messages, requests, presence →
+          </button>
+          <a
+            class="btn-ghost learn-more"
+            href="https://github.com/stavgian/frontend-orchestration-platform"
+            target="_blank"
+            rel="noopener"
+            >View the code on GitHub ↗</a
+          >
+          <a
+            class="btn-ghost learn-more"
+            href="https://www.npmjs.com/package/@stavgian/mfe-communication"
+            target="_blank"
+            rel="noopener"
+            >npm package ↗</a
+          >
+        </div>
       </section>
 
       @if (loadingManifest) {
@@ -118,6 +134,12 @@
           target="_blank"
           rel="noopener"
           >GitHub</a
+        >
+        <a
+          href="https://www.npmjs.com/package/@stavgian/mfe-communication"
+          target="_blank"
+          rel="noopener"
+          >npm</a
         >
       </nav>
     </footer>
