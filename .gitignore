@@ -9,6 +9,7 @@ tmp
 .idea
 
 graphify-out
+.playwright-mcp
 
 .claude/worktrees
 .claude/settings.local.json

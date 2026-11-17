@@ -22,6 +22,14 @@
       }
       <button
         type="button"
+        class="btn-ghost"
+        aria-haspopup="dialog"
+        (click)="aboutDialog.showModal()"
+      >
+        Help
+      </button>
+      <button
+        type="button"
         class="btn-ghost log-toggle"
         [class.active]="logOpen()"
         [attr.aria-expanded]="logOpen()"
@@ -47,32 +55,19 @@
         <p class="lede">
           Any framework, deployed on its own, discovered from a manifest, loaded
           on demand and connected through one message channel. This demo runs
-          four of them: Angular, React, Vue and plain JavaScript.
+          four apps (Angular, React, Vue and plain JavaScript), but the same
+          page could host anything that ships as a web component, including
+          several apps built with the same framework.
         </p>
-        <div class="hero-actions">
-          <button
-            type="button"
-            class="btn-ghost learn-more"
-            aria-haspopup="dialog"
-            (click)="howDialog.showModal()"
-          >
-            How it works: events, messages, requests, presence →
-          </button>
-          <a
-            class="btn-ghost learn-more"
-            href="https://github.com/stavgian/frontend-orchestration-platform"
-            target="_blank"
-            rel="noopener"
-            >View the code on GitHub ↗</a
-          >
-          <a
-            class="btn-ghost learn-more"
-            href="https://www.npmjs.com/package/@stavgian/mfe-communication"
-            target="_blank"
-            rel="noopener"
-            >npm package ↗</a
-          >
-        </div>
+        <button
+          type="button"
+          class="btn-ghost learn-more"
+          aria-haspopup="dialog"
+          (click)="howDialog.showModal()"
+        >
+          <span class="learn-title">How it works · Example use case</span>
+          <span class="learn-sub">Events, messages, requests, presence →</span>
+        </button>
       </section>
 
       @if (loadingManifest) {
@@ -84,8 +79,8 @@
       </div>
       } @else {
       <!-- Everything in this frame belongs to the shell portal: it hosts the page, loads the apps and provides the channel. -->
-      <section class="host" aria-label="Hosted by the shell portal">
-        <div class="host-label">
+      <section class="host frame" aria-label="Hosted by the shell portal">
+        <div class="frame-label">
           <span class="p-badge" aria-hidden="true">P</span>
           Shell portal<span class="long">
             · loads {{ mfes.length }} apps from the manifest and observes their
@@ -93,9 +88,28 @@
           >
         </div>
         <app-message-channel class="panel" [mfes]="mfes" />
-        <router-outlet />
+        <!-- Every boxed app inside this frame is a micro-frontend the shell portal loaded from the manifest. -->
+        <section class="mfes frame" aria-label="Micro-frontends">
+          <div class="frame-label">
+            <span class="p-badge" aria-hidden="true">{{ mfes.length }}</span>
+            Micro-frontends<span class="long">
+              · loaded from the
+              <button
+                type="button"
+                class="label-link"
+                aria-haspopup="dialog"
+                (click)="manifestDialog.showModal()"
+              >
+                manifest
+              </button></span
+            >
+          </div>
+          <router-outlet />
+        </section>
       </section>
       }
+
+      <app-project-links />
     </div>
 
     <footer class="footer">
@@ -118,7 +132,7 @@
       >
         <img src="ys-logo.svg" alt="" height="28" />
       </a>
-      <span>© {{ year }} Yiannis Stavgianoudakis · Portal v{{ version }}</span>
+      <span>© {{ year }} Yiannis Stavgianoudakis · Shell portal v{{ version }}</span>
       <nav aria-label="Links">
         <a
           href="https://github.com/stavgian/frontend-orchestration-platform/blob/main/LICENSE"
@@ -157,6 +171,11 @@
         ✕
       </button>
     </div>
+    <p class="sheet-intro">
+      Example use case: a small shop. Add a product in the catalog and the cart,
+      checkout and shipping each react, without any of them importing the
+      others. Four ways the apps talk make that possible:
+    </p>
     <ol class="steps">
       <li>
         <strong>Events</strong> “Something happened.” The sender does not know
@@ -186,6 +205,65 @@
         <span class="try"
           >Checkout waits for the cart, and “Check who’s online” asks everyone
           at once.</span
+        >
+      </li>
+    </ol>
+  </dialog>
+
+  <dialog #aboutDialog class="sheet" aria-labelledby="about-title" closedby="any">
+    <div class="sheet-head">
+      <h2 id="about-title">What you are looking at</h2>
+      <button
+        type="button"
+        class="btn-ghost"
+        aria-label="Close"
+        (click)="aboutDialog.close()"
+      >
+        ✕
+      </button>
+    </div>
+    <p class="sheet-intro">
+      A live demo of a micro-frontend platform. This page is the shell portal.
+      It loads four independent apps, built with different frameworks, and lets
+      them talk to each other. It is not a real shop; it exists to show the
+      pattern.
+    </p>
+    <p class="sheet-intro">
+      What it shows: apps in different frameworks side by side, each deployed on
+      its own, a manifest in place of hard-wired imports, and one small typed
+      channel in place of shared code.
+    </p>
+    <ol class="steps">
+      <li>
+        <strong>Shell portal</strong> This page, built with Angular. It reads the
+        manifest, loads each app on demand, draws the frame around them and
+        watches the message channel. It has no business logic and no built-in
+        knowledge of the apps.
+        <span class="try"
+          >Everything inside the dashed frame belongs to the shell portal.</span
+        >
+      </li>
+      <li>
+        <strong>Manifest</strong> A JSON file that lists the apps: their name,
+        colour, logo and where to load each one from. Add an entry and a new app
+        appears; the shell's code does not change.
+        <span class="try">Open Manifest in the top bar to read the real file.</span>
+      </li>
+      <li>
+        <strong>The four apps</strong> Product catalog (Angular), shopping cart
+        (React), checkout (plain JavaScript) and shipping (Vue). Each is built,
+        versioned and deployed on its own, and appears as a web component.
+        <span class="try"
+          >The inner dashed frame marks them as micro-frontends. “Built with” under each app shows the framework and version it
+          reports at runtime.</span
+        >
+      </li>
+      <li>
+        <strong>The npm library</strong> &#64;stavgian/mfe-communication is the only
+        code the apps share. It gives them events, direct messages, requests and
+        presence over browser CustomEvents, with typed messages, in under 4 KB.
+        <span class="try"
+          >Open the Message log, add a product and follow the messages.</span
         >
       </li>
     </ol>

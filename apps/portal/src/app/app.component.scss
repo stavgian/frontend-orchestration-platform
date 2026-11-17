@@ -44,21 +44,19 @@
   }
 }
 
-/* The portal frame around the channel and every app. */
-.host {
+/* Dashed frames with a label on the top edge: one around what the shell portal owns, one around the micro-frontends it loads. */
+.frame {
+  --frame: var(--bavaria);
+  --frame-ink: var(--accent);
+  --frame-w: 2px;
   position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  margin-top: 8px;
-  padding: 28px 18px 18px;
   border-radius: 26px;
-  border: 1.5px dashed color-mix(in srgb, var(--bavaria) 40%, transparent);
+  border: var(--frame-w) dashed color-mix(in srgb, var(--frame) 75%, transparent);
   background: rgba(255, 255, 255, 0.35);
 }
-.host-label {
+.frame-label {
   position: absolute;
-  top: -16px;
+  top: calc(-17px - var(--frame-w) / 2);
   left: 20px;
   display: flex;
   align-items: center;
@@ -67,14 +65,42 @@
   border-radius: 999px;
   font-size: 16px;
   font-weight: 600;
-  color: var(--accent);
+  color: var(--frame-ink);
   background: var(--background);
-  border: 1px solid color-mix(in srgb, var(--bavaria) 30%, transparent);
+  border: 1px solid color-mix(in srgb, var(--frame) 30%, transparent);
   .p-badge {
     width: 24px;
     height: 24px;
     font-size: 12px;
+    background: var(--frame);
   }
+}
+.label-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  &:hover {
+    color: var(--accent-dark);
+  }
+}
+.host {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 8px;
+  padding: 28px 18px 18px;
+}
+.mfes {
+  --frame: #0d9488;
+  --frame-ink: #0f766e;
+  margin-top: 12px;
+  padding: 30px 14px 14px;
+  border-radius: 22px;
 }
 .online {
   display: flex;
@@ -113,6 +139,8 @@
 }
 
 .hero {
+  position: relative;
+  container: hero / inline-size;
   padding: 4px 2px;
 }
 .eyebrow {
@@ -140,17 +168,38 @@ h1 {
   color: var(--text-secondary);
   font-size: 19px;
   line-height: 32px;
-}
-.hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 18px;
+  text-wrap: pretty;
 }
 .learn-more {
-  font-weight: 600;
+  display: block;
+  margin-top: 18px;
+  padding: 8px 14px;
+  border-radius: 16px;
+  text-align: left;
   color: var(--accent);
-  text-decoration: none;
+}
+.learn-title {
+  display: block;
+  font-weight: 600;
+}
+.learn-sub {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+/* A wide hero has free space beside the intro, so the link floats there and takes no row of its own. */
+@container hero (min-width: 900px) {
+  .lede {
+    max-width: min(80%, calc(100% - 290px));
+  }
+  .learn-more {
+    position: absolute;
+    right: 2px;
+    bottom: 4px;
+    width: 264px;
+    margin: 0;
+  }
 }
 
 /* Popups (native <dialog>) for "How it works" and the manifest. */
@@ -186,6 +235,13 @@ h1 {
     letter-spacing: -0.01em;
   }
 }
+.sheet-intro {
+  margin: 0;
+  padding: 0 24px 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
 .steps {
   list-style: none;
   margin: 0;
@@ -219,10 +275,13 @@ h1 {
   height: 100dvh;
   overflow: hidden;
   background: var(--panel);
-  border-left: 1px solid var(--border);
   > * {
     width: var(--log-width);
   }
+}
+/* The divider only exists while the log is open: a border cannot shrink, so on the closed 0px column it overflowed the page by 1px. */
+.log-open .log-panel {
+  border-left: 1px solid var(--border);
 }
 .backdrop {
   display: none;
@@ -319,6 +378,9 @@ h1 {
   }
   .host {
     padding: 24px 10px 10px;
+  }
+  .mfes {
+    padding: 26px 8px 8px;
   }
   .long {
     display: none;
