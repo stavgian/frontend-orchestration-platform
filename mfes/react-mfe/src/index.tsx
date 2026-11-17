@@ -122,7 +122,7 @@ const App: React.FC = () => {
 
 const styles: Record<string, React.CSSProperties> = {
   root: { font: '15px/1.5 var(--font-sans, Inter, system-ui, sans-serif)', color: 'var(--text, #171a20)' },
-  empty: { margin: 0, padding: '18px 12px', textAlign: 'center', color: 'var(--text-secondary, #5a6578)', fontSize: 14, borderRadius: 8, border: '1px dashed var(--border, #e5e7eb)' },
+  empty: { margin: 0, padding: '18px 12px', textAlign: 'center', color: 'var(--text-secondary, #5a6578)', fontSize: 14, borderRadius: 8, border: '2px dashed var(--border, #e5e7eb)' },
   list: { listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 6 },
   line: { display: 'flex', gap: 10, padding: '8px 12px', borderRadius: 8, background: 'var(--surface, #f7f8fa)' },
   qty: { color: '#6741d9', fontWeight: 700, minWidth: 24 },
