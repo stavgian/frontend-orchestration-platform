@@ -5,9 +5,12 @@
     </div>
   }
   @if (error) {
-    <div class="host-error" role="alert">
-      <strong>Could not load this app.</strong> Is it running?
+    <div class="host-error host-ended" role="alert">
+      <span><strong>Could not load this app.</strong> Is it running?</span>
       <small>{{ error }}</small>
+      @if (definition) {
+        <button type="button" class="btn-ghost" (click)="retry()">Try again</button>
+      }
     </div>
   }
   <div #host class="mfe-host" [class.dimmed]="loading"></div>

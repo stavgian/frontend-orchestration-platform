@@ -24,11 +24,7 @@
     "serve:angular-mfe": "npm run serve -w angular-mfe",
     "serve:react-mfe": "npm run serve -w react-mfe",
     "serve:js-mfe": "npm run serve -w js-mfe",
-    "serve:vue-mfe": "npm run serve -w vue-mfe",
-    "serve:mfe-a": "nx serve mfe-a",
-    "serve:mfe-b": "nx serve mfe-b",
-    "build:mfe-a": "nx build mfe-a",
-    "build:mfe-b": "nx build mfe-b"
+    "serve:vue-mfe": "npm run serve -w vue-mfe"
   },
   "dependencies": {
     "@angular/animations": "^18.2.14",

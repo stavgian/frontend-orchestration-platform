@@ -21,6 +21,13 @@
   small { flex-basis: 100%; color: var(--subtle); font-size: 12px; overflow-wrap: anywhere; }
 }
 
+/* Failed: the message and the retry, centred with room around them. */
+.host-ended {
+  flex-direction: column; justify-content: center; gap: 12px;
+  min-height: 120px; padding: 24px 20px; text-align: center;
+  small { flex-basis: auto; }
+}
+
 .spinner {
   width: 14px; height: 14px; border-radius: 50%;
   border: 2px solid var(--border-strong); border-top-color: var(--accent);
