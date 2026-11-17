@@ -2,30 +2,42 @@ import React, { useEffect, useState } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 
 // The only thing this app shares with the others: the published message library.
-import { EVENT_NAMES, StatusMessagePayload, publish, subscribe } from '@stavgian/mfe-communication';
+import { Connection, PeerInfo, connect } from '@stavgian/mfe-communication';
 
-function publishStatus(text: string) {
-  publish(EVENT_NAMES.statusMessage, {
-    text,
-    source: 'react-mfe',
-    emittedAt: new Date().toISOString(),
-  });
+// The messages this app sends. Other apps declare their own; nothing is shared but the names.
+declare module '@stavgian/mfe-communication' {
+  interface MessageMap {
+    'chat:hello': { text: string };
+  }
 }
 
-const App: React.FC = () => {
-  const [lastHeard, setLastHeard] = useState<StatusMessagePayload | null>(null);
+type Heard = { text: string; from: string; type: string };
 
-  // subscribe() returns its own cleanup, which React runs on unmount.
-  useEffect(() => subscribe(EVENT_NAMES.statusMessage, setLastHeard), []);
+const App: React.FC = () => {
+  const [bus, setBus] = useState<Connection | null>(null);
+  const [lastHeard, setLastHeard] = useState<Heard | null>(null);
+  const [peers, setPeers] = useState<PeerInfo[]>([]);
+
+  // Connect on mount; disconnect() on unmount announces we left and removes every subscription.
+  useEffect(() => {
+    const connection = connect({ id: 'react-mfe', name: 'React app', version: '1.0.0' });
+    connection.subscribe('*', (msg) => {
+      const text = (msg.payload as { text?: unknown } | undefined)?.text;
+      if (typeof text === 'string') setLastHeard({ text, from: msg.source, type: msg.type });
+    });
+    connection.onPeersChange(setPeers);
+    setBus(connection);
+    return () => connection.disconnect();
+  }, []);
 
   const handleHi = () => {
-    publishStatus('Hi from React MFE — saying hello to everyone!');
+    bus?.publish('chat:hello', { text: 'Hi from React MFE — saying hello to everyone!' });
   };
 
   return (
     <div style={styles.card}>
       <p style={styles.title}>React MFE</p>
-      <p style={styles.subtitle}>Says hi and listens to status messages.</p>
+      <p style={styles.subtitle}>Says hi and listens to every message.</p>
 
       <button style={styles.secondaryButton} onClick={handleHi}>
         Say hi to everyone
@@ -35,9 +47,12 @@ const App: React.FC = () => {
         <div style={styles.lastBox}>
           <div style={styles.lastTitle}>Last heard</div>
           <div>{lastHeard.text}</div>
-          <div style={{ color: '#9fb1c9', fontSize: 12 }}>from {lastHeard.source || 'unknown'}</div>
+          <div style={{ color: '#9fb1c9', fontSize: 12 }}>
+            from {lastHeard.from} · {lastHeard.type}
+          </div>
         </div>
       )}
+      <div style={styles.lastBox}>Connected with: {peers.map((p) => p.id).join(', ') || 'nobody yet'}</div>
     </div>
   );
 };

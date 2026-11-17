@@ -7,35 +7,55 @@
     <button type="button" class="btn-primary" (click)="send()">Send a message from the portal</button>
   </div>
 
-  @for (key of renderKey(); track key) {
-    <div class="diagram" [style.--n]="nodes().length">
-      <div class="nodes">
-        @for (node of nodes(); track node.id) {
-          @let sending = msg()?.sender?.id === node.id;
-          @let receiving = !!msg() && !sending;
-          <div class="node" [class.sending]="sending" [class.receiving]="receiving" [style.--c]="node.color">
-            <div class="avatar" aria-hidden="true">{{ node.initials }}</div>
-            <div class="name">{{ node.name }}</div>
-            <div class="tech">{{ node.tech }}</div>
-            <span class="status" aria-hidden="true">{{ sending ? 'Sent' : 'Heard it' }}</span>
-            <div class="stub"></div>
-          </div>
-        }
-      </div>
-      <div class="bus">
-        @if (msg(); as m) {
-          <div class="wave" [style.--x]="senderX() + '%'" [style.--c]="m.sender.color"></div>
-        }
-      </div>
-    </div>
-
-    <p class="caption" aria-live="polite">
-      @if (msg(); as m) {
-        <strong [style.color]="m.sender.color">{{ m.sender.name }}</strong> said
-        <q>{{ m.text }}</q> to everyone
-      } @else {
-        Waiting for the first message — press <em>Say hi</em> in any app below.
-      }
-    </p>
+  <!-- Alternating between two identical branches re-creates the diagram on every message, so its CSS animations replay. -->
+  @if (replay()) {
+    <ng-container [ngTemplateOutlet]="diagram" />
+  } @else {
+    <ng-container [ngTemplateOutlet]="diagram" />
   }
+
+  <p class="caption" aria-live="polite">
+    @if (msg(); as m) {
+      <strong [style.color]="m.sender.color">{{ m.sender.name }}</strong> sent
+      <code>{{ m.type }}</code>
+      @if (m.text) {
+        <q>{{ m.text }}</q>
+      }
+      to everyone
+    } @else {
+      Waiting for the first message — press <em>Say hi</em> in any app below.
+    }
+  </p>
 </section>
+
+<ng-template #diagram>
+  <div class="diagram" [style.--n]="nodes().length">
+    <div class="nodes">
+      @for (node of nodes(); track node.id) {
+        @let online = node.id === portalId || connectedIds().has(node.id);
+        @let sending = msg()?.sender?.id === node.id;
+        @let receiving = !!msg() && !sending && online;
+        <div
+          class="node"
+          [class.offline]="!online"
+          [class.sending]="sending"
+          [class.receiving]="receiving"
+          [style.--c]="node.color"
+        >
+          <div class="avatar" aria-hidden="true">{{ node.initials }}</div>
+          <div class="name">
+            <span class="live" aria-hidden="true"></span>{{ node.name }}
+          </div>
+          <div class="tech">{{ online ? 'Connected · ' + node.tech : 'Not connected' }}</div>
+          <span class="status" aria-hidden="true">{{ sending ? 'Sent' : 'Heard it' }}</span>
+          <div class="stub"></div>
+        </div>
+      }
+    </div>
+    <div class="bus">
+      @if (msg(); as m) {
+        <div class="wave" [style.--x]="senderX() + '%'" [style.--c]="m.sender.color"></div>
+      }
+    </div>
+  </div>
+</ng-template>

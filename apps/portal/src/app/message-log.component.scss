@@ -24,7 +24,19 @@ header p { margin: 2px 0 0; color: var(--subtle); font-size: 13px; }
 }
 .body { min-width: 0; flex: 1; }
 .meta { display: flex; align-items: baseline; gap: 6px; font-size: 13px; }
-.to { color: var(--subtle); font-size: 12px; }
+.type {
+  padding: 1px 7px; border-radius: 99px; font: 11px var(--font-mono);
+  color: var(--subtle); border: 1px solid var(--border-strong);
+}
+
+.presence {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  font-size: 12px; color: var(--subtle); padding: 0 4px;
+  animation: enter 320ms ease-out;
+  strong { color: var(--text); font-weight: 600; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+  &.left .dot { background: transparent; border: 1.5px solid var(--c); }
+}
 time { margin-left: auto; color: var(--subtle); font-size: 12px; font-variant-numeric: tabular-nums; }
 
 .bubble {
@@ -52,4 +64,4 @@ pre { margin-top: 6px; max-width: 100%; }
 @keyframes enter {
   from { opacity: 0; transform: translateY(-6px); }
 }
-@media (prefers-reduced-motion: reduce) { .entry { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .entry, .presence { animation: none; } }

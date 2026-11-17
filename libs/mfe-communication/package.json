@@ -34,7 +34,7 @@
   "sideEffects": false,
   "scripts": {
     "build": "rm -rf dist && tsc -p tsconfig.lib.json",
-    "test": "node --test \"test/*.test.js\"",
+    "test": "tsc -p test/tsconfig.json && node --test \"test/*.test.js\"",
     "prepublishOnly": "npm run build && npm test"
   },
   "devDependencies": {

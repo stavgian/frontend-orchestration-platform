@@ -1,5 +1,5 @@
 // The only thing this app shares with the others: the published message library.
-import { EVENT_NAMES, publish, subscribe } from "@stavgian/mfe-communication";
+import { connect } from "@stavgian/mfe-communication";
 
 // Messages come from other apps, so never insert them into HTML unescaped.
 const escapeHtml = (value) =>
@@ -9,27 +9,35 @@ class JsMfe extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    this.state = { lastStatus: null };
-    this.unsubscribeStatus = null;
+    this.state = { last: null, peers: [] };
+    this.bus = null;
   }
 
   connectedCallback() {
-    this.render();
-    this.unsubscribeStatus = subscribe(EVENT_NAMES.statusMessage, (msg) => {
-      this.state.lastStatus = msg;
+    this.bus = connect({ id: "js-mfe", name: "JavaScript app", version: "1.0.0" });
+    this.bus.subscribe("*", (msg) => {
+      if (typeof msg.payload?.text !== "string") return;
+      this.state.last = { text: msg.payload.text, from: msg.source, type: msg.type };
       this.render();
     });
+    this.bus.onPeersChange((peers) => {
+      this.state.peers = peers;
+      this.render();
+    });
+    this.render();
   }
 
   disconnectedCallback() {
-    if (this.unsubscribeStatus) this.unsubscribeStatus();
+    this.bus?.disconnect();
+    this.bus = null;
   }
 
   render() {
     const { shadowRoot } = this;
     if (!shadowRoot) return;
 
-    const status = this.state.lastStatus;
+    const { last, peers } = this.state;
+    const peerNames = peers.map((p) => p.id).join(", ") || "nobody yet";
     shadowRoot.innerHTML = `
       <style>
         :host {
@@ -61,20 +69,17 @@ class JsMfe extends HTMLElement {
       </style>
       <div class="card">
         <p class="title">JS MFE</p>
-        <p class="subtitle">Says hi and listens to status messages</p>
+        <p class="subtitle">Says hi and listens to every message</p>
         <button id="hi">Say hi to everyone</button>
-        ${status ? `<div class="note">Last heard: ${escapeHtml(status.text)} (${escapeHtml(status.source || 'unknown')})</div>` : ''}
+        ${last ? `<div class="note">Last heard: ${escapeHtml(last.text)} (${escapeHtml(last.from)} · ${escapeHtml(last.type)})</div>` : ''}
+        <div class="note">Connected with: ${escapeHtml(peerNames)}</div>
       </div>
     `;
 
     const hiBtn = shadowRoot.querySelector("#hi");
     if (hiBtn) {
       hiBtn.addEventListener("click", () => {
-        publish(EVENT_NAMES.statusMessage, {
-          text: "Hi from JS MFE — hope you see this!",
-          source: "js-mfe",
-          emittedAt: new Date().toISOString(),
-        });
+        this.bus?.publish("chat:hello", { text: "Hi from JS MFE — hope you see this!" });
       });
     }
   }

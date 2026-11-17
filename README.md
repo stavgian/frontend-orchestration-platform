@@ -48,10 +48,19 @@ The portal uses this information to load and render MFEs without compile-time co
 
 Communication is based on browser-native `CustomEvent`s published on `window`, wrapped by the [`@stavgian/mfe-communication`](libs/mfe-communication) package.
 
-- Single event: `statusMessage` → `{ text: string; source?: string; emittedAt?: string }`
-- The portal and every MFE depend on the package by version (`^1.0.0`), never on each other's code.
-- The library keeps no state, so apps bundling different versions of it still hear each other as long as the payload format is compatible.
-- The portal shows every message live: a channel diagram, a conversation log, and toasts. It can also send messages itself.
+- Each app calls `connect({ id })`, which announces it on the channel (`system:ready`) and discovers apps already connected (`system:present`). `disconnect()` announces `system:left`.
+- Every message is an envelope `{ specversion, id, type, source, time, payload }`. Apps choose their own types (`chat:hello`, `portal:announcement`) and declare their payloads with TypeScript declaration merging. No shared types package is needed.
+- Subscriptions take an exact type, a namespace (`chat:*`) or everything (`*`).
+- The portal and every MFE depend on the package by version (`^1.0.0`), never on each other's code. Each connection keeps only its own state, so apps on different library versions still talk as long as they share the same `specversion`.
+- The portal shows it all live:
+  - which apps are connected
+  - a channel diagram
+  - a conversation log with connect/leave events
+  - toasts
+
+  It can also send messages itself.
+
+See the [package README](libs/mfe-communication/README.md) for the full API.
 
 ### How the pieces depend on each other
 

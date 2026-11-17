@@ -2,7 +2,7 @@
   <header>
     <div>
       <h2 id="log-title">Conversation</h2>
-      <p>{{ feed.messages().length }} {{ feed.messages().length === 1 ? 'message' : 'messages' }}</p>
+      <p>{{ feed.messages().length }} {{ feed.messages().length === 1 ? 'event' : 'events' }}</p>
     </div>
     @if (feed.messages().length) {
       <button type="button" class="btn-ghost" (click)="feed.clear()">Clear</button>
@@ -11,21 +11,30 @@
 
   <ol class="list" tabindex="0" aria-label="Messages, newest first">
     @for (m of feed.messages(); track m.id) {
-      <li class="entry" [style.--c]="m.sender.color">
-        <div class="avatar" aria-hidden="true">{{ m.sender.initials }}</div>
-        <div class="body">
-          <div class="meta">
-            <strong>{{ m.sender.name }}</strong>
-            <span class="to">→ everyone</span>
-            <time [attr.datetime]="m.receivedAt.toISOString()">{{ m.receivedAt | date: 'HH:mm:ss' }}</time>
+      @if (m.kind === 'message') {
+        <li class="entry" [style.--c]="m.sender.color">
+          <div class="avatar" aria-hidden="true">{{ m.sender.initials }}</div>
+          <div class="body">
+            <div class="meta">
+              <strong>{{ m.sender.name }}</strong>
+              <span class="type">{{ m.type }}</span>
+              <time [attr.datetime]="m.receivedAt.toISOString()">{{ m.receivedAt | date: 'HH:mm:ss' }}</time>
+            </div>
+            <div class="bubble">{{ m.text ?? 'Sent a ' + m.type + ' message' }}</div>
+            <details>
+              <summary>Technical details</summary>
+              <pre>{{ m.envelope | json }}</pre>
+            </details>
           </div>
-          <div class="bubble">{{ m.text }}</div>
-          <details>
-            <summary>Technical details</summary>
-            <pre>{{ { event: 'statusMessage', payload: m.payload } | json }}</pre>
-          </details>
-        </div>
-      </li>
+        </li>
+      } @else {
+        <li class="presence" [class.left]="m.kind === 'left'" [style.--c]="m.sender.color">
+          <span class="dot" aria-hidden="true"></span>
+          <strong>{{ m.sender.name }}</strong>
+          {{ m.kind === 'joined' ? 'connected and is listening' : 'disconnected' }}
+          <time [attr.datetime]="m.receivedAt.toISOString()">{{ m.receivedAt | date: 'HH:mm:ss' }}</time>
+        </li>
+      }
     } @empty {
       <li class="empty">
         <span aria-hidden="true">💬</span>

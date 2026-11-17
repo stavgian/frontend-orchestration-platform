@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { MfeDefinition } from './manifest';
 import { MessageFeedService } from './message-feed.service';
@@ -13,6 +14,7 @@ const PORTAL_LINES = [
 @Component({
   selector: 'app-message-channel',
   standalone: true,
+  imports: [NgTemplateOutlet],
   templateUrl: './message-channel.component.html',
   styleUrl: './message-channel.component.scss',
 })
@@ -22,13 +24,15 @@ export class MessageChannelComponent {
 
   readonly mfes = input<MfeDefinition[]>([]);
   readonly msg = this.feed.latest;
+  readonly connectedIds = this.feed.connectedIds;
+  readonly portalId = PORTAL_ID;
   readonly nodes = computed(() => [
     participantFor(PORTAL_ID),
     ...this.mfes().map(participantForMfe),
   ]);
 
-  /** Re-keys the diagram on every message so its CSS animations replay. */
-  readonly renderKey = computed(() => [this.msg()?.id ?? 0]);
+  /** Flips on every app message; the template swaps branches on it to replay the animations. */
+  readonly replay = computed(() => this.feed.messageCount() % 2 === 1);
 
   readonly senderX = computed(() => {
     const nodes = this.nodes();

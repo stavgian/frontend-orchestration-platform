@@ -12,7 +12,7 @@ import { MessageFeedService } from './message-feed.service';
           <div class="avatar" aria-hidden="true">{{ t.sender.initials }}</div>
           <div class="body">
             <div class="who">{{ t.sender.name }} says</div>
-            <div class="text">{{ t.text }}</div>
+            <div class="text">{{ t.text ?? 'Sent a ' + t.type + ' message' }}</div>
           </div>
           <button type="button" class="close" (click)="feed.dismissToast(t.id)" aria-label="Dismiss">×</button>
         </div>

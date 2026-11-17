@@ -12,7 +12,14 @@ import {
 import { createApplication } from '@angular/platform-browser';
 import { createCustomElement } from '@angular/elements';
 // The only thing this app shares with the others: the published message library.
-import { EVENT_NAMES, StatusMessagePayload, publish, subscribe } from '@stavgian/mfe-communication';
+import { Connection, Message, PeerInfo, connect } from '@stavgian/mfe-communication';
+
+// The messages this app sends. Other apps declare their own; nothing is shared but the names.
+declare module '@stavgian/mfe-communication' {
+  interface MessageMap {
+    'chat:hello': { text: string };
+  }
+}
 
 @Component({
   selector: 'angular-mfe-view',
@@ -21,10 +28,11 @@ import { EVENT_NAMES, StatusMessagePayload, publish, subscribe } from '@stavgian
   template: `
     <div class="card">
       <p class="title">Angular MFE</p>
-      <p class="subtitle">Says hi and listens to status messages.</p>
+      <p class="subtitle">Says hi and listens to every message.</p>
 
       <button class="btn ghost" (click)="sayHi()">Say hi to everyone</button>
-      <div class="note" *ngIf="lastStatus">Last heard: {{ lastStatus?.text }} ({{ lastStatus?.source || 'unknown' }})</div>
+      <div class="note" *ngIf="last">Last heard: {{ last.text }} ({{ last.from }} · {{ last.type }})</div>
+      <div class="note">Connected with: {{ peerNames || 'nobody yet' }}</div>
     </div>
   `,
   styles: [
@@ -32,38 +40,33 @@ import { EVENT_NAMES, StatusMessagePayload, publish, subscribe } from '@stavgian
      .card { background: linear-gradient(180deg, #101827, #0b1220); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:16px; box-shadow:0 12px 30px rgba(0,0,0,0.25); }
      .title { margin:0 0 6px; font-weight:700; font-size:16px; }
      .subtitle { margin:0 0 12px; color:#9fb1c9; font-size:13px; }
-     .panel { border-radius:10px; border:1px dashed rgba(255,255,255,0.14); padding:10px; background:rgba(255,255,255,0.04); display:flex; flex-direction:column; gap:6px; }
-     .panel.muted { color:#9fb1c9; }
-     .label { font-size:12px; color:#b7c6da; }
-     .input { padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.06); color:#f6f8fb; }
-     .hint { font-size:12px; color:#b7c6da; }
      .btn { margin-top:12px; padding:10px 14px; border:none; border-radius:10px; font-weight:700; color:#0b1220; background:linear-gradient(90deg, #6bdcff, #9b8cff); cursor:pointer; }
-     .btn:disabled { opacity:0.5; cursor:not-allowed; }
      .note { margin-top:10px; color:#9fb1c9; font-size:12px; }
     `,
   ],
 })
 class AngularMfeComponent implements OnInit, OnDestroy {
-  statusMessage = '';
-  private unsubscribeStatus?: () => void;
-  lastStatus?: StatusMessagePayload;
+  private bus?: Connection;
+  last?: { text: string; from: string; type: string };
+  peerNames = '';
 
   ngOnInit(): void {
-    this.unsubscribeStatus = subscribe(EVENT_NAMES.statusMessage, (msg) => {
-      this.lastStatus = msg;
+    this.bus = connect({ id: 'angular-mfe', name: 'Angular app', version: '1.0.0' });
+    this.bus.subscribe('*', (msg: Message) => {
+      const text = (msg.payload as { text?: unknown } | undefined)?.text;
+      if (typeof text === 'string') this.last = { text, from: msg.source, type: msg.type };
+    });
+    this.bus.onPeersChange((peers: PeerInfo[]) => {
+      this.peerNames = peers.map((p) => p.id).join(', ');
     });
   }
 
   ngOnDestroy(): void {
-    this.unsubscribeStatus?.();
+    this.bus?.disconnect();
   }
 
   sayHi() {
-    publish(EVENT_NAMES.statusMessage, {
-      text: 'Hi from Angular MFE — waving at everyone!',
-      source: 'angular-mfe',
-      emittedAt: new Date().toISOString(),
-    });
+    this.bus?.publish('chat:hello', { text: 'Hi from Angular MFE — waving at everyone!' });
   }
 }
 

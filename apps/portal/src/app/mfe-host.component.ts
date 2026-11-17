@@ -37,10 +37,8 @@ export class MfeHostComponent implements OnInit, OnChanges, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    if (this.definition) {
-      void this.loadDefinition(this.definition);
-      return;
-    }
+    // With a [definition] input, ngOnChanges already loads it; loading here too mounted every app twice.
+    if (this.definition) return;
 
     this.sub = this.route.paramMap
       .pipe(
