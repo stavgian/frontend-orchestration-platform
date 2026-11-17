@@ -96,6 +96,10 @@ class JsMfe extends HTMLElement {
     return this.bus.request("cart:get-summary", undefined, { to: CART_ID, timeout: 2000 });
   }
 
+  askQuote() {
+    return this.bus.request("shipping:get-quote", undefined, { to: SHIPPING_ID, timeout: 2000 });
+  }
+
   async fetchSnapshot() {
     try {
       this.update({ summary: await this.askCart() });
@@ -106,7 +110,7 @@ class JsMfe extends HTMLElement {
 
   async fetchQuote() {
     try {
-      this.update({ shipping: await this.bus.request("shipping:get-quote", undefined, { to: SHIPPING_ID, timeout: 2000 }) });
+      this.update({ shipping: await this.askQuote() });
     } catch {
       // The shipping app will announce its next quote anyway.
     }
@@ -117,36 +121,39 @@ class JsMfe extends HTMLElement {
     this.update({ busy: true, error: null, note: null });
     const started = performance.now();
     try {
-      const confirmed = await this.askCart();
+      // Both answers are needed: the cart confirms the items, the shipping app confirms the price of sending them.
+      const [confirmed, shipping] = await Promise.all([this.askCart(), this.askQuote()]);
       const ms = Math.round(performance.now() - started);
       if (!confirmed.count) {
         this.update({ busy: false, summary: confirmed, error: "The cart is empty now." });
         return;
       }
-      this.bus.publish("order:placed", confirmed);
-      const { shipping } = this.state;
+      // `total` stays the items total; the order also says what shipping adds and what is due in all.
+      const order = { ...confirmed, shipping: shipping.cost, grandTotal: confirmed.total + shipping.cost };
+      this.bus.publish("order:placed", order);
       this.update({
         busy: false,
-        note: `Order placed: ${items(confirmed.count)}, €${confirmed.total}${shippingText(shipping)}, €${confirmed.total + (shipping?.cost ?? 0)} in all. Items confirmed by the cart in ${ms} ms.`,
+        shipping,
+        note: `Order placed: ${items(order.count)}, €${order.total}${shippingText(shipping)}, €${order.grandTotal} in all. Confirmed by the cart and the shipping app in ${ms} ms.`,
       });
     } catch (err) {
-      const error = err.code === "timeout" ? "The cart did not confirm in time. The order was not placed." : err.message;
+      const error = err.code === "timeout" ? "The cart or the shipping app did not confirm in time. The order was not placed." : err.message;
       this.update({ busy: false, error });
     }
   }
 
   render() {
-    const { cartOnline, summary, shipping, busy, error, note, announcement } = this.state;
+    const { cartOnline, shippingOnline, summary, shipping, busy, error, note, announcement } = this.state;
     const count = summary?.count ?? 0;
     const grand = (summary?.total ?? 0) + (shipping?.cost ?? 0);
-    const canOrder = cartOnline && count > 0 && !busy;
+    const canOrder = cartOnline && shippingOnline && count > 0 && !busy;
 
     this.shadowRoot.innerHTML = `
       <style>${STYLES}</style>
       ${announcement ? `<div class="announce" role="status"><span class="from">From ${escapeHtml(announcement.from)}${announcement.direct ? " · only to you" : ""}</span>${escapeHtml(announcement.text)}</div>` : ""}
       <div class="total">
         <strong>€${escapeHtml(grand)}</strong> · ${escapeHtml(items(count))}
-        ${count > 0 ? `<div class="muted">${shipping ? `€${escapeHtml(summary.total)} items${escapeHtml(shippingText(shipping))}` : "Shipping not quoted"}</div>` : ""}
+        ${count > 0 ? `<div class="muted">${shipping ? `€${escapeHtml(summary.total)} items${escapeHtml(shippingText(shipping))}` : "Shipping not quoted, so ordering is paused"}</div>` : ""}
         <div class="muted">${cartOnline ? "Kept up to date by the cart's events" : "Waiting for the cart"}</div>
       </div>
       <button id="order" ${canOrder ? "" : "disabled"}>${busy ? "Confirming with cart…" : "Place order"}</button>
