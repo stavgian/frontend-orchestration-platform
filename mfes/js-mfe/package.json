@@ -8,7 +8,7 @@
     "serve": "node server.mjs"
   },
   "dependencies": {
-    "@stavgian/mfe-communication": "^1.0.0"
+    "@stavgian/mfe-communication": "^2.0.0"
   },
   "devDependencies": {
     "esbuild": "^0.28.2"

@@ -1,6 +1,6 @@
 {
   "name": "@stavgian/mfe-communication",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Typed, framework-agnostic messaging between microfrontends using browser-native CustomEvents.",
   "keywords": [
     "microfrontends",
@@ -29,7 +29,8 @@
   },
   "files": [
     "dist",
-    "src"
+    "src",
+    "CHANGELOG.md"
   ],
   "sideEffects": false,
   "scripts": {
