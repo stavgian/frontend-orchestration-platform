@@ -43,7 +43,7 @@ A **shell portal** discovers the microfrontends from a JSON manifest, loads them
     - **Product catalog** (Angular 22, zoneless with signals, Angular Elements): loaded as a Module Federation–style remote container
     - **Shopping cart** (React 19, a React root inside a custom element): loaded with a script tag
     - **Checkout** (plain JavaScript, a native Web Component): loaded with a script tag
-    - **Shipping** (Vue 3.5, `defineCustomElement`): loaded with a script tag; listens to the cart and shows progress towards free shipping
+    - **Shipping** (Vue 3.5, `defineCustomElement`): loaded with a script tag; listens to the cart, shows progress towards free shipping and owns the shipping rule (free from €50, otherwise €5). It publishes `shipping:quoted` and answers `shipping:get-quote`, so checkout can show the shipping cost without repeating the rule
   - Each app reports its framework and version at runtime (presence `meta`, e.g. `Angular 22.2.6`); the shell portal shows it in the app's "Built with" footer without knowing it at build time
   - Each app also reports how it becomes a web component, so the demo shows four techniques side by side: Angular Elements, a React root inside a custom element, Vue's `defineCustomElement`, and a native Web Component
 
@@ -71,8 +71,8 @@ The demo shop uses all three patterns:
 
 | Pattern | In the demo |
 | --- | --- |
-| **Event**: "something happened" | The catalog publishes `cart:item-added`; the cart adds the item and publishes `cart:updated` with its new total, which checkout shows live. Checkout publishes `order:placed`; the cart empties. |
-| **Request**: "I need an answer" | On "Place order", checkout confirms the total with the cart itself: `request('cart:get-summary', …, { to: 'react-mfe' })`. The cart answers with `respond()`. |
+| **Event**: "something happened" | The catalog publishes `cart:item-added`; the cart adds the item and publishes `cart:updated` with its new total, which checkout shows live. The shipping app reacts with `shipping:quoted`, and checkout adds that cost to the total. Checkout publishes `order:placed`; the cart empties. |
+| **Request**: "I need an answer" | On "Place order", checkout confirms the total with the cart itself: `request('cart:get-summary', …, { to: 'react-mfe' })`. The cart answers with `respond()`. A checkout that loads after the shipping app asks it for the current quote the same way (`shipping:get-quote`). |
 | **Direct message**: "just for you" | "Checkout →" in the cart sends `checkout:start` only to checkout (`publish(…, { to: 'js-mfe' })`); the catalog never receives it. |
 | **Presence**: "who's here?" | When the cart comes online, checkout asks it once for its current total. Events only report changes, so this covers apps that load late. Checkout only allows ordering while the cart is connected. The shell portal's "Check who's online" uses presence to ask every app to answer and shows its response time. |
 

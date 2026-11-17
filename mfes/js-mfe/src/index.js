@@ -2,9 +2,13 @@
 import { connect } from "@stavgian/mfe-communication";
 
 const CART_ID = "react-mfe";
+const SHIPPING_ID = "vue-mfe";
 
 // Messages come from other apps, so never insert them into HTML unescaped.
 const items = (n) => `${n} ${n === 1 ? "item" : "items"}`;
+
+// How a quote reads in a sentence, e.g. " + €5 shipping" or " + free shipping".
+const shippingText = (shipping) => (shipping ? (shipping.free ? " + free shipping" : ` + €${shipping.cost} shipping`) : "");
 
 const escapeHtml = (value) =>
   String(value).replace(/[&<>"']/g, (ch) => `&#${ch.charCodeAt(0)};`);
@@ -29,7 +33,7 @@ class JsMfe extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    this.state = { cartOnline: false, summary: null, busy: false, error: null, note: null, announcement: null };
+    this.state = { cartOnline: false, shippingOnline: false, summary: null, shipping: null, busy: false, error: null, note: null, announcement: null };
     this.announceTimer = undefined;
     this.bus = null;
   }
@@ -44,6 +48,8 @@ class JsMfe extends HTMLElement {
 
     // Events keep the total current: the cart announces every change.
     this.bus.subscribe("cart:updated", (msg) => this.update({ summary: msg.payload, error: null }));
+    // The shipping app owns the rule; checkout only shows what it quotes.
+    this.bus.subscribe("shipping:quoted", (msg) => this.update({ shipping: msg.payload }));
     // A direct message from the cart: only checkout receives it.
     this.bus.subscribe("checkout:start", (msg) => {
       const { count, total } = msg.payload;
@@ -56,7 +62,14 @@ class JsMfe extends HTMLElement {
     this.bus.onPeersChange((peers) => {
       const online = peers.some((p) => p.id === CART_ID);
       if (online && !this.state.cartOnline) this.fetchSnapshot();
-      this.update({ cartOnline: online, ...(online ? {} : { summary: null }) });
+      const shippingUp = peers.some((p) => p.id === SHIPPING_ID);
+      if (shippingUp && !this.state.shippingOnline) this.fetchQuote();
+      this.update({
+        cartOnline: online,
+        shippingOnline: shippingUp,
+        ...(online ? {} : { summary: null }),
+        ...(shippingUp ? {} : { shipping: null }),
+      });
     });
 
     this.render();
@@ -91,6 +104,14 @@ class JsMfe extends HTMLElement {
     }
   }
 
+  async fetchQuote() {
+    try {
+      this.update({ shipping: await this.bus.request("shipping:get-quote", undefined, { to: SHIPPING_ID, timeout: 2000 }) });
+    } catch {
+      // The shipping app will announce its next quote anyway.
+    }
+  }
+
   // Request at the moment of truth: confirm the total with the cart itself before ordering.
   async placeOrder() {
     this.update({ busy: true, error: null, note: null });
@@ -103,9 +124,10 @@ class JsMfe extends HTMLElement {
         return;
       }
       this.bus.publish("order:placed", confirmed);
+      const { shipping } = this.state;
       this.update({
         busy: false,
-        note: `Order placed: ${items(confirmed.count)}, €${confirmed.total}. Total confirmed by the cart in ${ms} ms.`,
+        note: `Order placed: ${items(confirmed.count)}, €${confirmed.total}${shippingText(shipping)}, €${confirmed.total + (shipping?.cost ?? 0)} in all. Items confirmed by the cart in ${ms} ms.`,
       });
     } catch (err) {
       const error = err.code === "timeout" ? "The cart did not confirm in time. The order was not placed." : err.message;
@@ -114,15 +136,17 @@ class JsMfe extends HTMLElement {
   }
 
   render() {
-    const { cartOnline, summary, busy, error, note, announcement } = this.state;
+    const { cartOnline, summary, shipping, busy, error, note, announcement } = this.state;
     const count = summary?.count ?? 0;
+    const grand = (summary?.total ?? 0) + (shipping?.cost ?? 0);
     const canOrder = cartOnline && count > 0 && !busy;
 
     this.shadowRoot.innerHTML = `
       <style>${STYLES}</style>
       ${announcement ? `<div class="announce" role="status"><span class="from">From ${escapeHtml(announcement.from)}${announcement.direct ? " · only to you" : ""}</span>${escapeHtml(announcement.text)}</div>` : ""}
       <div class="total">
-        <strong>€${escapeHtml(summary?.total ?? 0)}</strong> · ${escapeHtml(items(count))}
+        <strong>€${escapeHtml(grand)}</strong> · ${escapeHtml(items(count))}
+        ${count > 0 ? `<div class="muted">${shipping ? `€${escapeHtml(summary.total)} items${escapeHtml(shippingText(shipping))}` : "Shipping not quoted"}</div>` : ""}
         <div class="muted">${cartOnline ? "Kept up to date by the cart's events" : "Waiting for the cart"}</div>
       </div>
       <button id="order" ${canOrder ? "" : "disabled"}>${busy ? "Confirming with cart…" : "Place order"}</button>
