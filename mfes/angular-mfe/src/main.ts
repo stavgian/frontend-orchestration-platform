@@ -11,112 +11,87 @@ import {
 } from '@angular/core';
 import { createApplication } from '@angular/platform-browser';
 import { createCustomElement } from '@angular/elements';
+// The only thing this app shares with the others: the published message library.
+import { Connection, connect } from '@stavgian/mfe-communication';
 
-// Event contract (mirrors shared-contract but kept local to avoid compile-time coupling)
-const EVENT_NAMES = {
-  statusMessage: 'statusMessage',
-} as const;
-
-type StatusMessagePayload = { text: string; source?: string; emittedAt?: string };
-type EventPayloadMap = {
-  [EVENT_NAMES.statusMessage]: StatusMessagePayload;
-};
-
-function validate<K extends keyof EventPayloadMap>(
-  eventName: K,
-  payload: EventPayloadMap[K]
-) {
-  const required = {
-    [EVENT_NAMES.statusMessage]: ['text'],
-  } as const;
-
-  const missing = required[eventName].filter(
-    (key) => typeof payload[key as keyof typeof payload] !== 'string' || !payload[key as keyof typeof payload]
-  );
-
-  if (missing.length) {
-    throw new Error(
-      `Invalid payload for ${eventName}: missing string fields ${missing.join(',')}`
-    );
+// The messages this app sends. Other apps declare their own; nothing is shared but the names.
+declare module '@stavgian/mfe-communication' {
+  interface MessageMap {
+    'cart:item-added': { sku: string; name: string; price: number };
   }
 }
 
-function publish<K extends keyof EventPayloadMap>(
-  eventName: K,
-  payload: EventPayloadMap[K]
-) {
-  validate(eventName, payload);
-  window.dispatchEvent(new CustomEvent(eventName, { detail: payload }));
-}
-
-function subscribe<K extends keyof EventPayloadMap>(
-  eventName: K,
-  handler: (payload: EventPayloadMap[K]) => void
-): () => void {
-  const listener = (event: Event) => {
-    const custom = event as CustomEvent<EventPayloadMap[K]>;
-    try {
-      validate(eventName, custom.detail);
-      handler(custom.detail);
-    } catch (err) {
-      console.warn(err);
-    }
-  };
-
-  window.addEventListener(eventName, listener as EventListener);
-  return () => window.removeEventListener(eventName, listener as EventListener);
-}
+const PRODUCTS = [
+  { sku: 'mug', name: 'Coffee mug', emoji: '☕', price: 12 },
+  { sku: 'tee', name: 'T-shirt', emoji: '👕', price: 25 },
+  { sku: 'cap', name: 'Cap', emoji: '🧢', price: 18 },
+];
 
 @Component({
   selector: 'angular-mfe-view',
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="card">
-      <p class="title">Angular MFE</p>
-      <p class="subtitle">Says hi and listens to status messages.</p>
-
-      <button class="btn ghost" (click)="sayHi()">Say hi to everyone</button>
-      <div class="note" *ngIf="lastStatus">Last heard: {{ lastStatus?.text }} ({{ lastStatus?.source || 'unknown' }})</div>
+    <div class="announce" *ngIf="announcement" role="status">
+      <span class="from">📣 From the shell portal{{ announcement.direct ? ' · only to you' : '' }}</span>{{ announcement.text }}
     </div>
+    <p class="intro">Pick a product. The catalog announces it; whoever cares (the cart) reacts.</p>
+    <ul class="products">
+      <li *ngFor="let p of products">
+        <span class="emoji" aria-hidden="true">{{ p.emoji }}</span>
+        <span class="name">{{ p.name }}</span>
+        <span class="price">€{{ p.price }}</span>
+        <button type="button" (click)="add(p)" [class.done]="justAdded === p.sku">
+          {{ justAdded === p.sku ? 'Added ✓' : 'Add to cart' }}
+        </button>
+      </li>
+    </ul>
   `,
   styles: [
-    `:host { display:block; font-family: 'Inter', system-ui, sans-serif; color:#f6f8fb; }
-     .card { background: linear-gradient(180deg, #101827, #0b1220); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:16px; box-shadow:0 12px 30px rgba(0,0,0,0.25); }
-     .title { margin:0 0 6px; font-weight:700; font-size:16px; }
-     .subtitle { margin:0 0 12px; color:#9fb1c9; font-size:13px; }
-     .panel { border-radius:10px; border:1px dashed rgba(255,255,255,0.14); padding:10px; background:rgba(255,255,255,0.04); display:flex; flex-direction:column; gap:6px; }
-     .panel.muted { color:#9fb1c9; }
-     .label { font-size:12px; color:#b7c6da; }
-     .input { padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.06); color:#f6f8fb; }
-     .hint { font-size:12px; color:#b7c6da; }
-     .btn { margin-top:12px; padding:10px 14px; border:none; border-radius:10px; font-weight:700; color:#0b1220; background:linear-gradient(90deg, #6bdcff, #9b8cff); cursor:pointer; }
-     .btn:disabled { opacity:0.5; cursor:not-allowed; }
-     .note { margin-top:10px; color:#9fb1c9; font-size:12px; }
+    `:host { display:block; font: 14px/1.45 Inter, system-ui, sans-serif; color:#e9eef5; }
+     .intro { margin:0 0 12px; color:#94a3b6; font-size:13px; }
+     .products { list-style:none; margin:0; padding:0; display:grid; gap:8px; }
+     li { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,0.04); }
+     .emoji { font-size:20px; }
+     .name { flex:1; min-width:0; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+     .price { color:#94a3b6; font-variant-numeric:tabular-nums; }
+     button { font:inherit; font-size:13px; font-weight:600; padding:6px 10px; border-radius:999px; cursor:pointer; border:0; color:#0a0f16; background:#ff6b8b; min-width:96px; flex:none; transition:background 150ms; }
+     button:hover { background:#ff8aa3; }
+     button.done { background:#4ade80; }
+     .announce { display:flex; flex-direction:column; gap:2px; margin:0 0 12px; padding:10px 12px; border-radius:12px; font-size:13px; background:rgba(182,243,107,0.08); border:1px solid rgba(182,243,107,0.3); animation:announce-in 250ms ease-out; }
+     .from { font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#b6f36b; }
+     @keyframes announce-in { from { opacity:0; transform:translateY(-4px); } }
     `,
   ],
 })
 class AngularMfeComponent implements OnInit, OnDestroy {
-  statusMessage = '';
-  private unsubscribeStatus?: () => void;
-  lastStatus?: StatusMessagePayload;
+  private bus?: Connection;
+  private timer?: ReturnType<typeof setTimeout>;
+  private announceTimer?: ReturnType<typeof setTimeout>;
+  readonly products = PRODUCTS;
+  justAdded?: string;
+  announcement?: { text: string; direct: boolean };
 
   ngOnInit(): void {
-    this.unsubscribeStatus = subscribe(EVENT_NAMES.statusMessage, (msg) => {
-      this.lastStatus = msg;
+    this.bus = connect({ id: 'angular-mfe', name: 'Product catalog', version: '1.0.0' });
+    this.bus.subscribe('portal:announcement', (msg) => {
+      this.announcement = { text: (msg.payload as { text: string }).text, direct: msg.to === 'angular-mfe' };
+      clearTimeout(this.announceTimer);
+      this.announceTimer = setTimeout(() => (this.announcement = undefined), 6000);
     });
   }
 
   ngOnDestroy(): void {
-    this.unsubscribeStatus?.();
+    clearTimeout(this.timer);
+    clearTimeout(this.announceTimer);
+    this.bus?.disconnect();
   }
 
-  sayHi() {
-    publish(EVENT_NAMES.statusMessage, {
-      text: 'Hi from Angular MFE — waving at everyone!',
-      source: 'angular-mfe',
-      emittedAt: new Date().toISOString(),
-    });
+  add(product: (typeof PRODUCTS)[number]) {
+    this.bus?.publish('cart:item-added', { sku: product.sku, name: product.name, price: product.price });
+    this.justAdded = product.sku;
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => (this.justAdded = undefined), 1200);
   }
 }
 

@@ -4,6 +4,17 @@
   "affected": {
     "defaultBase": "main"
   },
+  "release": {
+    "projects": ["mfe-communication"],
+    "releaseTagPattern": "mfe-communication@{version}",
+    "changelog": {
+      "workspaceChangelog": false,
+      "projectChangelogs": true
+    },
+    "git": {
+      "commitMessage": "chore(release): @stavgian/mfe-communication@{version}"
+    }
+  },
   "workspaceLayout": {
     "appsDir": "apps",
     "libsDir": "libs"

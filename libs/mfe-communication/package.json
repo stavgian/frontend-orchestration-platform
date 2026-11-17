@@ -1,0 +1,46 @@
+{
+  "name": "@stavgian/mfe-communication",
+  "version": "1.0.0",
+  "description": "Typed, framework-agnostic messaging between microfrontends using browser-native CustomEvents.",
+  "keywords": [
+    "microfrontends",
+    "micro-frontends",
+    "event-bus",
+    "custom-events",
+    "web-components",
+    "framework-agnostic"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stavgian/frontend-orchestration-platform.git",
+    "directory": "libs/mfe-communication"
+  },
+  "homepage": "https://github.com/stavgian/frontend-orchestration-platform/tree/main/libs/mfe-communication#readme",
+  "bugs": "https://github.com/stavgian/frontend-orchestration-platform/issues",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.lib.json",
+    "test": "tsc -p test/tsconfig.json && node --test \"test/*.test.js\"",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "devDependencies": {
+    "typescript": "~5.4.5"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

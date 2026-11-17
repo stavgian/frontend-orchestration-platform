@@ -1,33 +1,94 @@
-<ng-container *ngIf="!loadingManifest; else loading">
-  <div class="page single-column">
-    <section class="workspace full">
-      <router-outlet></router-outlet>
-    </section>
-
-    <section class="event-log">
-      <header>
-        <div class="title">Event Log</div>
-        <div class="subtitle">Listening to status messages</div>
-      </header>
-      <div class="log-list">
-        <div class="log-empty" *ngIf="!logs.length">No events yet.</div>
-        <div class="log-entry" *ngFor="let log of logs">
-          <div class="log-meta">
-            <span class="badge">{{ log.name }}</span>
-            <span class="time">{{ log.timestamp | date: 'shortTime' }}</span>
-          </div>
-          <div class="message" *ngIf="log.message">{{ log.message }}</div>
-          <div class="source" *ngIf="log.source || log.emittedAt">
-            {{ log.source || 'unknown source' }}
-            <ng-container *ngIf="log.emittedAt"> · {{ log.emittedAt | date:'shortTime' }}</ng-container>
-          </div>
-          <pre>{{ log.payload | json }}</pre>
-        </div>
+<div class="shell" [class.log-open]="logOpen()">
+  <div class="main">
+    <header class="topbar">
+      <div class="brand">
+        <span class="p-badge" aria-hidden="true">P</span>
+        <span>Shell portal <span class="brand-sub">· Frontend Orchestration</span></span>
       </div>
-    </section>
-  </div>
-</ng-container>
+      <div class="topbar-actions">
+        @if (mfes.length) {
+          <span class="online" title="Apps connected to the message channel">
+            <span class="live" aria-hidden="true"></span>
+            {{ feed.connectedCount() }} of {{ mfes.length }} apps connected
+          </span>
+        }
+        <button
+          type="button"
+          class="btn-ghost log-toggle"
+          [class.active]="logOpen()"
+          [attr.aria-expanded]="logOpen()"
+          aria-controls="message-log"
+          (click)="toggleLog()"
+        >
+          Message log
+          @if (unread()) {
+            <span class="badge" [attr.aria-label]="unread() + ' new'">{{ unread() }}</span>
+          }
+        </button>
+      </div>
+    </header>
 
-<ng-template #loading>
-  <div class="loading-state">Loading manifest…</div>
-</ng-template>
+    <div class="page">
+      <section class="hero">
+        <h1>One page, built from <span class="hl">independent apps</span></h1>
+        <p class="lede">
+          A catalog, a cart and a checkout, each built with a different technology and deployed on its own.
+          The shell portal reads a manifest, loads them at runtime, and gives them one shared message channel. That channel is the only way they work together.
+        </p>
+        <ol class="steps">
+          <li><strong>Events</strong> “Something happened”: the catalog announces a product; the cart announces its new total.</li>
+          <li><strong>Requests</strong> “I need an answer”: checkout confirms the total with the cart before ordering.</li>
+          <li><strong>Presence</strong> “Who's here?”: checkout notices when the cart comes online and catches up.</li>
+        </ol>
+      </section>
+
+      @if (loadingManifest) {
+        <div class="panel notice">Finding available apps…</div>
+      } @else if (manifestError) {
+        <div class="panel notice error">
+          Couldn't load the list of apps.
+          <small>{{ manifestError }}</small>
+        </div>
+      } @else {
+        <!-- Everything in this frame belongs to the shell portal: it hosts the page, loads the apps and provides the channel. -->
+        <section class="host" aria-label="Hosted by the shell portal">
+          <div class="host-label">
+            <span class="p-badge" aria-hidden="true">P</span>
+            Shell portal<span class="long"> · loads {{ mfes.length }} apps from the manifest and hosts their channel</span>
+          </div>
+          @if (manifest) {
+            <app-manifest-panel [manifest]="manifest" [url]="manifestUrl" />
+          }
+          <app-message-channel class="panel" [mfes]="mfes" />
+          <router-outlet />
+        </section>
+      }
+    </div>
+
+    <footer class="footer">
+      <span>
+        © {{ year }} Yiannis Stavgianoudakis ·
+        <a href="https://github.com/stavgian/frontend-orchestration-platform/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+      </span>
+      <nav aria-label="Links">
+        <a href="https://stavgian.de" target="_blank" rel="noopener">stavgian.de</a>
+        <a href="https://github.com/stavgian/frontend-orchestration-platform" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </footer>
+  </div>
+
+  <aside
+    id="message-log"
+    class="log-panel"
+    [class.open]="logOpen()"
+    [attr.inert]="logOpen() ? null : ''"
+    aria-label="Message log"
+  >
+    <app-message-log (closed)="toggleLog(false)" />
+  </aside>
+  <div class="backdrop" (click)="toggleLog(false)" aria-hidden="true"></div>
+</div>
+
+@if (!logOpen()) {
+  <app-toast-stack />
+}

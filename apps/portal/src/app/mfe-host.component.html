@@ -1,5 +1,14 @@
 <div class="host-wrapper">
-  <div class="host-status" *ngIf="loading">Loading microfrontend…</div>
-  <div class="host-error" *ngIf="error">{{ error }}</div>
+  @if (loading) {
+    <div class="host-status" role="status">
+      <span class="spinner" aria-hidden="true"></span> Loading app…
+    </div>
+  }
+  @if (error) {
+    <div class="host-error" role="alert">
+      <strong>Couldn't load this app.</strong> Is it running?
+      <small>{{ error }}</small>
+    </div>
+  }
   <div #host class="mfe-host" [class.dimmed]="loading"></div>
 </div>

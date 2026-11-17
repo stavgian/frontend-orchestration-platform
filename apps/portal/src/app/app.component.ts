@@ -1,128 +1,82 @@
-import { CommonModule, DatePipe, JsonPipe } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import {
-  NavigationEnd,
-  Router,
-  RouterLink,
-  RouterLinkActive,
-  RouterOutlet,
-} from '@angular/router';
-import {
-  EVENT_NAMES,
-  EventPayloadMap,
-  Manifest,
-  MfeDefinition,
-  StatusMessagePayload,
-} from '@frontend/shared-contract';
-import { subscribe } from '@frontend/shared-event-bus';
-import { filter } from 'rxjs/operators';
-import { Subscription } from 'rxjs';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Router, RouterOutlet } from '@angular/router';
+import { Manifest, MfeDefinition } from './manifest';
+import { manifestUrl } from './manifest-url';
+import { ManifestPanelComponent } from './manifest-panel.component';
+import { MessageChannelComponent } from './message-channel.component';
+import { MessageFeedService } from './message-feed.service';
+import { MessageLogComponent } from './message-log.component';
 import { MfeLoaderService } from './mfe-loader.service';
+import { ToastStackComponent } from './toast-stack.component';
 
-type EventLogEntry = {
-  name: keyof EventPayloadMap;
-  payload: StatusMessagePayload;
-  timestamp: number;
-  source?: string;
-  emittedAt?: string;
-  message?: string;
-};
+const LOG_PREF_KEY = 'portal.message-log';
 
 @Component({
   standalone: true,
   selector: 'app-root',
-  imports: [
-    CommonModule,
-    RouterOutlet,
-    RouterLink,
-    RouterLinkActive,
-    JsonPipe,
-    DatePipe,
-  ],
+  imports: [RouterOutlet, ManifestPanelComponent, MessageChannelComponent, MessageLogComponent, ToastStackComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })
-export class AppComponent implements OnInit, OnDestroy {
+export class AppComponent implements OnInit {
+  private readonly loader = inject(MfeLoaderService);
+  private readonly router = inject(Router);
+  readonly feed = inject(MessageFeedService);
+
+  readonly year = new Date().getFullYear();
+  readonly manifestUrl = manifestUrl;
+  manifest?: Manifest;
   mfes: MfeDefinition[] = [];
-  manifestVersion?: Manifest['version'];
-  logs: EventLogEntry[] = [];
   loadingManifest = true;
   manifestError?: string;
-  activeMfeId?: string;
 
-  private eventUnsubscribers: Array<() => void> = [];
-  private navSub?: Subscription;
-
-  constructor(
-    private readonly loader: MfeLoaderService,
-    private readonly router: Router
-  ) {}
+  readonly logOpen = signal(initialLogOpen());
+  /** Messages that arrived while the log was closed. */
+  private readonly seenCount = signal(0);
+  readonly unread = computed(() => (this.logOpen() ? 0 : this.feed.messageCount() - this.seenCount()));
 
   async ngOnInit(): Promise<void> {
-    this.navSub = this.router.events
-      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
-      .subscribe(() => (this.activeMfeId = this.currentRouteId()));
-
     try {
       const manifest = await this.loader.getManifest();
+      this.manifest = manifest;
       this.mfes = manifest.mfes;
-      this.manifestVersion = manifest.version;
-      this.activeMfeId = this.currentRouteId();
-
-      const isMfeRoute = this.router.url.startsWith('/mfe/');
-      if (isMfeRoute && (!this.activeMfeId || !this.findMfe(this.activeMfeId))) {
-        const first = manifest.mfes[0];
-        if (first) {
-          this.router.navigate(['mfe', first.route ?? first.id]);
-        }
-      }
+      this.redirectUnknownMfeRoute();
     } catch (err) {
       this.manifestError = (err as Error)?.message ?? 'Unable to load manifest';
     } finally {
       this.loadingManifest = false;
     }
-
-    this.setupEventLog();
   }
 
-  ngOnDestroy(): void {
-    this.eventUnsubscribers.forEach((fn) => fn());
-    this.navSub?.unsubscribe();
+  toggleLog(open = !this.logOpen()): void {
+    if (!open) this.seenCount.set(this.feed.messageCount());
+    this.logOpen.set(open);
+    try {
+      localStorage.setItem(LOG_PREF_KEY, open ? 'open' : 'closed');
+    } catch {
+      // Storage can be unavailable (private mode); the toggle still works for this visit.
+    }
   }
 
-  navLink(mfe: MfeDefinition) {
-    return ['/mfe', mfe.route ?? mfe.id];
-  }
+  private redirectUnknownMfeRoute(): void {
+    if (!this.router.url.startsWith('/mfe/')) return;
 
-  trackById = (_: number, mfe: MfeDefinition) => mfe.id;
-
-  private setupEventLog(): void {
-    this.eventUnsubscribers.push(
-      subscribe(EVENT_NAMES.statusMessage, (payload) =>
-        this.addLog(EVENT_NAMES.statusMessage, payload)
-      )
-    );
+    const id = this.router.routerState.snapshot.root.firstChild?.params['id'];
+    const known = this.mfes.some((mfe) => mfe.id === id || mfe.route === id);
+    const first = this.mfes[0];
+    if (!known && first) {
+      this.router.navigate(['mfe', first.route ?? first.id]);
+    }
   }
+}
 
-  private addLog(name: keyof EventPayloadMap, payload: StatusMessagePayload): void {
-    const entry: EventLogEntry = {
-      name,
-      payload,
-      timestamp: Date.now(),
-      source: (payload as any).source,
-      emittedAt: (payload as any).emittedAt,
-      message: (payload as any).text,
-    };
-    this.logs = [entry, ...this.logs].slice(0, 50);
+/** Remembered choice, or open by default when there's room beside the apps. */
+function initialLogOpen(): boolean {
+  try {
+    const saved = localStorage.getItem(LOG_PREF_KEY);
+    if (saved) return saved === 'open';
+  } catch {
+    // Fall through to the default.
   }
-
-  private currentRouteId(): string | undefined {
-    const child = this.router.routerState.snapshot.root.firstChild;
-    return child?.params['id'];
-  }
-
-  private findMfe(id?: string): MfeDefinition | undefined {
-    if (!id) return undefined;
-    return this.mfes.find((mfe) => mfe.id === id || mfe.route === id);
-  }
+  return typeof window !== 'undefined' && window.innerWidth >= 1200;
 }

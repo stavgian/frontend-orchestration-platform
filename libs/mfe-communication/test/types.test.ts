@@ -1,0 +1,61 @@
+// Compile-time checks: `tsc` fails if declared message types stop being enforced.
+import { Message, connect } from '../src/index';
+
+declare module '../src/index' {
+  interface MessageMap {
+    'cart:item-added': { sku: string; qty: number };
+  }
+  interface RequestMap {
+    'cart:get-summary': { request: { currency: string }; response: { count: number; total: number } };
+  }
+}
+
+const bus = connect({ id: 'types-test' });
+
+// Declared types get typed payloads.
+bus.publish('cart:item-added', { sku: 'A1', qty: 1 });
+// @ts-expect-error qty is missing
+bus.publish('cart:item-added', { sku: 'A1' });
+// @ts-expect-error sku must be a string
+bus.publish('cart:item-added', { sku: 1, qty: 1 });
+
+// Direct messages and observers.
+bus.publish('cart:item-added', { sku: 'A1', qty: 1 }, { to: 'cart-app' });
+bus.subscribe('*', () => undefined, { observeAll: true });
+
+// Undeclared types still work, with an unknown payload.
+bus.publish('anything:else', { whatever: true });
+
+// Exact subscriptions receive the typed envelope.
+bus.subscribe('cart:item-added', (msg) => {
+  const sku: string = msg.payload.sku;
+  const qty: number = msg.payload.qty;
+  void [sku, qty];
+});
+
+// Wildcards receive a generic envelope.
+bus.subscribe('cart:*', (msg: Message) => {
+  // @ts-expect-error payload is unknown until narrowed
+  void msg.payload.sku;
+});
+
+// Declared requests: typed question and typed answer.
+async function requests() {
+  const summary = await bus.request('cart:get-summary', { currency: 'EUR' });
+  const total: number = summary.total;
+  void total;
+  // @ts-expect-error currency is missing
+  await bus.request('cart:get-summary', {});
+  bus.respond('cart:get-summary', (req) => ({ count: req.currency.length, total: 0 }));
+  // @ts-expect-error total is missing from the answer
+  bus.respond('cart:get-summary', () => ({ count: 1 }));
+  const ms: number = await bus.ping('someone');
+  void ms;
+}
+void requests;
+
+// Presence payloads are typed.
+bus.subscribe('system:ready', (msg) => {
+  const id: string = msg.payload.id;
+  void id;
+});

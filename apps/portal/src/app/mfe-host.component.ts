@@ -10,7 +10,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { MfeDefinition } from '@frontend/shared-contract';
+import { MfeDefinition } from './manifest';
 import { MfeLoaderService } from './mfe-loader.service';
 import { Subscription, from, of } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
@@ -37,10 +37,8 @@ export class MfeHostComponent implements OnInit, OnChanges, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    if (this.definition) {
-      void this.loadDefinition(this.definition);
-      return;
-    }
+    // With a [definition] input, ngOnChanges already loads it; loading here too mounted every app twice.
+    if (this.definition) return;
 
     this.sub = this.route.paramMap
       .pipe(

@@ -24,14 +24,18 @@ Microfrontends are discovered via a JSON manifest, loaded dynamically by URL, mo
   - Does not import or reference MFE code at build time
 
 - Microfrontends (MFEs)
-  - Independently buildable and servable
+  - Independently buildable and servable, each with its own `package.json`
   - Expose a custom element as their public API
-  - Communicate only via shared event contracts
-  - Current MFEs: Angular (module federation), React (script), JS (script)
+  - Communicate only through the published `@stavgian/mfe-communication` package
+  - Render only their own content; the portal draws the frame around each one
+  - Current MFEs, together forming a small shop:
+    - **Product catalog** (Angular, module federation)
+    - **Shopping cart** (React, script)
+    - **Checkout** (plain JS, script)
 
-- Shared libraries
-  - shared-contract: manifest schema, event names, payload types
-  - shared-event-bus: publish / subscribe abstraction over browser-native events
+- Shared library
+  - [`@stavgian/mfe-communication`](libs/mfe-communication) (published to npm): events, requests with answers, and presence over browser-native events. The only code the portal and the MFEs share.
+  - The manifest format lives in the portal ([`manifest.ts`](apps/portal/src/app/manifest.ts)), because only the portal reads it.
 
 ## Runtime manifest
 
@@ -46,11 +50,43 @@ The portal uses this information to load and render MFEs without compile-time co
 
 ## Cross-microfrontend communication
 
-Communication is based on browser-native `CustomEvent`s published on `window`.
+Communication is based on browser-native `CustomEvent`s published on `window`, wrapped by the [`@stavgian/mfe-communication`](libs/mfe-communication) package.
 
-- Single event: `statusMessage` → `{ text: string; source?: string; emittedAt?: string }`
-- MFEs publish/subscribe via the lightweight `shared-event-bus`.
-- The portal listens and logs every status with its source and emitted time; the dashboard header also shows the last heard message.
+The demo shop uses all three patterns:
+
+| Pattern | In the demo |
+| --- | --- |
+| **Event**: "something happened" | The catalog publishes `cart:item-added`; the cart adds the item and publishes `cart:updated` with its new total, which checkout shows live. Checkout publishes `order:placed`; the cart empties. |
+| **Request**: "I need an answer" | On "Place order", checkout confirms the total with the cart itself: `request('cart:get-summary', …, { to: 'react-mfe' })`. The cart answers with `respond()`. |
+| **Direct message**: "just for you" | "Checkout →" in the cart sends `checkout:start` only to checkout (`publish(…, { to: 'js-mfe' })`); the catalog never receives it. The shell portal can also send its announcement to one app only. |
+| **Presence**: "who's here?" | When the cart comes online, checkout asks it once for its current total. Events only report changes, so this covers apps that load late. Checkout only allows ordering while the cart is connected. The portal's "Ping all apps" checks every app and shows its response time. |
+
+How it works:
+- Each app calls `connect({ id })`, which announces it on the channel (`system:ready`) and discovers apps already connected (`system:present`). `disconnect()` announces `system:left`.
+- Every message is an envelope `{ specversion, id, type, source, time, payload }`. Apps choose their own types and declare the payloads they use with TypeScript declaration merging. No shared types package is needed.
+- Subscriptions take an exact type, a namespace (`cart:*`) or everything (`*`).
+- The portal and every MFE depend on the package by version (`^1.0.0`), never on each other's code. Each connection keeps only its own state, so apps on different library versions still talk as long as they share the same `specversion`.
+
+On one page, the shell portal shows everything live:
+- the manifest it loaded the apps from: which apps, how each one is loaded, and from where
+- which apps are connected
+- a channel diagram showing who sent, who was asked, and who answered
+- a full-height message log sidebar you can toggle and filter
+- toasts while the log is closed
+
+It can also send announcements itself.
+
+See the [package README](libs/mfe-communication/README.md) for the full API.
+
+### How the pieces depend on each other
+
+```
+@stavgian/mfe-communication  (npm, semver)
+   ▲        ▲          ▲          ▲
+portal  angular-mfe  react-mfe  js-mfe     ← each pins its own version range
+```
+
+In this repo, npm workspaces link the local library source to each app, as long as the library's version satisfies that app's range. An app can stay on `^1` while the library moves to `2.x`, in which case it installs `1.x` from npm instead.
 
 ## Repository structure
 
@@ -59,14 +95,26 @@ apps/
   portal/
 
 libs/
-  shared-contract/
-  shared-event-bus/
+  mfe-communication/   ← published to npm as @stavgian/mfe-communication
 
 mfes/
   angular-mfe/
   react-mfe/
   js-mfe/
 ```
+
+## Releasing `@stavgian/mfe-communication`
+
+Releases are made from this repo. A pushed tag triggers [`.github/workflows/publish-mfe-communication.yml`](.github/workflows/publish-mfe-communication.yml), which builds, tests and publishes with npm trusted publishing (no npm token stored, provenance attached).
+
+```bash
+npx nx release minor --skip-publish   # or patch / major: bumps version, writes CHANGELOG, commits, tags mfe-communication@x.y.z
+git push --follow-tags                # the tag starts the publish workflow
+```
+
+Pick the bump by what changed in the payload format: patch for fixes, minor for new events or optional fields, major for renamed/removed fields or new required fields.
+
+Run the library's tests locally with `npm run test:mfe-communication`.
 
 ## Running locally
 
@@ -118,6 +166,28 @@ PAGES_BASE_PATH=/ npm run build:github-pages
 
 The workflow in `.github/workflows/deploy-pages.yml` publishes `dist/github-pages` to GitHub Pages on pushes to `main`.
 
+## Deploying to Cloudflare
+
+The same static build also runs on Cloudflare, served from the site root. [`wrangler.jsonc`](wrangler.jsonc) tells Cloudflare where the built files are and sends unknown paths (deep links like `/mfe/react-mfe`) to the shell portal.
+
+In the Cloudflare dashboard, go to **Workers & Pages → Create → Import a repository**, pick this repo, and set:
+
+| Setting | Value |
+| --- | --- |
+| Build command | `npm run build:cloudflare` |
+| Deploy command | `npx wrangler deploy` (the default) |
+| Worker name | `frontend-orchestration-platform` (must match `name` in `wrangler.jsonc`) |
+
+`build:cloudflare` builds with `PAGES_BASE_PATH=/`. The GitHub Pages build instead uses `/<repository-name>/`, which would break every asset URL on Cloudflare.
+
+To check a build locally the way Cloudflare serves it:
+
+```bash
+npm run build:cloudflare
+npx wrangler deploy --dry-run   # validates the config and files, uploads nothing
+npx wrangler dev                # serves it locally
+```
+
 ## Design principles
 
 - No compile-time coupling between shell and MFEs
@@ -133,13 +203,14 @@ MIT
 
 ## JS MFE (plain JS)
 
-Run the lightweight dev server (serves the built single file):
+Plain JavaScript, no framework. A tiny esbuild step bundles `@stavgian/mfe-communication` into a single file:
 
 ```bash
-npm run serve:js-mfe
+npm run build:js-mfe   # produces mfes/js-mfe/dist/js-mfe.js
+npm run serve:js-mfe   # builds then serves on http://localhost:4303/js-mfe.js
 ```
 
-Listens on http://localhost:4303/js-mfe.js (portal manifest points here).
+The portal manifest points to http://localhost:4303/js-mfe.js.
 
 ## React MFE (custom element)
 
