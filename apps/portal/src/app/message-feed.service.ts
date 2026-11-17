@@ -58,12 +58,14 @@ export class MessageFeedService implements OnDestroy {
   readonly connectedCount = computed(() => this.connectedIds().size);
 
   constructor() {
-    this.bus.subscribe('*', (message) => this.add(message));
+    // The portal watches all traffic, including messages addressed to one app.
+    this.bus.subscribe('*', (message) => this.add(message), { observeAll: true });
     this.bus.onPeersChange((peers) => this.connectedIds.set(new Set(peers.map((p) => p.id))));
   }
 
-  announce(text: string): void {
-    this.bus.publish('portal:announcement', { text });
+  /** To everyone, or with `to` to one app only. */
+  announce(text: string, to?: string): void {
+    this.bus.publish('portal:announcement', { text }, { to });
   }
 
   /** Request/response health check: asks every connected app to answer. */

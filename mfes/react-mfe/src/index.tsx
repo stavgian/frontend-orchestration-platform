@@ -14,6 +14,8 @@ declare module '@stavgian/mfe-communication' {
     /** Published after every change, so other apps can stay in sync without asking. */
     'cart:updated': Summary;
     'order:placed': Summary;
+    /** Sent only to checkout (a direct message), when the shopper is ready to pay. */
+    'checkout:start': Summary;
   }
   interface RequestMap {
     'cart:get-summary': { request: void; response: Summary };
@@ -31,7 +33,7 @@ const App: React.FC = () => {
   const [bus, setBus] = useState<Connection | null>(null);
   const [lines, setLines] = useState<Line[]>([]);
   const [note, setNote] = useState<string | null>(null);
-  const [announcement, setAnnouncement] = useState<string | null>(null);
+  const [announcement, setAnnouncement] = useState<{ text: string; direct: boolean } | null>(null);
   // The responder reads the latest cart without re-registering on every change.
   const linesRef = useRef(lines);
   linesRef.current = lines;
@@ -54,7 +56,7 @@ const App: React.FC = () => {
     });
     let announceTimer: ReturnType<typeof setTimeout> | undefined;
     connection.subscribe('portal:announcement', (msg) => {
-      setAnnouncement((msg.payload as { text: string }).text);
+      setAnnouncement({ text: (msg.payload as { text: string }).text, direct: msg.to === 'react-mfe' });
       clearTimeout(announceTimer);
       announceTimer = setTimeout(() => setAnnouncement(null), 6000);
     });
@@ -80,6 +82,11 @@ const App: React.FC = () => {
   }, [lines]);
 
   const clear = () => setLines([]);
+  // A direct message: only the checkout app receives it, the catalog never sees it.
+  const proceed = () => {
+    bus?.publish('checkout:start', summarize(lines), { to: 'js-mfe' });
+    setNote('Sent your cart to checkout only.');
+  };
 
   const { count, total } = summarize(lines);
 
@@ -88,8 +95,8 @@ const App: React.FC = () => {
       <style>{'@keyframes announce-in { from { opacity: 0; transform: translateY(-4px); } }'}</style>
       {announcement && (
         <div style={styles.announce} role="status">
-          <span style={styles.from}>📣 From the portal</span>
-          {announcement}
+          <span style={styles.from}>📣 From the shell portal{announcement.direct ? ' · only to you' : ''}</span>
+          {announcement.text}
         </div>
       )}
       {lines.length === 0 ? (
@@ -109,9 +116,14 @@ const App: React.FC = () => {
         <span>
           <strong>{count}</strong> {count === 1 ? 'item' : 'items'} · <strong>€{total}</strong>
         </span>
-        <button style={styles.button} onClick={clear} disabled={!lines.length}>
-          Clear cart
-        </button>
+        <span style={{ display: 'flex', gap: 6 }}>
+          <button style={styles.button} onClick={clear} disabled={!lines.length}>
+            Clear
+          </button>
+          <button style={styles.primary} onClick={proceed} disabled={!lines.length}>
+            Checkout →
+          </button>
+        </span>
       </div>
       {note && <p style={styles.note}>{note}</p>}
     </div>
@@ -128,6 +140,7 @@ const styles: Record<string, React.CSSProperties> = {
   footer: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 },
   button: { font: 'inherit', fontSize: 13, fontWeight: 600, padding: '6px 12px', borderRadius: 999, cursor: 'pointer', color: '#e9eef5', background: 'transparent', border: '1px solid rgba(255,255,255,0.18)' },
   note: { margin: '12px 0 0', fontSize: 13, color: '#94a3b6' },
+  primary: { font: 'inherit', fontSize: 13, fontWeight: 600, padding: '6px 12px', borderRadius: 999, cursor: 'pointer', color: '#0a0f16', background: '#61dafb', border: 0 },
   announce: { display: 'flex', flexDirection: 'column', gap: 2, margin: '0 0 12px', padding: '10px 12px', borderRadius: 12, fontSize: 13, background: 'rgba(182,243,107,0.08)', border: '1px solid rgba(182,243,107,0.3)', animation: 'announce-in 250ms ease-out' },
   from: { fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#b6f36b' },
 };

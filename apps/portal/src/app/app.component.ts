@@ -1,6 +1,8 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
-import { MfeDefinition } from './manifest';
+import { Manifest, MfeDefinition } from './manifest';
+import { manifestUrl } from './manifest-url';
+import { ManifestPanelComponent } from './manifest-panel.component';
 import { MessageChannelComponent } from './message-channel.component';
 import { MessageFeedService } from './message-feed.service';
 import { MessageLogComponent } from './message-log.component';
@@ -12,7 +14,7 @@ const LOG_PREF_KEY = 'portal.message-log';
 @Component({
   standalone: true,
   selector: 'app-root',
-  imports: [RouterOutlet, MessageChannelComponent, MessageLogComponent, ToastStackComponent],
+  imports: [RouterOutlet, ManifestPanelComponent, MessageChannelComponent, MessageLogComponent, ToastStackComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })
@@ -22,6 +24,8 @@ export class AppComponent implements OnInit {
   readonly feed = inject(MessageFeedService);
 
   readonly year = new Date().getFullYear();
+  readonly manifestUrl = manifestUrl;
+  manifest?: Manifest;
   mfes: MfeDefinition[] = [];
   loadingManifest = true;
   manifestError?: string;
@@ -34,6 +38,7 @@ export class AppComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     try {
       const manifest = await this.loader.getManifest();
+      this.manifest = manifest;
       this.mfes = manifest.mfes;
       this.redirectUnknownMfeRoute();
     } catch (err) {

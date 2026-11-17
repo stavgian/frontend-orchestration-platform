@@ -3,7 +3,7 @@
     <header class="topbar">
       <div class="brand">
         <span class="p-badge" aria-hidden="true">P</span>
-        <span>Portal <span class="brand-sub">· Frontend Orchestration</span></span>
+        <span>Shell portal <span class="brand-sub">· Frontend Orchestration</span></span>
       </div>
       <div class="topbar-actions">
         @if (mfes.length) {
@@ -33,7 +33,7 @@
         <h1>One page, built from <span class="hl">independent apps</span></h1>
         <p class="lede">
           A catalog, a cart and a checkout, each built with a different technology and deployed on its own.
-          The portal loads them at runtime; they work together only by talking over one shared message channel.
+          The shell portal reads a manifest, loads them at runtime, and gives them one shared message channel. That channel is the only way they work together.
         </p>
         <ol class="steps">
           <li><strong>Events</strong> “Something happened”: the catalog announces a product; the cart announces its new total.</li>
@@ -50,12 +50,15 @@
           <small>{{ manifestError }}</small>
         </div>
       } @else {
-        <!-- Everything in this frame belongs to the portal: it hosts the page, loads the apps and provides the channel. -->
-        <section class="host" aria-label="Hosted by the portal">
+        <!-- Everything in this frame belongs to the shell portal: it hosts the page, loads the apps and provides the channel. -->
+        <section class="host" aria-label="Hosted by the shell portal">
           <div class="host-label">
             <span class="p-badge" aria-hidden="true">P</span>
-            Portal<span class="long"> · hosts this page, loads {{ mfes.length }} apps at runtime, provides their channel</span>
+            Shell portal<span class="long"> · loads {{ mfes.length }} apps from the manifest and hosts their channel</span>
           </div>
+          @if (manifest) {
+            <app-manifest-panel [manifest]="manifest" [url]="manifestUrl" />
+          }
           <app-message-channel class="panel" [mfes]="mfes" />
           <router-outlet />
         </section>

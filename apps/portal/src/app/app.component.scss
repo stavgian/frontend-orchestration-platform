@@ -21,10 +21,6 @@
   border-bottom: 1px solid var(--border);
 }
 .brand { display: flex; align-items: center; gap: 10px; font: 600 15px var(--font-display); }
-.p-badge {
-  flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
-  font: 700 11px var(--font-display); color: #0a0f16; background: var(--portal);
-}
 .brand-sub { color: var(--subtle); font-weight: 500; }
 
 /* The portal frame around the channel and every app. */

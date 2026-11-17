@@ -19,6 +19,10 @@ bus.publish('cart:item-added', { sku: 'A1' });
 // @ts-expect-error sku must be a string
 bus.publish('cart:item-added', { sku: 1, qty: 1 });
 
+// Direct messages and observers.
+bus.publish('cart:item-added', { sku: 'A1', qty: 1 }, { to: 'cart-app' });
+bus.subscribe('*', () => undefined, { observeAll: true });
+
 // Undeclared types still work, with an unknown payload.
 bus.publish('anything:else', { whatever: true });
 

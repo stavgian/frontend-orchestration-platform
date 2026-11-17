@@ -40,10 +40,14 @@ class JsMfe extends HTMLElement {
 
     // Events keep the total current: the cart announces every change.
     this.bus.subscribe("cart:updated", (msg) => this.update({ summary: msg.payload, error: null }));
-    this.bus.subscribe("portal:announcement", (msg) => {
-      this.update({ announcement: String(msg.payload?.text ?? "") });
-      clearTimeout(this.announceTimer);
-      this.announceTimer = setTimeout(() => this.update({ announcement: null }), 6000);
+    this.bus.subscribe("portal:announcement", (msg) =>
+      this.showBanner({ from: "the shell portal", direct: msg.to === "js-mfe", text: String(msg.payload?.text ?? "") })
+    );
+    // A direct message from the cart: only checkout receives it.
+    this.bus.subscribe("checkout:start", (msg) => {
+      const { count, total } = msg.payload;
+      this.update({ summary: { count, total } });
+      this.showBanner({ from: "the shopping cart", direct: true, text: `Ready to check out ${items(count)}, €${total}.` });
     });
 
     // Presence + request: when the cart comes online, ask once for what it already holds.
@@ -61,6 +65,12 @@ class JsMfe extends HTMLElement {
     clearTimeout(this.announceTimer);
     this.bus?.disconnect();
     this.bus = null;
+  }
+
+  showBanner(announcement) {
+    this.update({ announcement });
+    clearTimeout(this.announceTimer);
+    this.announceTimer = setTimeout(() => this.update({ announcement: null }), 6000);
   }
 
   update(patch) {
@@ -109,7 +119,7 @@ class JsMfe extends HTMLElement {
 
     this.shadowRoot.innerHTML = `
       <style>${STYLES}</style>
-      ${announcement ? `<div class="announce" role="status"><span class="from">📣 From the portal</span>${escapeHtml(announcement)}</div>` : ""}
+      ${announcement ? `<div class="announce" role="status"><span class="from">📣 From ${escapeHtml(announcement.from)}${announcement.direct ? " · only to you" : ""}</span>${escapeHtml(announcement.text)}</div>` : ""}
       <div class="status">
         <span class="dot ${cartOnline ? "" : "off"}"></span>
         ${cartOnline ? "Cart app is online" : "Cart app is offline"}

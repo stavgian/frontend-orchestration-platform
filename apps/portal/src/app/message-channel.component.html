@@ -2,13 +2,24 @@
   <div class="head">
     <div>
       <h2 id="channel-title">Live message channel</h2>
-      <p>Provided by the portal. Who sends, who is asked, who answers.</p>
+      <p>Provided by the shell portal. Who sends, who is asked, who answers.</p>
     </div>
     <div class="actions">
       <button type="button" class="btn-ghost" (click)="ping()" [disabled]="pinging()">
         {{ pinging() ? 'Pinging…' : 'Ping all apps' }}
       </button>
-      <button type="button" class="btn-primary" (click)="announce()">Send announcement</button>
+      <div class="send-group">
+        <label class="to">
+          <span>to</span>
+          <select [value]="announceTo()" (change)="announceTo.set($any($event.target).value)" aria-label="Send the announcement to">
+            <option value="">everyone</option>
+            @for (node of nodes(); track node.id) {
+              <option [value]="node.id">{{ node.name }} only</option>
+            }
+          </select>
+        </label>
+        <button type="button" class="btn-primary" (click)="announce()">Send announcement</button>
+      </div>
     </div>
   </div>
 
@@ -21,7 +32,7 @@
 
   <p class="caption" aria-live="polite">
     @if (showPings()) {
-      <strong class="portal">Portal</strong> pinged every app. Each one answered on its own.
+      <strong style="color: var(--portal)">Shell portal</strong> pinged every app. Each one answered on its own.
     } @else {
       @if (msg(); as m) {
         <strong [style.color]="m.sender.color">{{ m.sender.name }}</strong>
@@ -80,11 +91,11 @@
     </div>
     <div class="bus" [class.sending]="portalSending()" [class.receiving]="portalReceiving()">
       @if (msg(); as m) {
-        <div class="wave" [style.--x]="senderX() + '%'" [style.--c]="m.sender.color"></div>
+        <div class="wave" [style.--x]="senderX() + '%'" [style.--x1]="waveSpan().from + '%'" [style.--x2]="waveSpan().to + '%'" [style.--c]="m.sender.color"></div>
       }
       <span class="bus-label">
         <span class="p-badge" aria-hidden="true">P</span>
-        Portal<span class="long"> · hosts the channel every app plugs into</span>
+        Shell portal<span class="long"> · the channel every app plugs into</span>
       </span>
     </div>
   </div>

@@ -5,9 +5,9 @@ import { FeedMessage, MessageFeedService, isRecipient } from './message-feed.ser
 import { PORTAL_ID, participantForMfe } from './participants';
 
 const PORTAL_LINES = [
-  'Hello from the portal 👋 — welcome, everyone!',
-  'Portal here: all apps are loaded and listening.',
-  'Quick check from the portal — can everyone hear me?',
+  'Hello from the shell portal 👋 — welcome, everyone!',
+  'Shell portal here: all apps are loaded and listening.',
+  'Quick check from the shell portal — can everyone hear me?',
 ];
 
 /**
@@ -30,6 +30,8 @@ export class MessageChannelComponent implements OnDestroy {
   readonly connectedIds = this.feed.connectedIds;
   readonly pings = this.feed.pings;
   readonly pinging = signal(false);
+  /** Announcement target: '' for everyone, or an app id. */
+  readonly announceTo = signal('');
   /** Briefly true after a ping round, to show every app's answer at once. */
   readonly showPings = signal(false);
   private pingTimer?: ReturnType<typeof setTimeout>;
@@ -41,14 +43,27 @@ export class MessageChannelComponent implements OnDestroy {
   /** Flips on every app message; the template swaps branches on it to replay the animations. */
   readonly replay = computed(() => this.feed.messageCount() % 2 === 1);
 
-  readonly senderX = computed(() => {
+  /** Where an app sits on the bus, in %. The portal (not a node) is the middle of the bus. */
+  private xOf(id: string | undefined): number {
     const nodes = this.nodes();
-    const index = nodes.findIndex((n) => n.id === this.msg()?.sender.id);
-    return index < 0 ? 50 : ((index + 0.5) / nodes.length) * 100; // the portal sends from the middle of the bus
+    const index = nodes.findIndex((n) => n.id === id);
+    return index < 0 ? 50 : ((index + 0.5) / nodes.length) * 100;
+  }
+
+  readonly senderX = computed(() => this.xOf(this.msg()?.sender.id));
+
+  /** How far the wave spreads: the whole bus for broadcasts, only sender → target for direct messages. */
+  readonly waveSpan = computed(() => {
+    const m = this.msg();
+    if (!m?.target) return { from: 0, to: 100 };
+    const [a, b] = [this.senderX(), this.xOf(m.target.id)].sort((x, y) => x - y);
+    return { from: a, to: b };
   });
 
   announce(): void {
-    this.feed.announce(PORTAL_LINES[this.sentCount++ % PORTAL_LINES.length]);
+    const to = this.announceTo() || undefined;
+    const text = to ? 'This one is just for you, from the shell portal.' : PORTAL_LINES[this.sentCount++ % PORTAL_LINES.length];
+    this.feed.announce(text, to);
   }
 
   async ping(): Promise<void> {

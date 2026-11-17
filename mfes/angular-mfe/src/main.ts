@@ -33,7 +33,7 @@ const PRODUCTS = [
   imports: [CommonModule],
   template: `
     <div class="announce" *ngIf="announcement" role="status">
-      <span class="from">📣 From the portal</span>{{ announcement }}
+      <span class="from">📣 From the shell portal{{ announcement.direct ? ' · only to you' : '' }}</span>{{ announcement.text }}
     </div>
     <p class="intro">Pick a product. The catalog announces it; whoever cares (the cart) reacts.</p>
     <ul class="products">
@@ -70,12 +70,12 @@ class AngularMfeComponent implements OnInit, OnDestroy {
   private announceTimer?: ReturnType<typeof setTimeout>;
   readonly products = PRODUCTS;
   justAdded?: string;
-  announcement?: string;
+  announcement?: { text: string; direct: boolean };
 
   ngOnInit(): void {
     this.bus = connect({ id: 'angular-mfe', name: 'Product catalog', version: '1.0.0' });
     this.bus.subscribe('portal:announcement', (msg) => {
-      this.announcement = (msg.payload as { text: string }).text;
+      this.announcement = { text: (msg.payload as { text: string }).text, direct: msg.to === 'angular-mfe' };
       clearTimeout(this.announceTimer);
       this.announceTimer = setTimeout(() => (this.announcement = undefined), 6000);
     });

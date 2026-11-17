@@ -12,7 +12,7 @@ export interface Participant {
 }
 
 const KNOWN: Record<string, Omit<Participant, 'id'>> = {
-  [PORTAL_ID]: { name: 'Portal', tech: 'The host page', initials: 'P', color: '#b6f36b' },
+  [PORTAL_ID]: { name: 'Shell portal', tech: 'The host', initials: 'P', color: '#b6f36b' },
   'angular-mfe': { name: 'Product catalog', tech: 'Angular', initials: 'A', color: '#ff6b8b' },
   'react-mfe': { name: 'Shopping cart', tech: 'React', initials: 'R', color: '#61dafb' },
   'js-mfe': { name: 'Checkout', tech: 'Plain JavaScript', initials: 'JS', color: '#f5d742' },

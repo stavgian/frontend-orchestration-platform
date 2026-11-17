@@ -60,6 +60,12 @@ pre {
 }
 
 /* Shared surfaces and controls used across portal components. */
+/* The portal's mark, wherever the portal itself is shown. */
+.p-badge {
+  flex: none; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center;
+  font: 700 10px var(--font-display); color: #0a0f16; background: var(--portal);
+}
+
 .panel {
   display: block;
   background: var(--panel);

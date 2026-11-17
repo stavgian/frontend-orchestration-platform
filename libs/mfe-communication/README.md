@@ -24,6 +24,9 @@ const bus = connect({ id: 'cart-app', name: 'Cart', version: '1.4.0' });
 // Send to everyone. The library adds id, source, time and specversion.
 bus.publish('cart:item-added', { sku: 'A1', qty: 1 });
 
+// Or to one app only (a direct message).
+bus.publish('checkout:start', { count: 1, total: 12 }, { to: 'checkout-app' });
+
 // Listen to one type, a namespace, or everything.
 bus.subscribe('cart:item-added', (msg) => console.log(msg.payload.sku));
 bus.subscribe('cart:*', (msg) => console.log(msg.type));
@@ -88,6 +91,12 @@ declare module '@stavgian/mfe-communication' {
 const { total } = await bus.request('cart:get-summary', undefined); // total: number
 ```
 
+## Direct messages
+
+`publish(type, payload, { to: 'checkout-app' })` delivers a message only to that app's subscribers; other apps' `subscribe()` calls, even `'*'`, don't receive it. Requests use the same `to` option.
+
+Logs and dev tools can still see everything with `subscribe('*', handler, { observeAll: true })`. This is about routing, not privacy: every message is a DOM event any script on the page could read.
+
 ## Requests and answers
 
 `request()` sends a message marked `expectsReply`. Apps that called `respond()` for that type answer with a `system:reply` whose `inReplyTo` is the request's id.
@@ -134,7 +143,8 @@ Each connection also carries a unique `instance` id. When an app remounts (Angul
 | --- | --- |
 | `connect({ id, name?, version?, schemas? })` | Joins the channel and returns a `Connection`. |
 | `connection.publish(type, payload)` | Sends to everyone, including this app's own subscribers. Returns the envelope. |
-| `connection.subscribe(pattern, handler)` | `'type'`, `'namespace:*'` or `'*'`. Returns an unsubscribe function. |
+| `connection.publish(type, payload, { to? })` | To everyone, or to one app. Returns the envelope. |
+| `connection.subscribe(pattern, handler, { observeAll? })` | `'type'`, `'namespace:*'` or `'*'`. Returns an unsubscribe function. |
 | `connection.request(type, payload, { to?, timeout? })` | Resolves with the first answer; rejects with a `RequestError`. |
 | `connection.respond(type, handler)` | Answers requests of that type, one responder per type. Returns a function that stops answering. |
 | `connection.ping(peerId, { timeout? })` | Resolves with the round trip in ms. |

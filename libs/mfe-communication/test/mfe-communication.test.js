@@ -47,6 +47,24 @@ test('wildcards match a namespace or everything', () => {
   assert.deepEqual(all, ['cart:item-added', 'user:login']);
 });
 
+test('a direct message reaches only its target, and observers', () => {
+  const cart = connect({ id: 'cart' });
+  const checkout = connect({ id: 'checkout' });
+  const catalog = connect({ id: 'catalog' });
+  const portal = connect({ id: 'portal' });
+  const got = { checkout: [], catalog: [], portalLog: [] };
+  checkout.subscribe('checkout:start', (msg) => got.checkout.push(msg.payload));
+  catalog.subscribe('*', (msg) => got.catalog.push(msg.type));
+  portal.subscribe('checkout:*', (msg) => got.portalLog.push(msg.to), { observeAll: true });
+
+  const sent = cart.publish('checkout:start', { count: 2 }, { to: 'checkout' });
+
+  assert.equal(sent.to, 'checkout');
+  assert.deepEqual(got.checkout, [{ count: 2 }]);
+  assert.deepEqual(got.catalog, []);
+  assert.deepEqual(got.portalLog, ['checkout']);
+});
+
 test('newcomers announce themselves and discover existing peers', () => {
   const portal = connect({ id: 'portal' });
   const changes = [];

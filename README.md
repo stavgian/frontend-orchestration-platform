@@ -58,6 +58,7 @@ The demo shop uses all three patterns:
 | --- | --- |
 | **Event**: "something happened" | The catalog publishes `cart:item-added`; the cart adds the item and publishes `cart:updated` with its new total, which checkout shows live. Checkout publishes `order:placed`; the cart empties. |
 | **Request**: "I need an answer" | On "Place order", checkout confirms the total with the cart itself: `request('cart:get-summary', …, { to: 'react-mfe' })`. The cart answers with `respond()`. |
+| **Direct message**: "just for you" | "Checkout →" in the cart sends `checkout:start` only to checkout (`publish(…, { to: 'js-mfe' })`); the catalog never receives it. The shell portal can also send its announcement to one app only. |
 | **Presence**: "who's here?" | When the cart comes online, checkout asks it once for its current total. Events only report changes, so this covers apps that load late. Checkout only allows ordering while the cart is connected. The portal's "Ping all apps" checks every app and shows its response time. |
 
 How it works:
@@ -66,7 +67,8 @@ How it works:
 - Subscriptions take an exact type, a namespace (`cart:*`) or everything (`*`).
 - The portal and every MFE depend on the package by version (`^1.0.0`), never on each other's code. Each connection keeps only its own state, so apps on different library versions still talk as long as they share the same `specversion`.
 
-On one page, the portal shows everything live:
+On one page, the shell portal shows everything live:
+- the manifest it loaded the apps from: which apps, how each one is loaded, and from where
 - which apps are connected
 - a channel diagram showing who sent, who was asked, and who answered
 - a full-height message log sidebar you can toggle and filter

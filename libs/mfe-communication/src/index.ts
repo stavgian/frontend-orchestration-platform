@@ -120,6 +120,19 @@ export type MessagePattern = string;
 
 type HandlerFor<P extends string> = P extends `${string}*` ? (message: Message) => void : (message: Message<P>) => void;
 
+export interface PublishOptions {
+  /** Send to one app only: just its subscribers receive it (plus observers, see `SubscribeOptions`). */
+  to?: string;
+}
+
+export interface SubscribeOptions {
+  /**
+   * Also receive messages addressed to other apps. Meant for logs and dev tools;
+   * normal app code should leave it off.
+   */
+  observeAll?: boolean;
+}
+
 export interface RequestOptions {
   /** Ask one app only. Without it, the first app to answer wins. */
   to?: string;
@@ -166,10 +179,16 @@ export interface ConnectOptions extends PeerInfo {
 
 export interface Connection {
   readonly self: PeerInfo;
-  /** Sends an event to everyone, including this connection's own subscribers. Returns the sent envelope. */
-  publish<T extends string>(type: T, payload: PayloadOf<T>): Message<T>;
-  /** Listens for messages matching a pattern. Returns a function that stops listening. */
-  subscribe<P extends MessagePattern>(pattern: P, handler: HandlerFor<P>): () => void;
+  /**
+   * Sends an event to everyone (including this connection's own subscribers), or with `to`
+   * to one app only. Returns the sent envelope.
+   */
+  publish<T extends string>(type: T, payload: PayloadOf<T>, options?: PublishOptions): Message<T>;
+  /**
+   * Listens for messages matching a pattern: ones sent to everyone, and ones addressed to
+   * this app. Returns a function that stops listening.
+   */
+  subscribe<P extends MessagePattern>(pattern: P, handler: HandlerFor<P>, options?: SubscribeOptions): () => void;
   /**
    * Asks a question and resolves with the first answer. Rejects with a `RequestError`
    * if nobody answers in time, the responder throws, or this connection disconnects.
@@ -212,7 +231,7 @@ export function connect(options: ConnectOptions): Connection {
   const schemas = options.schemas ?? {};
   const target: EventTarget = window;
   const presence: PresencePayload = { ...self, instance: createId() };
-  const subscriptions = new Set<{ pattern: string; handler: (message: Message) => void }>();
+  const subscriptions = new Set<{ pattern: string; handler: (message: Message) => void; observeAll: boolean }>();
   const responders = new Map<string, (payload: unknown, request: Message) => unknown>();
   const pending = new Map<string, Pending>();
   const peers = new Map<string, { peer: PeerInfo; instance?: string }>();
@@ -278,6 +297,7 @@ export function connect(options: ConnectOptions): Connection {
 
     for (const sub of [...subscriptions]) {
       if (!matches(sub.pattern, message.type)) continue;
+      if (!forMe && !sub.observeAll) continue; // addressed to another app
       try {
         sub.handler(message);
       } catch (err) {
@@ -288,8 +308,8 @@ export function connect(options: ConnectOptions): Connection {
   };
   target.addEventListener(DOM_EVENT, onDomEvent);
 
-  const listen = (pattern: string, handler: (message: Message) => void): (() => void) => {
-    const sub = { pattern, handler };
+  const listen = (pattern: string, handler: (message: Message) => void, observeAll = false): (() => void) => {
+    const sub = { pattern, handler, observeAll };
     subscriptions.add(sub);
     return () => subscriptions.delete(sub);
   };
@@ -351,14 +371,15 @@ export function connect(options: ConnectOptions): Connection {
 
   return {
     self,
-    publish(type, payload) {
+    publish(type, payload, publishOptions) {
       assertConnected();
       assertSendable(type, payload);
-      return send(type, payload) as Message<typeof type>;
+      const to = publishOptions?.to;
+      return send(type, payload, to ? { to } : {}) as Message<typeof type>;
     },
-    subscribe(pattern, handler) {
+    subscribe(pattern, handler, subscribeOptions) {
       assertConnected();
-      return listen(pattern, handler as (message: Message) => void);
+      return listen(pattern, handler as (message: Message) => void, subscribeOptions?.observeAll === true);
     },
     request(type, payload, requestOptions) {
       try {
