@@ -1,129 +1,45 @@
-import { CommonModule } from '@angular/common';
-import {
-  Component,
-  ElementRef,
-  Input,
-  OnDestroy,
-  OnInit,
-  OnChanges,
-  SimpleChanges,
-  ViewChild,
-  ChangeDetectionStrategy
-} from '@angular/core';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { Component, ElementRef, Input, OnChanges, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { MfeDefinition } from '../../core/manifest/manifest';
 import { MfeLoaderService } from '../../core/mfe-loader/mfe-loader.service';
-import { Subscription, from, of } from 'rxjs';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
+/** Loads one app from its manifest entry and mounts its custom element. The app is told nothing: it connects to the channel itself. */
 @Component({
   selector: 'app-mfe-host',
   standalone: true,
-  imports: [CommonModule, RouterModule],
   templateUrl: './mfe-host.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './mfe-host.component.scss',
 })
-export class MfeHostComponent implements OnInit, OnChanges, OnDestroy {
+export class MfeHostComponent implements OnChanges {
   @ViewChild('host', { static: true }) hostRef!: ElementRef<HTMLElement>;
 
-  @Input() definition?: MfeDefinition;
+  @Input({ required: true }) definition!: MfeDefinition;
   loading = false;
   error?: string;
 
-  private sub?: Subscription;
+  constructor(private readonly loader: MfeLoaderService) {}
 
-  constructor(
-    private readonly route: ActivatedRoute,
-    private readonly loader: MfeLoaderService
-  ) {}
-
-  ngOnInit(): void {
-    // With a [definition] input, ngOnChanges already loads it; loading here too mounted every app twice.
-    if (this.definition) return;
-
-    this.sub = this.route.paramMap
-      .pipe(
-        switchMap((params) => {
-          const id = params.get('id');
-          if (!id) {
-            return of(null);
-          }
-
-          this.loading = true;
-          this.error = undefined;
-
-          return from(this.loader.getManifest()).pipe(
-            map((manifest) =>
-              manifest.mfes.find((mfe) => mfe.id === id || mfe.route === id)
-            ),
-            switchMap((definition) => {
-              if (!definition) {
-                throw new Error(`MFE ${id} not found in manifest`);
-              }
-
-              this.definition = definition;
-              return from(this.loader.loadMfe(definition)).pipe(
-                tap(() => this.mount(definition))
-              );
-            })
-          );
-        }),
-        tap(() => (this.loading = false)),
-        catchError((err) => {
-          this.loading = false;
-          this.error = err?.message ?? 'Failed to load microfrontend';
-          this.clearHost();
-          return of(null);
-        })
-      )
-      .subscribe();
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['definition'] && this.definition) {
-      void this.loadDefinition(this.definition);
-    }
+  ngOnChanges(): void {
+    void this.load();
   }
 
   /** After a failed load, fetches the app again (the loader forgets failed scripts). */
   retry(): void {
-    if (this.definition) void this.loadDefinition(this.definition);
+    void this.load();
   }
 
-  private loadDefinition(definition: MfeDefinition) {
+  private async load(): Promise<void> {
     this.loading = true;
     this.error = undefined;
-
-    return from(this.loader.loadMfe(definition))
-      .pipe(
-        tap(() => this.mount(definition)),
-        tap(() => (this.loading = false)),
-        catchError((err) => {
-          this.loading = false;
-          this.error = err?.message ?? 'Failed to load microfrontend';
-          this.clearHost();
-          return of(null);
-        })
-      )
-      .toPromise();
-  }
-
-  private mount(definition: MfeDefinition): void {
-    const container = this.hostRef.nativeElement;
-    container.innerHTML = '';
-
-    const element = document.createElement(definition.customElement);
-    container.appendChild(element);
-  }
-
-  private clearHost(): void {
-    if (this.hostRef) {
-      this.hostRef.nativeElement.innerHTML = '';
+    try {
+      await this.loader.loadMfe(this.definition);
+      const container = this.hostRef.nativeElement;
+      container.replaceChildren(document.createElement(this.definition.customElement));
+    } catch (err) {
+      this.error = (err as Error)?.message ?? 'Failed to load microfrontend';
+      this.hostRef.nativeElement.replaceChildren();
+    } finally {
+      this.loading = false;
     }
-  }
-
-  ngOnDestroy(): void {
-    this.sub?.unsubscribe();
   }
 }

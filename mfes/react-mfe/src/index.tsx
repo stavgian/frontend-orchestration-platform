@@ -1,135 +1,99 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 
 // The only thing this app shares with the others: the published message library.
 import { Connection, connect } from '@stavgian/mfe-communication';
 
-// The messages this app understands. Other apps declare their own; nothing is shared but the names.
-type Item = { sku: string; name: string; price: number };
-type Summary = { count: number; total: number };
+type Context = { contextType: string; contextId: string; routeId: string; correlationId?: string };
+type Doc = { name: string; kind: 'contract' | 'evidence' | 'correspondence' };
 
+// The messages this app understands. Other apps declare their own; nothing is shared but the names.
 declare module '@stavgian/mfe-communication' {
   interface MessageMap {
-    'cart:item-added': Item;
-    /** Published after every change, so other apps can stay in sync without asking. */
-    'cart:updated': Summary;
-    'order:placed': Summary;
-    /** Sent only to checkout (a direct message), when the shopper is ready to pay. */
-    'checkout:start': Summary;
+    'context:changed': Context;
+    'document:uploaded': { contextId: string; text?: string } & Doc;
   }
   interface RequestMap {
-    'cart:get-summary': { request: void; response: Summary };
+    'context:get': { request: void; response: Context | null };
   }
 }
 
-type Line = Item & { qty: number };
-
-const summarize = (lines: Line[]): Summary => ({
-  count: lines.reduce((n, l) => n + l.qty, 0),
-  total: lines.reduce((sum, l) => sum + l.qty * l.price, 0),
-});
+// Fictional documents, keyed by the context id the shell announces.
+const INITIAL: Record<string, Doc[]> = {
+  'CASE-2026-1082': [
+    { name: 'Supply agreement 2024.pdf', kind: 'contract' },
+    { name: 'Delivery log Q3.xlsx', kind: 'evidence' },
+  ],
+  'CASE-2026-1083': [
+    { name: 'Employment contract.pdf', kind: 'contract' },
+    { name: 'Termination letter.pdf', kind: 'correspondence' },
+  ],
+  'CASE-2026-1084': [{ name: 'Share purchase draft v3.docx', kind: 'contract' }],
+  'CASE-2026-1085': [{ name: 'Trademark registration.pdf', kind: 'evidence' }, { name: 'Cease-and-desist letter.pdf', kind: 'correspondence' }],
+  'CASE-2026-1086': [{ name: 'Authority information request.pdf', kind: 'correspondence' }],
+};
+// What the "Upload" button adds, in turn.
+const SAMPLE_UPLOADS: Doc[] = [
+  { name: 'Witness statement.pdf', kind: 'evidence' },
+  { name: 'Email thread export.eml', kind: 'correspondence' },
+  { name: 'Amendment no. 2.pdf', kind: 'contract' },
+];
 
 const App: React.FC = () => {
   const [bus, setBus] = useState<Connection | null>(null);
-  const [lines, setLines] = useState<Line[]>([]);
-  const [note, setNote] = useState<string | null>(null);
-  // The responder reads the latest cart without re-registering on every change.
-  const linesRef = useRef(lines);
-  linesRef.current = lines;
+  const [ctx, setCtx] = useState<Context | null>(null);
+  // Local state: documents added during this session, per context id.
+  const [added, setAdded] = useState<Record<string, Doc[]>>({});
 
   useEffect(() => {
     const connection = connect({
       id: 'react-mfe',
-      name: 'Shopping cart',
+      name: 'Documents',
       version: '1.0.0',
       meta: { framework: `React ${React.version}`, element: 'React root in a custom element' },
     });
-
-    connection.subscribe('cart:item-added', ({ payload: item }) => {
-      setNote(null);
-      setLines((current) => {
-        const existing = current.find((l) => l.sku === item.sku);
-        return existing
-          ? current.map((l) => (l === existing ? { ...l, qty: l.qty + 1 } : l))
-          : [...current, { ...item, qty: 1 }];
-      });
-    });
-    connection.subscribe('order:placed', ({ payload }) => {
-      setLines([]);
-      setNote(`Order placed: ${payload.count} ${payload.count === 1 ? 'item' : 'items'}, €${payload.total}. Cart emptied.`);
-    });
-
-    // Answer questions from other apps, e.g. the checkout asking for the total.
-    connection.respond('cart:get-summary', () => summarize(linesRef.current));
-
+    // Follow the portal's active context; ask once in case it was announced before this app loaded.
+    connection.subscribe('context:changed', ({ payload }) => setCtx(payload));
+    connection.request('context:get', undefined, { to: 'portal' }).then((c) => c && setCtx(c), () => undefined);
     setBus(connection);
-    return () => {
-      connection.disconnect();
-    };
+    return () => connection.disconnect();
   }, []);
 
-  // Tell everyone whenever the cart changes (not on first render: nothing changed yet).
-  const firstRender = useRef(true);
-  useEffect(() => {
-    if (firstRender.current) {
-      firstRender.current = false;
-      return;
-    }
-    bus?.publish('cart:updated', summarize(lines));
-  }, [lines]);
+  if (!ctx) return <p style={styles.empty}>Waiting for a context from the portal…</p>;
 
-  const clear = () => setLines([]);
-  // A direct message: only the checkout app receives it, the catalog never sees it.
-  const proceed = () => {
-    bus?.publish('checkout:start', summarize(lines), { to: 'js-mfe' });
-    setNote('Sent your cart to checkout only.');
+  const mine = added[ctx.contextId] ?? [];
+  const docs = [...(INITIAL[ctx.contextId] ?? []), ...mine];
+
+  const upload = () => {
+    const doc = SAMPLE_UPLOADS[mine.length % SAMPLE_UPLOADS.length];
+    setAdded({ ...added, [ctx.contextId]: [...mine, doc] });
+    // An event: whoever cares (compliance, risk, client relations) reacts.
+    bus?.publish('document:uploaded', { contextId: ctx.contextId, ...doc, text: `Added "${doc.name}"` });
   };
-
-  const { count, total } = summarize(lines);
 
   return (
     <div style={styles.root}>
-      {lines.length === 0 ? (
-        <p style={styles.empty}>Your cart is empty. Add something from the catalog.</p>
-      ) : (
-        <ul style={styles.list}>
-          {lines.map((l) => (
-            <li key={l.sku} style={styles.line}>
-              <span style={styles.qty}>{l.qty}×</span>
-              <span style={{ flex: 1 }}>{l.name}</span>
-              <span style={styles.muted}>€{l.qty * l.price}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-      <div style={styles.footer}>
-        <span>
-          <strong>{count}</strong> {count === 1 ? 'item' : 'items'} · <strong>€{total}</strong>
-        </span>
-        <span style={{ display: 'flex', gap: 6 }}>
-          <button style={styles.button} onClick={clear} disabled={!lines.length}>
-            Clear
-          </button>
-          <button style={styles.primary} onClick={proceed} disabled={!lines.length}>
-            Checkout →
-          </button>
-        </span>
-      </div>
-      {note && <p style={styles.note}>{note}</p>}
+      <p style={styles.ctx}>Context <code>{ctx.contextId}</code> · {docs.length} documents</p>
+      <ul style={styles.list}>
+        {docs.map((d, i) => (
+          <li key={`${d.name}-${i}`} style={styles.line}>
+            <span style={{ flex: 1 }}>{d.name}</span>
+            <span style={styles.kind}>{d.kind}</span>
+          </li>
+        ))}
+      </ul>
+      <button style={styles.primary} onClick={upload}>Upload document</button>
     </div>
   );
 };
 
 const styles: Record<string, React.CSSProperties> = {
   root: { font: '15px/1.5 var(--font-sans, Inter, system-ui, sans-serif)', color: 'var(--text, #171a20)' },
+  ctx: { margin: '0 0 10px', fontSize: 13, color: 'var(--text-secondary, #5a6578)' },
   empty: { margin: 0, padding: '18px 12px', textAlign: 'center', color: 'var(--text-secondary, #5a6578)', fontSize: 14, borderRadius: 8, border: '2px dashed var(--border, #e5e7eb)' },
-  list: { listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 6 },
-  line: { display: 'flex', gap: 10, padding: '8px 12px', borderRadius: 8, background: 'var(--surface, #f7f8fa)' },
-  qty: { color: '#6741d9', fontWeight: 700, minWidth: 24 },
-  muted: { color: 'var(--text-secondary, #5a6578)', fontVariantNumeric: 'tabular-nums' },
-  footer: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap', marginTop: 12 },
-  button: { font: 'inherit', fontSize: 13, fontWeight: 600, padding: '6px 14px', borderRadius: 9999, cursor: 'pointer', color: 'var(--text-secondary, #5a6578)', background: '#fff', border: '1px solid var(--border, #e5e7eb)' },
-  note: { margin: '12px 0 0', fontSize: 14, color: 'var(--text-secondary, #5a6578)' },
+  list: { listStyle: 'none', margin: '0 0 12px', padding: 0, display: 'grid', gap: 6 },
+  line: { display: 'flex', gap: 10, padding: '8px 12px', borderRadius: 8, background: 'var(--surface, #f7f8fa)', fontSize: 14 },
+  kind: { color: '#6741d9', fontSize: 12, fontWeight: 600 },
   primary: { font: 'inherit', fontSize: 13, fontWeight: 600, padding: '6px 14px', borderRadius: 9999, cursor: 'pointer', color: '#fff', background: '#6741d9', border: 0 },
 };
 

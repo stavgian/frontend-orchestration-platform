@@ -1,16 +1,19 @@
 import {
   Component,
   OnInit,
-  computed,
   inject,
-  signal,
   ChangeDetectionStrategy,
 } from '@angular/core';
-import { Router, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { filter, map } from 'rxjs';
+import { IconComponent } from './components/icon/icon.component';
+import { ContextService } from './core/context/context.service';
+import { ScenarioService } from './core/scenario/scenario.service';
 import { Manifest, MfeDefinition } from './core/manifest/manifest';
 import { manifestUrl } from './core/manifest/manifest-url';
 import { ManifestPanelComponent } from './components/manifest-panel/manifest-panel.component';
-import { MessageChannelComponent } from './components/message-channel/message-channel.component';
+import { LogPanelService } from './core/messaging/log-panel.service';
 import { MessageFeedService } from './core/messaging/message-feed.service';
 import { MessageLogComponent } from './components/message-log/message-log.component';
 import { MfeLoaderService } from './core/mfe-loader/mfe-loader.service';
@@ -18,15 +21,13 @@ import { ProjectLinksComponent } from './components/project-links/project-links.
 import { ToastStackComponent } from './components/toast-stack/toast-stack.component';
 import { version } from '../../package.json';
 
-const LOG_PREF_KEY = 'portal.message-log';
-
 @Component({
   standalone: true,
   selector: 'app-root',
   imports: [
     RouterOutlet,
+    IconComponent,
     ManifestPanelComponent,
-    MessageChannelComponent,
     MessageLogComponent,
     ProjectLinksComponent,
     ToastStackComponent,
@@ -39,6 +40,29 @@ export class AppComponent implements OnInit {
   private readonly loader = inject(MfeLoaderService);
   private readonly router = inject(Router);
   readonly feed = inject(MessageFeedService);
+  readonly scenarioService = inject(ScenarioService);
+  readonly scenario = this.scenarioService.scenario;
+  /** The hero introduces the platform on the landing page only. */
+  readonly onLanding = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map((e) => e.urlAfterRedirects.split(/[?#]/)[0] === '/')
+    ),
+    { initialValue: true }
+  );
+
+  constructor() {
+    // Starts answering `context:get` before any app has loaded.
+    inject(ContextService);
+  }
+
+  namesOf(appIds: string[]): string {
+    return appIds.map((id) => this.nameOf(id)).join(', ');
+  }
+
+  nameOf(appId: string): string {
+    return this.mfes.find((m) => m.id === appId)?.display.name ?? appId;
+  }
 
   readonly year = new Date().getFullYear();
   /** The shell portal's own release version, bumped by `nx release` (tag portal@x.y.z). */
@@ -49,55 +73,17 @@ export class AppComponent implements OnInit {
   loadingManifest = true;
   manifestError?: string;
 
-  readonly logOpen = signal(initialLogOpen());
-  /** Messages that arrived while the log was closed. */
-  private readonly seenCount = signal(0);
-  readonly unread = computed(() =>
-    this.logOpen() ? 0 : this.feed.messageCount() - this.seenCount()
-  );
+  readonly log = inject(LogPanelService);
 
   async ngOnInit(): Promise<void> {
     try {
-      const manifest = await this.loader.getManifest();
+      const [manifest] = await Promise.all([this.loader.getManifest(), this.scenarioService.load()]);
       this.manifest = manifest;
       this.mfes = manifest.mfes;
-      this.redirectUnknownMfeRoute();
     } catch (err) {
       this.manifestError = (err as Error)?.message ?? 'Unable to load manifest';
     } finally {
       this.loadingManifest = false;
     }
   }
-
-  toggleLog(open = !this.logOpen()): void {
-    if (!open) this.seenCount.set(this.feed.messageCount());
-    this.logOpen.set(open);
-    try {
-      localStorage.setItem(LOG_PREF_KEY, open ? 'open' : 'closed');
-    } catch {
-      // Storage can be unavailable (private mode); the toggle still works for this visit.
-    }
-  }
-
-  private redirectUnknownMfeRoute(): void {
-    if (!this.router.url.startsWith('/mfe/')) return;
-
-    const id = this.router.routerState.snapshot.root.firstChild?.params['id'];
-    const known = this.mfes.some((mfe) => mfe.id === id || mfe.route === id);
-    const first = this.mfes[0];
-    if (!known && first) {
-      this.router.navigate(['mfe', first.route ?? first.id]);
-    }
-  }
-}
-
-/** Remembered choice, or open by default when there's room beside the apps. */
-function initialLogOpen(): boolean {
-  try {
-    const saved = localStorage.getItem(LOG_PREF_KEY);
-    if (saved) return saved === 'open';
-  } catch {
-    // Fall through to the default.
-  }
-  return typeof window !== 'undefined' && window.innerWidth >= 1200;
 }

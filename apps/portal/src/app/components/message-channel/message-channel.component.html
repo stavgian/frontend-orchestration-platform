@@ -1,117 +1,49 @@
-<section class="channel" aria-labelledby="channel-title">
-  <div class="head">
-    <div>
-      <h2 id="channel-title">Live message channel</h2>
-      <p>
-        Apps talk to each other directly. The shell portal observes: who sends,
-        who is asked, who answers.
-      </p>
-    </div>
-    <div class="actions">
+<section class="channel" aria-label="Live message channel">
+  <header>
+    <h3>
+      <app-icon name="radio" /> Live message channel
+      <span class="online" [class.partial]="connectedCount() < mfes().length">
+        <span class="live" [class.off]="connectedCount() < mfes().length" aria-hidden="true"></span>
+        {{ connectedCount() }} of {{ mfes().length }} connected
+      </span>
+    </h3>
+    <span class="actions">
+      <button type="button" class="btn-ghost" (click)="ping()" [disabled]="pinging()">
+        {{ pinging() ? 'Checking…' : 'Check who’s online' }}
+      </button>
       <button
         type="button"
         class="btn-ghost"
-        (click)="ping()"
-        [disabled]="pinging()"
-        title="Asks every app to answer and shows how fast each one did"
+        [class.active]="log.open()"
+        [attr.aria-expanded]="log.open()"
+        aria-controls="message-log"
+        (click)="log.toggle()"
       >
-        {{ pinging() ? 'Checking…' : 'Check who’s online' }}
+        <app-icon name="message" /> Message log
+        @if (log.unread()) { <span class="count" [attr.aria-label]="log.unread() + ' new'">{{ log.unread() }}</span> }
       </button>
-    </div>
-  </div>
+    </span>
+  </header>
 
-  <!-- Alternating between two identical branches re-creates the diagram on every message, so its CSS animations replay. -->
-  @if (replay()) {
-  <ng-container [ngTemplateOutlet]="diagram" />
-  } @else {
-  <ng-container [ngTemplateOutlet]="diagram" />
-  }
-
-  <p class="caption" aria-live="polite">
-    @if (showPings()) {
-    <strong style="color: var(--accent)">Shell portal</strong> pinged every app.
-    Each one answered on its own. } @else { @if (msg(); as m) {
-    <strong [style.color]="m.sender.color">{{ m.sender.name }}</strong>
-    {{ verb(m) }}
-    <code>{{ m.kind === 'reply' ? m.requestType ?? 'request' : m.type }}</code>
-    @if (m.summary) {
-    <q>{{ m.summary }}</q>
-    } @if (m.target) { to
-    <strong [style.color]="m.target.color">{{ m.target.name }}</strong>
-    } @else { to everyone } } @else { Waiting for the first message. Add a
-    product in the catalog below. } }
-  </p>
-</section>
-
-<ng-template #diagram>
-  <div class="diagram" [style.--n]="nodes().length">
-    <div class="nodes">
-      @for (node of nodes(); track node.id) { @let online =
-      connectedIds().has(node.id); @let sending = msg()?.sender?.id === node.id;
-      @let receiving = receives(msg(), node.id, online); @let ping =
-      pings().get(node.id);
-      <div
-        class="node"
-        [class.offline]="!online"
-        [class.sending]="sending && !showPings()"
-        [class.receiving]="receiving && !showPings()"
-        [style.--c]="node.color"
-      >
-        <div class="avatar" aria-hidden="true">{{ node.initials }}</div>
-        <div class="name">
-          <span class="live" aria-hidden="true"></span>{{ node.name }}
-        </div>
-        <div class="tech">
-          @if (online && node.logo) {
-          <img class="logo" [src]="node.logo" alt="" />
-          }
-          {{
-            online ? frameworks().get(node.id) ?? 'Connected' : 'Not connected'
-          }}
-          @if (ping !== undefined) {
-          <span class="ping" [class.failed]="ping === 'timeout'">{{
-            ping === 'timeout' ? 'no answer' : ping + ' ms'
-          }}</span>
-          }
-        </div>
-        @if (showPings() && ping !== undefined) {
-        <span class="status ping-result" [class.failed]="ping === 'timeout'">
-          @if (ping === 'timeout') { No answer } @else {
-          <span class="long">Answered · </span>{{ ping }} ms }
-        </span>
-        } @else {
-        <span class="status" aria-hidden="true">{{
-          sending
-            ? senderLabel(msg()!)
-            : msg()?.target
-            ? 'Received'
-            : 'Heard it'
-        }}</span>
-        }
-        <div class="stub"></div>
-      </div>
-      }
-    </div>
-    <div
-      class="bus"
-      [class.sending]="portalSending()"
-      [class.receiving]="portalReceiving()"
-    >
-      @if (msg(); as m) {
-      <div
-        class="wave"
-        [style.--x]="senderX() + '%'"
-        [style.--x1]="waveSpan().from + '%'"
-        [style.--x2]="waveSpan().to + '%'"
-        [style.--c]="m.sender.color"
-      ></div>
-      }
-      <span class="bus-label">
-        <span class="p-badge" aria-hidden="true">P</span>
-        Shell portal<span class="long">
-          · hosts the page the channel runs on</span
+  <ul class="nodes">
+    @for (t of tick(); track t) {
+      @for (n of nodes(); track n.id) {
+        @let online = connectedIds().has(n.id);
+        <li
+          [style.--c]="n.color"
+          [class.off]="!online"
+          [class.sending]="msg()?.sender?.id === n.id"
+          [class.receiving]="receives(msg(), n.id)"
         >
-      </span>
-    </div>
-  </div>
-</ng-template>
+          <span class="badge" aria-hidden="true">{{ n.initials }}</span>
+          <span class="name">{{ n.name }}</span>
+          @if (showPings() && pings().get(n.id); as p) {
+            <small>{{ p === 'timeout' ? 'no answer' : p + ' ms' }}</small>
+          } @else {
+            <span class="live" [class.off]="!online" [attr.title]="online ? 'Connected' : 'Not connected'"></span>
+          }
+        </li>
+      }
+    }
+  </ul>
+</section>

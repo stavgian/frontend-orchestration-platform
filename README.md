@@ -8,8 +8,10 @@ A **shell portal** discovers the microfrontends from a JSON manifest, loads them
 
 - **Frontend Orchestration Platform**: the whole project (this repository and its live demo).
 - **Shell portal**: the host app that reads the manifest, loads the apps and draws the frame around them. It is built with Angular here, but any framework could play this role.
-- **Apps** (microfrontends, MFEs): the four independently deployed frontends the shell portal loads.
-- **Manifest**: the JSON file that lists the apps and how to present them.
+- **Apps** (microfrontends, MFEs): the independently deployed frontends the shell portal loads (six in the demo).
+- **Manifest**: the JSON file that lists the apps and how to load and present them.
+- **Scenario**: the JSON file that gives the demo its business meaning (records, departments, labels). The shell treats it as opaque data; the demo scenario is Legal Case Management.
+- **Context**: the record the user opened (`contextType`, `contextId`, `routeId`). The shell owns it; apps follow it.
 - **`@stavgian/mfe-communication`**: the npm library the apps use to talk to each other.
 
 ![Preview](./preview.png)
@@ -27,65 +29,89 @@ A **shell portal** discovers the microfrontends from a JSON manifest, loads them
 
 ## High-level architecture
 
-- Shell portal (Angular)
-  - Loads a runtime manifest
-  - Loads and mounts every MFE on one page, by URL and custom element name, and draws the frame around each one
-  - If an app fails to load (for example, its server is down), its frame says so and offers **Try again**, which fetches the app again; the other apps keep working
-  - A single app can also be opened on its own at `/mfe/<id>`
+The platform owns orchestration, the scenario owns business meaning, each app owns its functionality.
+
+- **Shell portal (Angular)**: generic. It knows applications, manifests, contexts, routes, events and presence, and nothing about cases, claims or employees.
+  - Loads the manifest and the scenario at runtime and loads every compatible app by URL and custom element name
+  - Routes: `/` (the scenario's records) and `/:contextId` (the generic context page). Unknown ids redirect to `/`
+  - Owns the active context. Navigation changes it; the shell broadcasts `context:changed` and answers `context:get`. Apps never touch the route
+  - Switching between contexts keeps every app mounted: nothing reloads, apps just receive the new context
+  - If an app fails to load, its frame says so and offers **Try again**; the other apps keep working
   - Does not import or reference MFE code at build time
+- **Scenario (`apps/portal/src/assets/scenario.json`)**: name, description, labels, the records (type, id, title, status, summary, fields), and which manifest apps take part with their department and responsibility, plus the example events (documentation only).
+- **Microfrontends (MFEs)**: independent, each with its own `package.json`, a custom element as public API, and `@stavgian/mfe-communication` as the only shared code. Each keeps its own mock data keyed by context id.
 
-- Microfrontends (MFEs)
-  - Independently buildable and servable, each with its own `package.json`
-  - Expose a custom element as their public API
-  - Communicate only through the published `@stavgian/mfe-communication` package
-  - Render only their own content; the shell portal draws the frame around each one
-  - Current MFEs, together forming a small shop:
-    - **Product catalog** (Angular 22, zoneless with signals, Angular Elements): loaded as a Module Federation–style remote container
-    - **Shopping cart** (React 19, a React root inside a custom element): loaded with a script tag
-    - **Checkout** (plain JavaScript, a native Web Component): loaded with a script tag
-    - **Shipping** (Vue 3.5, `defineCustomElement`): loaded with a script tag; listens to the cart, shows progress towards free shipping and owns the shipping rule (free from €50, otherwise €5). It publishes `shipping:quoted` and answers `shipping:get-quote`, so checkout can show the shipping cost without repeating the rule
-  - Each app reports its framework and version at runtime (presence `meta`, e.g. `Angular 22.2.6`); the shell portal shows it in the app's "Built with" footer without knowing it at build time
-  - Each app also reports how it becomes a web component, so the demo shows four techniques side by side: Angular Elements, a React root inside a custom element, Vue's `defineCustomElement`, and a native Web Component
+| App | Department | Framework | Loaded as |
+| --- | --- | --- | --- |
+| `angular-mfe` Legal | Legal department | Angular 22, zoneless, Angular Elements | Module Federation–style remote container |
+| `react-mfe` Documents | Document management | React 19 | script tag |
+| `js-mfe` Compliance | Compliance department | Plain JS native Web Component | script tag |
+| `vue-mfe` Finance | Finance department | Vue 3.5, `defineCustomElement` | script tag |
+| `svelte-mfe` Client Relations | Client services | Svelte 5 custom element | script tag |
+| `lit-mfe` Risk | Risk management | Lit 3 | script tag |
 
-- Shared library
-  - [`@stavgian/mfe-communication`](libs/mfe-communication) (published to npm): events, requests with answers, and presence over browser-native events. The only code the shell portal and the MFEs share.
-  - The manifest format lives in the shell portal ([`manifest.ts`](apps/portal/src/app/core/manifest/manifest.ts)), because only the shell portal reads it.
+Each app reports its framework and version at runtime (presence `meta`); the shell shows it in the app's "Built with" footer without knowing it at build time.
+
+- **Shared library**: [`@stavgian/mfe-communication`](libs/mfe-communication) (published to npm): events, requests with answers, and presence over browser-native events. Unchanged by this demo.
+
+## Context synchronization
+
+1. The user opens `/CASE-2026-1083`. The context page looks the id up in the scenario and calls `ContextService.activate({ contextType, contextId, routeId, correlationId })`.
+2. The shell publishes `context:changed` (broadcast). Apps already loaded update themselves.
+3. An app that loads later (first visit, or slow network) sends `request('context:get', …, { to: 'portal' })` when it connects and gets the current context, or `null` when none is active.
+4. Moving to another record only repeats step 2. Moving back to `/` unmounts the apps, which disconnect from the channel.
+
+The same contract works for any domain: `contextType` and `contextId` are opaque strings.
+
+## Example event flows (Legal Case Management)
+
+These event names belong to the scenario, not the platform. The shell monitor shows them as generic envelopes.
+
+| Flow | What happens |
+| --- | --- |
+| Documents → Compliance, Risk, Client Relations → Legal | "Upload document" publishes `document:uploaded`. Compliance screens it and publishes `compliance:check:completed`; Risk raises the score and publishes `risk:assessment:updated`; Client Relations logs it; Legal shows the latest check and risk. |
+| Finance → Risk, Client Relations | "Log 1.5 h" publishes `billing:updated`; Risk adjusts the score, Client Relations logs a draft invoice. |
+| Legal ⇄ Risk (request/response) | Legal asks `risk:get-score` from `lit-mfe` when a context opens, when Risk comes online and on "Ask Risk". Risk answers with `respond()`. |
+
+## How to introduce another scenario
+
+No shell change is needed.
+
+1. Write a new `scenario.json`: context type, records, labels, the apps with department/responsibility/`contextTypes`, example events.
+2. Write a manifest listing the apps (`manifest.dev.json` / `manifest.prod.json`).
+3. Implement the MFEs. Each subscribes to `context:changed`, requests `context:get` on connect and declares its own events.
+
+For example an insurance scenario would use `contextType: 'insurance-claim'` and `contextId: 'CLM-2026-00421'` with Claims, Policy, Documents, Risk, Legal and Finance apps.
 
 ## Runtime manifest
 
-The shell portal reads a JSON manifest at runtime that describes available MFEs.
+The shell portal reads a JSON manifest at runtime that describes available MFEs: `id`, `display` (name, initials, colour, optional logo), `type` (`module-federation` or `script`), `customElement`, and either `scripts` or `remoteEntry`/`remoteName`/`exposedModule`.
 
-Current dev manifest (`apps/portal/src/assets/manifest.dev.json`):
-- Angular MFE (Module Federation–style remote): http://localhost:4301/remoteEntry.js
-- React MFE (script): http://localhost:4302/react-mfe.js
-- JS MFE (script): http://localhost:4303/js-mfe.js
-- Vue MFE (script): http://localhost:4304/vue-mfe.js
-
-The shell portal uses this information to load and render MFEs without compile-time coupling.
+Dev manifest (`apps/portal/src/assets/manifest.dev.json`) ports: Angular 4301, React 4302, JS 4303, Vue 4304, Svelte 4305, Lit 4306. The production manifest uses relative URLs (`./<id>/<file>.js`), resolved against `<base href>`, so GitHub Pages sub-paths work.
 
 ## Cross-microfrontend communication
 
 Communication is based on browser-native `CustomEvent`s published on `window`, wrapped by the [`@stavgian/mfe-communication`](libs/mfe-communication) package.
 
-The demo shop uses all three patterns:
+The demo uses these patterns:
 
 | Pattern | In the demo |
 | --- | --- |
-| **Event**: "something happened" | The catalog publishes `cart:item-added`; the cart adds the item and publishes `cart:updated` with its new total, which checkout shows live. The shipping app reacts with `shipping:quoted`, and checkout adds that cost to the total. Checkout publishes `order:placed` with the items total, the shipping and the grand total (for example 49, 5 and 54); the cart empties. |
-| **Request**: "I need an answer" | On "Place order", checkout confirms the total with the cart itself: `request('cart:get-summary', …, { to: 'react-mfe' })`. The cart answers with `respond()`. It asks the shipping app for the shipping cost the same way (`shipping:get-quote`), when the shipping app appears and again on "Place order", so the order never goes out with a missing or stale shipping cost. |
-| **Direct message**: "just for you" | "Checkout →" in the cart sends `checkout:start` only to checkout (`publish(…, { to: 'js-mfe' })`); the catalog never receives it. |
-| **Presence**: "who's here?" | When the cart comes online, checkout asks it once for its current total. Events only report changes, so this covers apps that load late. Checkout only allows ordering while the cart and the shipping app are connected. The shell portal's "Check who's online" uses presence to ask every app to answer and shows its response time. |
+| **Event**: "something happened" | `document:uploaded`, `billing:updated`, `compliance:check:completed`, `risk:assessment:updated` (see the flows above). |
+| **Request**: "I need an answer" | Legal asks Risk for the score (`risk:get-score`); every app asks the shell for the current context (`context:get`). |
+| **Direct message**: "just for you" | `publish(…, { to: '<id>' })` reaches one app only. The shell's context requests use it. |
+| **Presence**: "who's here?" | The shell shows which apps are connected and which framework each reports. Legal re-asks Risk when Risk joins late. "Check who's online" pings every app. |
 
 How it works:
 - Each app calls `connect({ id })`, which announces it on the channel (`system:ready`) and discovers apps already connected (`system:present`). `disconnect()` announces `system:left`.
 - Every message is an envelope `{ specversion, id, type, source, time, payload }`. Apps choose their own types and declare the payloads they use with TypeScript declaration merging. No shared types package is needed.
-- Subscriptions take an exact type, a namespace (`cart:*`) or everything (`*`).
+- Subscriptions take an exact type, a namespace (`document:*`) or everything (`*`).
 - The shell portal and every MFE depend on the package by version (`^2.0.0`), never on each other's code. Each connection keeps only its own state, so apps on different library versions still talk as long as they share the same `specversion`.
 
 On one page, the shell portal shows everything live:
 - the manifest it loaded the apps from: which apps, how each one is loaded, and from where
 - which apps are connected (floating in the top corner) and, in each app's footer, what it is built with
-- a channel diagram showing who sent, who was asked, and who answered
+- a compact channel strip showing which apps are connected and who sent, was asked or answered
 - a full-height message log sidebar you can toggle and filter
 - toasts while the log is closed
 
@@ -98,7 +124,7 @@ See the [package README](libs/mfe-communication/README.md) for the full API.
 ```
 @stavgian/mfe-communication  (npm, semver)
    ▲        ▲          ▲          ▲         ▲
-portal  angular-mfe  react-mfe  js-mfe  vue-mfe    ← each pins its own version range
+portal  angular-mfe  react-mfe  js-mfe  vue-mfe  svelte-mfe  lit-mfe   ← each pins its own version range
 ```
 
 In this repo, npm workspaces link the local library source to each app, as long as the library's version satisfies that app's range. An app can stay on `^2` while the library moves to `3.x`, in which case it installs `2.x` from npm instead.
@@ -110,7 +136,7 @@ An app is anything that registers a custom element and talks through `@stavgian/
 1. Create `mfes/<name>/` with its own `package.json`. Its dependencies are its own, so a second Angular app can pin a different major version than the first; npm installs it inside that workspace.
 2. Build it into a single script that defines the custom element (see the existing `build.mjs` files).
 3. Call `connect({ id, name, meta: { framework: …, element: … } })` and use events, requests or presence like the others.
-4. Add an entry to `apps/portal/src/assets/manifest.dev.json` and `manifest.prod.json`. The shell portal needs nothing else: it reads the manifest at runtime.
+4. Add an entry to `apps/portal/src/assets/manifest.dev.json` and `manifest.prod.json`, and list the app in `scenario.json` under `apps` with its department and `contextTypes`. The shell portal needs nothing else.
 5. Give it a `display` block in the manifest entry (`name`, `initials`, `color`, and optionally a `logo` image URL). The shell portal takes how it presents each app from the manifest, so it has no code per app.
 
 Two Angular apps already share this page: the shell portal runs with zone.js, and `angular-mfe` runs without it (zoneless change detection with signals). Each brings its own Angular runtime inside its own bundle, so they can be on different Angular versions and neither upgrade blocks the other.
@@ -129,6 +155,8 @@ mfes/
   react-mfe/
   js-mfe/
   vue-mfe/
+  svelte-mfe/
+  lit-mfe/
 ```
 
 ## The apps
@@ -203,13 +231,29 @@ npx nx release patch --skip-publish -g portal   # add --first-release the first 
 git push --follow-tags
 ```
 
+### Svelte MFE (Svelte custom element)
+
+Svelte 5 compiled with `customElement: true` through `esbuild-svelte`; the component declares its own tag.
+
+```bash
+npm run build:svelte-mfe   # produces mfes/svelte-mfe/dist/svelte-mfe.js
+npm run serve:svelte-mfe   # http://localhost:4305/svelte-mfe.js
+```
+
+### Lit MFE (LitElement)
+
+```bash
+npm run build:lit-mfe   # produces mfes/lit-mfe/dist/lit-mfe.js
+npm run serve:lit-mfe   # http://localhost:4306/lit-mfe.js
+```
+
 ## Running locally
 
 ### One command (recommended)
 ```bash
 npm run serve:all
 ```
-Starts Angular MFE (4301), React MFE (4302), JS MFE (4303), Vue MFE (4304), and the shell portal with prefixed logs.
+Starts Angular MFE (4301), React MFE (4302), JS MFE (4303), Vue MFE (4304), Svelte MFE (4305), Lit MFE (4306) and the shell portal with prefixed logs.
 
 ### Manual start (individual terminals)
 ```bash
@@ -217,6 +261,8 @@ npm run serve:angular-mfe   # 4301 -> remoteEntry.js
 npm run serve:react-mfe     # 4302 -> react-mfe.js
 npm run serve:js-mfe        # 4303 -> js-mfe.js
 npm run serve:vue-mfe       # 4304 -> vue-mfe.js
+npm run serve:svelte-mfe    # 4305 -> svelte-mfe.js
+npm run serve:lit-mfe       # 4306 -> lit-mfe.js
 NX_DAEMON=false npm run serve:portal
 ```
 

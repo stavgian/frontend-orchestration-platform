@@ -1,0 +1,41 @@
+.context { padding: 22px 24px; margin-top: 8px; }
+.top { display: flex; justify-content: space-between; align-items: center; }
+.back { display: inline-flex; align-items: center; gap: 6px; color: var(--accent); font-size: 13px; text-decoration: none; }
+.kind { margin: 14px 0 2px; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+h2 { margin: 0; font: 700 28px/1.2 var(--font-sans); letter-spacing: -0.02em; }
+.id { margin-left: 8px; font: 500 14px var(--font-mono); color: var(--subtle); }
+.summary { margin: 8px 0 0; max-width: 70ch; color: var(--text-secondary); }
+dl { display: flex; flex-wrap: wrap; gap: 8px 32px; margin: 16px 0 0; }
+dl > div { display: flex; align-items: center; gap: 10px; }
+dl app-icon { font-size: 20px; color: var(--accent); }
+dt { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--subtle); }
+dd { margin: 2px 0 0; font-weight: 500; }
+.status { padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; background: var(--surface); }
+.status[data-tone='active'] { color: var(--ok); }
+.status[data-tone='pending'] { color: #a16207; }
+.switch { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+.switch a { padding: 4px 12px; border-radius: 99px; border: 1px solid var(--border); font: 500 12px var(--font-mono); color: var(--text-secondary); text-decoration: none; }
+.switch a.current { color: var(--on-color); background: var(--accent); border-color: var(--accent); }
+
+.banner { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 14px; padding: 10px 14px; border-radius: 8px; background: color-mix(in srgb, var(--bavaria) 8%, white); font-size: 13px; }
+.banner code { margin: 0 4px; }
+.banner code, .txt { flex: 1; display: grid; }
+.cid { font-size: 20px; letter-spacing: -0.01em; }
+.txt small { color: var(--subtle); }
+.sync.wait { color: var(--subtle); border-color: var(--border); }
+.banner .ico-tile { width: 34px; height: 34px; }
+.sync { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 99px; border: 1px solid color-mix(in srgb, var(--ok) 35%, white); background: white; font-weight: 600; color: var(--ok); }
+
+/* Phones: the banner stacks; the icon goes, the id shrinks, the sync badge sits on its own line. */
+@media (max-width: 640px) {
+  .context { padding: 16px; }
+  .banner { gap: 8px; padding: 10px 12px; }
+  .banner .ico-tile { display: none; }
+  .txt { flex-basis: 100%; min-width: 0; }
+  .cid { font-size: 17px; overflow-wrap: anywhere; }
+  .txt small { overflow-wrap: anywhere; }
+  .sync { font-size: 12px; }
+  h2 { font-size: 22px; }
+  .id { display: block; margin: 4px 0 0; }
+  dl { gap: 10px 20px; }
+}
