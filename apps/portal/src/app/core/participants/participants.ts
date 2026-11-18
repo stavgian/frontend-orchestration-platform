@@ -9,6 +9,8 @@ export interface Participant {
   name: string;
   initials: string;
   color: string;
+  /** Name from the shell's icon set; apps without one show their initials. */
+  icon?: string;
   /** Image shown next to the framework an app reports; apps without one show text only. */
   logo?: string;
 }

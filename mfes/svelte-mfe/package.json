@@ -1,0 +1,18 @@
+{
+  "name": "svelte-mfe",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "serve": "node server.mjs"
+  },
+  "dependencies": {
+    "@stavgian/mfe-communication": "^2.0.0",
+    "svelte": "^5.58.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "esbuild-svelte": "^0.9.5"
+  }
+}

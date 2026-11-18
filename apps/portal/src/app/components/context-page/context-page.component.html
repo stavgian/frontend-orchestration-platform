@@ -1,0 +1,47 @@
+@if (record(); as r) {
+  <section class="context panel" aria-label="Active context">
+    <div class="top">
+      <a routerLink="/" class="back"><app-icon name="back" /> All {{ scenario()?.branding?.contextLabelPlural?.toLowerCase() }}</a>
+      <span class="status" [attr.data-tone]="r.tone">{{ r.status }}</span>
+    </div>
+    <div class="banner" aria-label="Active context">
+      <span class="ico-tile"><app-icon name="layers" /></span>
+      <span class="txt">
+        <strong>Active business context</strong>
+        <b class="cid">{{ r.id }}</b>
+        <small>Context type: {{ r.contextType }}@if (synced()) { · Synchronized across all applications }</small>
+      </span>
+      <span class="sync" [class.wait]="!synced()">
+        @if (synced()) { <app-icon name="check" /> Synchronized } @else { {{ feed.connectedCount() }} of {{ mfes().length }} apps connected }
+      </span>
+    </div>
+    <p class="kind">{{ scenario()?.branding?.portalLabel }}</p>
+    <h2>{{ r.title }} <code class="id">{{ r.id }}</code></h2>
+    <p class="summary">{{ r.summary }}</p>
+    <dl>
+      @for (f of r.fields; track f.label) {
+        <div>@if (f.icon) { <app-icon [name]="f.icon" /> }<span><dt>{{ f.label }}</dt><dd>{{ f.value }}</dd></span></div>
+      }
+    </dl>
+    <nav class="switch" aria-label="Switch context">
+      @for (c of siblings(); track c.id) {
+        <a [routerLink]="['/', c.id]" [class.current]="c.id === r.id">{{ c.id }}</a>
+      }
+    </nav>
+  </section>
+
+  <section class="host frame" aria-label="Hosted by the shell portal">
+    <div class="frame-label">
+      <span class="p-badge" aria-hidden="true">P</span>
+      Portal<span class="long"> · shares the open {{ scenario()?.branding?.contextLabel?.toLowerCase() }} with every app and watches their messages</span>
+    </div>
+    <app-message-channel class="panel" [mfes]="mfes()" />
+    <section class="mfes frame" aria-label="Micro-frontends">
+      <div class="frame-label">
+        <span class="p-badge" aria-hidden="true">{{ mfes().length }}</span>
+        {{ scenario()?.branding?.appsLabel }}<span class="long"> · {{ mfes().length }} separate apps, each built and deployed on its own, loaded when you open a {{ scenario()?.branding?.contextLabel?.toLowerCase() }}</span>
+      </div>
+      <app-composition />
+    </section>
+  </section>
+}

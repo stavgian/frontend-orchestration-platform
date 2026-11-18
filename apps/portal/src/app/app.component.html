@@ -1,74 +1,23 @@
-<div class="shell" [class.log-open]="logOpen()">
+<div class="shell" [class.log-open]="log.open()">
   <div class="main">
-    <!-- No header: the shell's status and the log toggle float in the top corner. -->
-    <div class="corner" role="toolbar" aria-label="Shell portal status">
-      @if (mfes.length) {
-      <span class="online" title="Apps connected to the message channel">
-        <span class="live" aria-hidden="true"></span>
-        <span
-          >{{ feed.connectedCount() }} of {{ mfes.length
-          }}<span class="long"> apps connected</span></span
-        >
-      </span>
-      } @if (manifest) {
-      <button
-        type="button"
-        class="btn-ghost"
-        aria-haspopup="dialog"
-        (click)="manifestDialog.showModal()"
-      >
-        Manifest
-      </button>
-      }
-      <button
-        type="button"
-        class="btn-ghost"
-        aria-haspopup="dialog"
-        (click)="aboutDialog.showModal()"
-      >
-        Help
-      </button>
-      <button
-        type="button"
-        class="btn-ghost log-toggle"
-        [class.active]="logOpen()"
-        [attr.aria-expanded]="logOpen()"
-        aria-controls="message-log"
-        (click)="toggleLog()"
-      >
-        Message log @if (unread()) {
-        <span class="badge" [attr.aria-label]="unread() + ' new'">{{
-          unread()
-        }}</span>
-        }
-      </button>
-    </div>
+    <!-- No header: the only shell control floats in the top corner. -->
+    <button type="button" class="btn-ghost corner-help" aria-haspopup="dialog" (click)="helpDialog.showModal()">
+      <app-icon name="help" /> How it works
+    </button>
 
     <div class="page">
+      @if (onLanding()) {
       <section class="hero">
-        <p class="eyebrow">Frontend Orchestration Platform · Live demo</p>
+        <p class="eyebrow">Interactive demonstration</p>
         <!-- Non-breaking hyphen and space keep "micro-frontends" and "at runtime" together when the headline wraps. -->
-        <h1>
-          Orchestrate micro&#8209;frontends
-          <span class="hl">at&nbsp;runtime.</span>
-        </h1>
+        <h1>Different teams. Different systems. <span class="hl">One connected experience.</span></h1>
         <p class="lede">
-          Any framework, deployed on its own, discovered from a manifest, loaded
-          on demand and connected through one message channel. This demo runs
-          four apps (Angular, React, Vue and plain JavaScript), but the same
-          page could host anything that ships as a web component, including
-          several apps built with the same framework.
+          Bring independently managed applications together in one place. Give
+          teams a unified view of their work while allowing each department to
+          maintain its own tools, technologies and processes.
         </p>
-        <button
-          type="button"
-          class="btn-ghost learn-more"
-          aria-haspopup="dialog"
-          (click)="howDialog.showModal()"
-        >
-          <span class="learn-title">How it works · Example use case</span>
-          <span class="learn-sub">Events, messages, requests, presence →</span>
-        </button>
       </section>
+      }
 
       @if (loadingManifest) {
       <div class="panel notice">Finding available apps…</div>
@@ -78,35 +27,7 @@
         <small>{{ manifestError }}</small>
       </div>
       } @else {
-      <!-- Everything in this frame belongs to the shell portal: it hosts the page, loads the apps and provides the channel. -->
-      <section class="host frame" aria-label="Hosted by the shell portal">
-        <div class="frame-label">
-          <span class="p-badge" aria-hidden="true">P</span>
-          Shell portal<span class="long">
-            · loads {{ mfes.length }} apps from the manifest and observes their
-            channel</span
-          >
-        </div>
-        <app-message-channel class="panel" [mfes]="mfes" />
-        <!-- Every boxed app inside this frame is a micro-frontend the shell portal loaded from the manifest. -->
-        <section class="mfes frame" aria-label="Micro-frontends">
-          <div class="frame-label">
-            <span class="p-badge" aria-hidden="true">{{ mfes.length }}</span>
-            Micro-frontends<span class="long">
-              · loaded from the
-              <button
-                type="button"
-                class="label-link"
-                aria-haspopup="dialog"
-                (click)="manifestDialog.showModal()"
-              >
-                manifest
-              </button></span
-            >
-          </div>
-          <router-outlet />
-        </section>
-      </section>
+      <router-outlet />
       }
 
       <app-project-links />
@@ -159,133 +80,64 @@
     </footer>
   </div>
 
-  <dialog #howDialog class="sheet" aria-labelledby="how-title" closedby="any">
+  <dialog #helpDialog class="sheet wide" aria-labelledby="help-title" closedby="any">
     <div class="sheet-head">
-      <h2 id="how-title">How the apps talk</h2>
-      <button
-        type="button"
-        class="btn-ghost"
-        aria-label="Close"
-        (click)="howDialog.close()"
-      >
-        ✕
-      </button>
+      <h2 id="help-title">How it works</h2>
+      <button type="button" class="btn-ghost" aria-label="Close" (click)="helpDialog.close()">✕</button>
     </div>
     <p class="sheet-intro">
-      Example use case: a small shop. Add a product in the catalog and the cart,
-      checkout and shipping each react, without any of them importing the
-      others. Four ways the apps talk make that possible:
+      A live demo of a micro-frontend platform. This page is the shell portal:
+      it reads a manifest, loads {{ mfes.length }} independent apps built with
+      different frameworks, owns one active context and lets the apps talk
+      through a shared message channel. It contains no business logic. What the
+      example means comes from a scenario file and from the apps themselves.
     </p>
+
+    @if (scenario(); as s) {
+    <h3 class="sheet-h">Example use case: {{ s.name }}</h3>
+    @for (p of s.useCase; track $index) {
+    <p class="sheet-intro">{{ p }}</p>
+    }
+    <p class="sheet-intro">The apps talk through these events. They belong to the scenario, not to the platform:</p>
+    <ul class="events">
+      @for (e of s.exampleEvents; track e.type) {
+      <li>
+        <code>{{ e.type }}</code>
+        {{ nameOf(e.publisher) }} → {{ namesOf(e.consumers) }}. {{ e.description }}
+      </li>
+      }
+    </ul>
+    }
+
+
+    <h3 class="sheet-h">What happens, step by step</h3>
     <ol class="steps">
       <li>
-        <strong>Events</strong> “Something happened.” The sender does not know
-        who is listening.
-        <span class="try"
-          >Add a product: the cart, checkout and shipping all react.</span
-        >
+        <strong>1. Discover</strong> The shell fetches the manifest, the only
+        place that says which apps exist and where to load them from.
+        <span class="try">Listed below under “Manifest”.</span>
       </li>
       <li>
-        <strong>Direct messages</strong> “This is for you.” The same message,
-        addressed to a single app.
-        <span class="try"
-          >“Checkout →” in the cart reaches checkout only. The catalog never
-          sees it.</span
-        >
+        <strong>2. Load</strong> When you open a record, each compatible app is
+        loaded on demand as a script and mounted as a web component. Each app is
+        built and deployed on its own.
+        <span class="try">“Built with” under each app shows the framework it reports at runtime.</span>
       </li>
       <li>
-        <strong>Requests</strong> “I need an answer.” One app asks, and the app
-        that knows replies.
-        <span class="try"
-          >On “Place order”, checkout asks the cart to confirm the total.</span
-        >
+        <strong>3. Share context</strong> The record you open becomes the active
+        context. The shell announces <code>context:changed</code>; an app that
+        loads later asks with <code>context:get</code>. Apps never change the route.
+        <span class="try">Switch records on a detail page: nothing reloads, every app updates itself.</span>
       </li>
       <li>
-        <strong>Presence</strong> “Who is here?” Apps announce when they join
-        and when they leave.
-        <span class="try"
-          >Checkout waits for the cart, and “Check who’s online” asks everyone
-          at once.</span
-        >
+        <strong>4. Communicate</strong> Apps publish events, ask each other
+        questions and announce when they join or leave, using
+        &#64;stavgian/mfe-communication, the only code they share.
+        <span class="try">Open the Message log and trigger an action in any app.</span>
       </li>
     </ol>
-  </dialog>
 
-  <dialog #aboutDialog class="sheet" aria-labelledby="about-title" closedby="any">
-    <div class="sheet-head">
-      <h2 id="about-title">What you are looking at</h2>
-      <button
-        type="button"
-        class="btn-ghost"
-        aria-label="Close"
-        (click)="aboutDialog.close()"
-      >
-        ✕
-      </button>
-    </div>
-    <p class="sheet-intro">
-      A live demo of a micro-frontend platform. This page is the shell portal.
-      It loads four independent apps, built with different frameworks, and lets
-      them talk to each other. It is not a real shop; it exists to show the
-      pattern.
-    </p>
-    <p class="sheet-intro">
-      What it shows: apps in different frameworks side by side, each deployed on
-      its own, a manifest in place of hard-wired imports, and one small typed
-      channel in place of shared code.
-    </p>
-    <ol class="steps">
-      <li>
-        <strong>Shell portal</strong> This page, built with Angular. It reads the
-        manifest, loads each app on demand, draws the frame around them and
-        watches the message channel. It has no business logic and no built-in
-        knowledge of the apps.
-        <span class="try"
-          >Everything inside the dashed frame belongs to the shell portal.</span
-        >
-      </li>
-      <li>
-        <strong>Manifest</strong> A JSON file that lists the apps: their name,
-        colour, logo and where to load each one from. Add an entry and a new app
-        appears; the shell's code does not change.
-        <span class="try">Open Manifest in the top bar to read the real file.</span>
-      </li>
-      <li>
-        <strong>The four apps</strong> Product catalog (Angular), shopping cart
-        (React), checkout (plain JavaScript) and shipping (Vue). Each is built,
-        versioned and deployed on its own, and appears as a web component.
-        <span class="try"
-          >The inner dashed frame marks them as micro-frontends. “Built with” under each app shows the framework and version it
-          reports at runtime.</span
-        >
-      </li>
-      <li>
-        <strong>The npm library</strong> &#64;stavgian/mfe-communication is the only
-        code the apps share. It gives them events, direct messages, requests and
-        presence over browser CustomEvents, with typed messages, in under 4 KB.
-        <span class="try"
-          >Open the Message log, add a product and follow the messages.</span
-        >
-      </li>
-    </ol>
-  </dialog>
-
-  <dialog
-    #manifestDialog
-    class="sheet wide"
-    aria-label="Manifest"
-    closedby="any"
-  >
-    <div class="sheet-head">
-      <span></span>
-      <button
-        type="button"
-        class="btn-ghost"
-        aria-label="Close"
-        (click)="manifestDialog.close()"
-      >
-        ✕
-      </button>
-    </div>
+    <h3 class="sheet-h">Manifest</h3>
     @if (manifest) {
     <app-manifest-panel [manifest]="manifest" [url]="manifestUrl" />
     }
@@ -294,15 +146,15 @@
   <aside
     id="message-log"
     class="log-panel"
-    [class.open]="logOpen()"
-    [attr.inert]="logOpen() ? null : ''"
+    [class.open]="log.open()"
+    [attr.inert]="log.open() ? null : ''"
     aria-label="Message log"
   >
-    <app-message-log (closed)="toggleLog(false)" />
+    <app-message-log (closed)="log.toggle(false)" />
   </aside>
-  <div class="backdrop" (click)="toggleLog(false)" aria-hidden="true"></div>
+  <div class="backdrop" (click)="log.toggle(false)" aria-hidden="true"></div>
 </div>
 
-@if (!logOpen()) {
+@if (!log.open()) {
 <app-toast-stack />
 }
