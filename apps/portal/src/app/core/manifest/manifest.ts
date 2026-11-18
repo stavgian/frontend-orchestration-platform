@@ -2,13 +2,8 @@ export type MfeType = "module-federation" | "script";
 
 export interface MfeDefinition {
   id: string;
-  /** How the portal presents this app: its name, avatar initials, accent colour and an optional logo (an image URL). */
-  display: { name: string; initials: string; color: string; logo?: string };
-  /**
-   * Used to build navigation and routing.
-   * Example: "angular-mfe" becomes /mfe/angular-mfe
-   */
-  route: string;
+  /** How the portal presents this app: its name, avatar initials, accent colour, an optional icon name from the shell's icon set and an optional logo (an image URL). */
+  display: { name: string; initials: string; color: string; icon?: string; logo?: string };
   type: MfeType;
   /**
    * Custom element that the remote registers.

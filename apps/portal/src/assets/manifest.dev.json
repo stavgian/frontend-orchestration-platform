@@ -4,12 +4,12 @@
     {
       "id": "angular-mfe",
       "display": {
-        "name": "Product catalog",
+        "name": "Legal",
         "initials": "A",
         "color": "#c2255c",
+        "icon": "scale",
         "logo": "logos/angular.svg"
       },
-      "route": "angular-mfe",
       "type": "module-federation",
       "remoteEntry": "http://localhost:4301/remoteEntry.js",
       "remoteName": "angularMfe",
@@ -19,12 +19,12 @@
     {
       "id": "react-mfe",
       "display": {
-        "name": "Shopping cart",
+        "name": "Documents",
         "initials": "R",
         "color": "#6741d9",
+        "icon": "file",
         "logo": "logos/react.svg"
       },
-      "route": "react-mfe",
       "type": "script",
       "scripts": [
         "http://localhost:4302/react-mfe.js"
@@ -34,12 +34,12 @@
     {
       "id": "js-mfe",
       "display": {
-        "name": "Checkout",
+        "name": "Compliance",
         "initials": "JS",
         "color": "#c2410c",
+        "icon": "shield",
         "logo": "logos/javascript.svg"
       },
-      "route": "js-mfe",
       "type": "script",
       "scripts": [
         "http://localhost:4303/js-mfe.js"
@@ -49,17 +49,45 @@
     {
       "id": "vue-mfe",
       "display": {
-        "name": "Shipping",
+        "name": "Finance",
         "initials": "V",
         "color": "#1e7a3c",
+        "icon": "database",
         "logo": "logos/vue.svg"
       },
-      "route": "vue-mfe",
       "type": "script",
       "scripts": [
         "http://localhost:4304/vue-mfe.js"
       ],
       "customElement": "vue-mfe"
+    },
+    {
+      "id": "svelte-mfe",
+      "display": {
+        "name": "Client Relations",
+        "initials": "S",
+        "color": "#0e7490",
+        "icon": "users"
+      },
+      "type": "script",
+      "scripts": [
+        "http://localhost:4305/svelte-mfe.js"
+      ],
+      "customElement": "svelte-mfe"
+    },
+    {
+      "id": "lit-mfe",
+      "display": {
+        "name": "Risk",
+        "initials": "L",
+        "color": "#a16207",
+        "icon": "alert"
+      },
+      "type": "script",
+      "scripts": [
+        "http://localhost:4306/lit-mfe.js"
+      ],
+      "customElement": "lit-mfe"
     }
   ]
 }

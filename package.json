@@ -18,12 +18,16 @@
     "build:react-mfe": "npm run build -w react-mfe",
     "build:js-mfe": "npm run build -w js-mfe",
     "build:vue-mfe": "npm run build -w vue-mfe",
-    "serve:all": "npm run build:mfe-communication && concurrently -k -n ANG,REACT,JS,VUE,PORTAL -c cyan,magenta,yellow,blue,green \"npm:serve:angular-mfe\" \"npm:serve:react-mfe\" \"npm:serve:js-mfe\" \"npm:serve:vue-mfe\" \"NX_DAEMON=false npm run serve:portal\"",
+    "build:svelte-mfe": "npm run build -w svelte-mfe",
+    "build:lit-mfe": "npm run build -w lit-mfe",
+    "serve:all": "node scripts/check-ports.mjs && npm run build:mfe-communication && concurrently -k -n ANG,REACT,JS,VUE,SVELTE,LIT,PORTAL -c cyan,magenta,yellow,blue,red,white,green \"npm:serve:angular-mfe\" \"npm:serve:react-mfe\" \"npm:serve:js-mfe\" \"npm:serve:vue-mfe\" \"npm:serve:svelte-mfe\" \"npm:serve:lit-mfe\" \"NX_DAEMON=false npm run serve:portal\"",
     "serve:portal": "nx serve portal",
     "serve:angular-mfe": "npm run serve -w angular-mfe",
     "serve:react-mfe": "npm run serve -w react-mfe",
     "serve:js-mfe": "npm run serve -w js-mfe",
-    "serve:vue-mfe": "npm run serve -w vue-mfe"
+    "serve:vue-mfe": "npm run serve -w vue-mfe",
+    "serve:svelte-mfe": "npm run serve -w svelte-mfe",
+    "serve:lit-mfe": "npm run serve -w lit-mfe"
   },
   "dependencies": {
     "@angular/animations": "~22.2.0",

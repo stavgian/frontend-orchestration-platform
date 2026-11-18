@@ -36,7 +36,8 @@ const TOAST_MS = 4500;
 /** The portal's single connection to the shared message channel. */
 @Injectable({ providedIn: 'root' })
 export class MessageFeedService implements OnDestroy {
-  private readonly bus = connect({
+  /** The portal's connection, shared with the services that speak for the shell (e.g. the context). */
+  readonly connection = connect({
     id: PORTAL_ID,
     name: 'Portal',
     version: '1.0.0',
@@ -77,10 +78,10 @@ export class MessageFeedService implements OnDestroy {
 
   constructor() {
     // The portal watches all traffic, including messages addressed to one app.
-    this.bus.subscribe('*', (message) => this.add(message), {
+    this.connection.subscribe('*', (message) => this.add(message), {
       observeAll: true,
     });
-    this.bus.onPeersChange((peers) => this.peers.set(peers));
+    this.connection.onPeersChange((peers) => this.peers.set(peers));
     this.loader
       .getManifest()
       .then((manifest) => manifest.mfes.forEach((mfe) => this.participants.set(mfe.id, participantForMfe(mfe))))
@@ -91,11 +92,11 @@ export class MessageFeedService implements OnDestroy {
   /** Request/response health check: asks every connected app to answer. */
   async pingAll(): Promise<void> {
     const results = await Promise.all(
-      this.bus
+      this.connection
         .peers()
         .map(async (peer): Promise<[string, number | 'timeout']> => {
           try {
-            return [peer.id, await this.bus.ping(peer.id, { timeout: 2000 })];
+            return [peer.id, await this.connection.ping(peer.id, { timeout: 2000 })];
           } catch {
             return [peer.id, 'timeout'];
           }
@@ -113,7 +114,7 @@ export class MessageFeedService implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.bus.disconnect();
+    this.connection.disconnect();
     this.timers.forEach(clearTimeout);
   }
 
@@ -167,7 +168,8 @@ export class MessageFeedService implements OnDestroy {
     this.latest.set(entry);
     this.arrivals.next(entry);
     this.messageCount.update((n) => n + 1);
-    if (kind === 'event') this.showToast(entry);
+    // The shell's own announcements (the context) are not news to the person who just navigated.
+    if (kind === 'event' && entry.sender.id !== PORTAL_ID) this.showToast(entry);
   }
 
   private showToast(entry: FeedMessage): void {

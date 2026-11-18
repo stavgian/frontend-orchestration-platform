@@ -1,0 +1,229 @@
+{
+  "name": "Legal Case Management",
+  "description": "A fictional law-firm scenario. Six departments each own one small application, all working together on the same case.",
+  "branding": {
+    "contextLabel": "Case",
+    "contextLabelPlural": "Cases",
+    "recordsTitle": "Client cases",
+    "portalLabel": "Legal operations portal",
+    "appsLabel": "Department applications"
+  },
+  "contexts": [
+    {
+      "contextType": "legal-case",
+      "id": "CASE-2026-1082",
+      "title": "Commercial dispute",
+      "status": "In progress",
+      "tone": "active",
+      "summary": "Late delivery and withheld payment between trading partners.",
+      "fields": [
+        {
+          "label": "Client",
+          "value": "Northwind Logistics Ltd",
+          "icon": "briefcase"
+        },
+        {
+          "label": "Lead Counsel",
+          "value": "A. Marlowe",
+          "icon": "user"
+        },
+        {
+          "label": "Opened",
+          "value": "2026-02-03",
+          "icon": "calendar"
+        }
+      ]
+    },
+    {
+      "contextType": "legal-case",
+      "id": "CASE-2026-1083",
+      "title": "Employment litigation",
+      "status": "Awaiting review",
+      "tone": "pending",
+      "summary": "Wrongful-dismissal claim; response brief awaiting review.",
+      "fields": [
+        {
+          "label": "Client",
+          "value": "Contoso Retail Group",
+          "icon": "briefcase"
+        },
+        {
+          "label": "Lead Counsel",
+          "value": "J. Okafor",
+          "icon": "user"
+        },
+        {
+          "label": "Opened",
+          "value": "2026-03-17",
+          "icon": "calendar"
+        }
+      ]
+    },
+    {
+      "contextType": "legal-case",
+      "id": "CASE-2026-1084",
+      "title": "Corporate acquisition",
+      "status": "Due diligence",
+      "tone": "neutral",
+      "summary": "Software supplier acquisition; contracts and IP under review.",
+      "fields": [
+        {
+          "label": "Client",
+          "value": "Fabrikam Holdings",
+          "icon": "briefcase"
+        },
+        {
+          "label": "Lead Counsel",
+          "value": "S. Lindqvist",
+          "icon": "user"
+        },
+        {
+          "label": "Opened",
+          "value": "2026-04-22",
+          "icon": "calendar"
+        }
+      ]
+    },
+    {
+      "contextType": "legal-case",
+      "id": "CASE-2026-1085",
+      "title": "Trademark infringement",
+      "status": "Filed",
+      "tone": "active",
+      "summary": "Claim against an online retailer selling goods under a copied brand name.",
+      "fields": [
+        {
+          "label": "Client",
+          "value": "Tailspin Toys",
+          "icon": "briefcase"
+        },
+        {
+          "label": "Lead Counsel",
+          "value": "M. Duarte",
+          "icon": "user"
+        },
+        {
+          "label": "Opened",
+          "value": "2026-05-11",
+          "icon": "calendar"
+        }
+      ]
+    },
+    {
+      "contextType": "legal-case",
+      "id": "CASE-2026-1086",
+      "title": "Regulatory investigation",
+      "status": "On hold",
+      "tone": "neutral",
+      "summary": "Data-protection authority inquiry after a customer data incident.",
+      "fields": [
+        {
+          "label": "Client",
+          "value": "Woodgrove Bank",
+          "icon": "briefcase"
+        },
+        {
+          "label": "Lead Counsel",
+          "value": "K. Brennan",
+          "icon": "user"
+        },
+        {
+          "label": "Opened",
+          "value": "2026-06-02",
+          "icon": "calendar"
+        }
+      ]
+    }
+  ],
+  "apps": [
+    {
+      "id": "angular-mfe",
+      "department": "Legal Department",
+      "responsibility": "Case status and overview",
+      "contextTypes": [
+        "legal-case"
+      ]
+    },
+    {
+      "id": "react-mfe",
+      "department": "Document Management",
+      "responsibility": "Contracts and evidence",
+      "contextTypes": [
+        "legal-case"
+      ]
+    },
+    {
+      "id": "js-mfe",
+      "department": "Compliance Department",
+      "responsibility": "Checks and validations",
+      "contextTypes": [
+        "legal-case"
+      ]
+    },
+    {
+      "id": "vue-mfe",
+      "department": "Finance Department",
+      "responsibility": "Time entries and billing",
+      "contextTypes": [
+        "legal-case"
+      ]
+    },
+    {
+      "id": "svelte-mfe",
+      "department": "Client Services",
+      "responsibility": "Communication history",
+      "contextTypes": [
+        "legal-case"
+      ]
+    },
+    {
+      "id": "lit-mfe",
+      "department": "Risk Management",
+      "responsibility": "Risk assessment and exposure",
+      "contextTypes": [
+        "legal-case"
+      ]
+    }
+  ],
+  "exampleEvents": [
+    {
+      "type": "document:uploaded",
+      "publisher": "react-mfe",
+      "consumers": [
+        "js-mfe",
+        "lit-mfe",
+        "svelte-mfe"
+      ],
+      "description": "A document was added. Compliance re-checks, Risk re-scores, Client Relations logs it."
+    },
+    {
+      "type": "compliance:check:completed",
+      "publisher": "js-mfe",
+      "consumers": [
+        "angular-mfe"
+      ],
+      "description": "A compliance check finished. Legal shows the outcome."
+    },
+    {
+      "type": "billing:updated",
+      "publisher": "vue-mfe",
+      "consumers": [
+        "lit-mfe",
+        "svelte-mfe"
+      ],
+      "description": "Time was billed. Risk adjusts exposure, Client Relations logs it."
+    },
+    {
+      "type": "risk:assessment:updated",
+      "publisher": "lit-mfe",
+      "consumers": [
+        "angular-mfe"
+      ],
+      "description": "The risk score changed. Legal shows it."
+    }
+  ],
+  "useCase": [
+    "A law firm handles multiple client cases, with different departments contributing to each one. Legal manages case progress, Document Management handles contracts and evidence, Finance oversees billing, Compliance performs checks, Client Services manages client communication and Risk evaluates potential exposure.",
+    "This demonstration brings all six departments together in one workspace. Each department operates its own independent application, but all applications work with the same case. When a document is added, for example, Compliance can initiate a new check and Risk can update its assessment. All information is fictional."
+  ]
+}

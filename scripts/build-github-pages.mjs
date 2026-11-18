@@ -42,6 +42,20 @@ const standalonePages = [
     scriptFiles: ['vue-mfe.js'],
     sourceDir: join(workspaceRoot, 'mfes/vue-mfe/dist'),
   },
+  {
+    id: 'svelte-mfe',
+    title: 'Svelte MFE',
+    elementTag: 'svelte-mfe',
+    scriptFiles: ['svelte-mfe.js'],
+    sourceDir: join(workspaceRoot, 'mfes/svelte-mfe/dist'),
+  },
+  {
+    id: 'lit-mfe',
+    title: 'Lit MFE',
+    elementTag: 'lit-mfe',
+    scriptFiles: ['lit-mfe.js'],
+    sourceDir: join(workspaceRoot, 'mfes/lit-mfe/dist'),
+  },
 ];
 
 run('npx', ['nx', 'build', 'mfe-communication']);
@@ -50,6 +64,8 @@ run('node', ['mfes/angular-mfe/build.mjs']);
 run('node', ['mfes/react-mfe/build.mjs']);
 run('node', ['mfes/js-mfe/build.mjs']);
 run('node', ['mfes/vue-mfe/build.mjs']);
+run('node', ['mfes/svelte-mfe/build.mjs']);
+run('node', ['mfes/lit-mfe/build.mjs']);
 
 rmSync(outputDir, { force: true, recursive: true });
 mkdirSync(outputDir, { recursive: true });
@@ -170,7 +186,7 @@ function createStandaloneHtml(title, elementTag, scriptFiles) {
     <main>
       <section class="hero">
         <h1>${title}</h1>
-        <p>Standalone deployment for this microfrontend.</p>
+        <p>Standalone deployment for this microfrontend. Without the portal there is no context to show.</p>
       </section>
       <${elementTag}></${elementTag}>
     </main>
