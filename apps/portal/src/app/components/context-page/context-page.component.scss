@@ -1,43 +1,43 @@
-.context { padding: 22px 24px; }
+.eyebrow { margin: 4px 0 26px; font-size: 12px; color: var(--subtle); }
 .toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 16px; }
-.top { display: flex; justify-content: flex-end; align-items: center; }
 .back { display: inline-flex; align-items: center; gap: 6px; color: var(--accent); font-size: 13px; text-decoration: none; }
-.kind { margin: 14px 0 2px; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
-h2 { margin: 0; font: 700 28px/1.2 var(--font-sans); letter-spacing: -0.02em; }
-.id { margin-left: 8px; font: 500 14px var(--font-mono); color: var(--subtle); }
-.summary { margin: 8px 0 0; max-width: 70ch; color: var(--text-secondary); }
-dl { display: flex; flex-wrap: wrap; gap: 8px 32px; margin: 16px 0 0; }
-dl > div { display: flex; align-items: center; gap: 10px; }
-dl app-icon { font-size: 20px; color: var(--accent); }
-dt { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--subtle); }
-dd { margin: 2px 0 0; font-weight: 500; }
-.status { padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; background: var(--surface); }
-.status[data-tone='active'] { color: var(--ok); }
-.status[data-tone='pending'] { color: #a16207; }
 .switch { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--subtle); }
 .switch select { max-width: 100%; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: 500 13px var(--font-sans); }
 
-.banner { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 14px; padding: 10px 14px; border-radius: 8px; background: color-mix(in srgb, var(--bavaria) 8%, white); font-size: 13px; }
-.banner code { margin: 0 4px; }
-.banner code, .txt { flex: 1; display: grid; }
-.cid { font-size: 20px; letter-spacing: -0.01em; }
-.txt small { color: var(--subtle); }
+/* Case card, desktop: one row of three columns (title block · fields · badges). */
+.context { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 12px 32px; padding: 16px 20px; }
+.head { min-width: 0; }
+.kind { margin: 0 0 2px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+h2 { margin: 0; font: 700 20px/1.25 var(--font-sans); letter-spacing: -0.02em; }
+.id { margin-left: 8px; font: 500 13px var(--font-mono); color: var(--subtle); }
+.summary { margin: 2px 0 0; font-size: 13px; color: var(--text-secondary); }
+dl { display: flex; gap: 24px; margin: 0; }
+dl > div { display: flex; align-items: center; gap: 8px; }
+dl app-icon { font-size: 18px; color: var(--accent); }
+dt { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--subtle); }
+dd { margin: 0; font-size: 14px; font-weight: 500; white-space: nowrap; }
+.badges { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.status { padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; background: var(--surface); }
+.status[data-tone='active'] { color: var(--ok); }
+.status[data-tone='pending'] { color: #a16207; }
+.sync { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 99px; border: 1px solid color-mix(in srgb, var(--ok) 35%, white); background: white; font-size: 12px; font-weight: 600; color: var(--ok); white-space: nowrap; }
 .sync.wait { color: var(--subtle); border-color: var(--border); }
-.banner .ico-tile { width: 34px; height: 34px; }
-.sync { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 99px; border: 1px solid color-mix(in srgb, var(--ok) 35%, white); background: white; font-weight: 600; color: var(--ok); }
 
-/* Phones: the banner stacks; the icon goes, the id shrinks, the sync badge sits on its own line. */
+/* Mid widths: the fields drop under the title, badges stay top right. */
+@media (max-width: 1100px) {
+  .context { grid-template-columns: minmax(0, 1fr) auto; align-items: start; }
+  dl { grid-column: 1 / -1; grid-row: 2; flex-wrap: wrap; gap: 8px 24px; }
+}
+
+/* Phones: badges first as one row, then title, then fields in two columns. */
 @media (max-width: 640px) {
-  .context { padding: 16px; }
   .switch { width: 100%; }
   .switch select { flex: 1; min-width: 0; }
-  .banner { gap: 8px; padding: 10px 12px; }
-  .banner .ico-tile { display: none; }
-  .txt { flex-basis: 100%; min-width: 0; }
-  .cid { font-size: 17px; overflow-wrap: anywhere; }
-  .txt small { overflow-wrap: anywhere; }
-  .sync { font-size: 12px; }
-  h2 { font-size: 22px; }
-  .id { display: block; margin: 4px 0 0; }
-  dl { gap: 10px 20px; }
+  .context { grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 14px; }
+  .badges { grid-row: 1; flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .head { grid-row: 2; }
+  h2 { font-size: 19px; }
+  .id { display: block; margin: 2px 0 0; }
+  dl { grid-row: 3; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+  dd { white-space: normal; overflow-wrap: anywhere; }
 }

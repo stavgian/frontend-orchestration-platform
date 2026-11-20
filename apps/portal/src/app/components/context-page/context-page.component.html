@@ -1,4 +1,5 @@
 @if (record(); as r) {
+  <p class="eyebrow">Example use case · {{ scenario()?.name }}</p>
   <section class="host frame" aria-label="Hosted by the shell portal">
     <div class="frame-label">
       <span class="p-badge" aria-hidden="true">P</span>
@@ -15,29 +16,23 @@
         </select>
       </label>
     </nav>
-    <section class="context panel" aria-label="Active context">
-      <div class="top">
-        <span class="status" [attr.data-tone]="r.tone">{{ r.status }}</span>
+    <section class="context panel" [attr.aria-label]="r.title">
+      <div class="head">
+        <p class="kind">{{ scenario()?.branding?.portalLabel }}</p>
+        <h2>{{ r.title }} <code class="id">{{ r.id }}</code></h2>
+        <p class="summary">{{ r.summary }}</p>
       </div>
-      <div class="banner">
-        <span class="ico-tile"><app-icon name="layers" /></span>
-        <span class="txt">
-          <strong>Active business context</strong>
-          <b class="cid">{{ r.id }}</b>
-          <small>Context type: {{ r.contextType }}@if (synced()) { · Synchronized across all applications }</small>
-        </span>
-        <span class="sync" [class.wait]="!synced()">
-          @if (synced()) { <app-icon name="check" /> Synchronized } @else { {{ feed.connectedCount() }} of {{ mfes().length }} apps connected }
-        </span>
-      </div>
-      <p class="kind">{{ scenario()?.branding?.portalLabel }}</p>
-      <h2>{{ r.title }} <code class="id">{{ r.id }}</code></h2>
-      <p class="summary">{{ r.summary }}</p>
       <dl>
         @for (f of r.fields; track f.label) {
           <div>@if (f.icon) { <app-icon [name]="f.icon" /> }<span><dt>{{ f.label }}</dt><dd>{{ f.value }}</dd></span></div>
         }
       </dl>
+      <div class="badges">
+        <span class="status" [attr.data-tone]="r.tone">{{ r.status }}</span>
+        <span class="sync" role="status" [class.wait]="!synced()">
+          @if (synced()) { <app-icon name="check" /> Synchronized } @else { {{ feed.connectedCount() }} of {{ mfes().length }} apps connected }
+        </span>
+      </div>
     </section>
     <app-message-channel class="panel" [mfes]="mfes()" />
     <section class="mfes frame" aria-label="Micro-frontends">
