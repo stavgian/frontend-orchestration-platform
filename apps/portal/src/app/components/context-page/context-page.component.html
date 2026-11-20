@@ -8,7 +8,7 @@
       <a routerLink="/" class="back"><app-icon name="back" /> All {{ scenario()?.branding?.contextLabelPlural?.toLowerCase() }}</a>
       <label class="switch">
         Switch {{ scenario()?.branding?.contextLabel?.toLowerCase() }}
-        <select [value]="r.id" (change)="open($any($event.target).value)">
+        <select (change)="open($any($event.target).value)">
           @for (c of siblings(); track c.id) {
             <option [value]="c.id" [selected]="c.id === r.id">{{ c.id }} · {{ c.title }}</option>
           }
@@ -19,7 +19,7 @@
       <div class="top">
         <span class="status" [attr.data-tone]="r.tone">{{ r.status }}</span>
       </div>
-      <div class="banner" aria-label="Active context">
+      <div class="banner">
         <span class="ico-tile"><app-icon name="layers" /></span>
         <span class="txt">
           <strong>Active business context</strong>
