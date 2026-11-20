@@ -12,7 +12,11 @@
     "moduleResolution": "bundler",
     "module": "preserve",
     "resolveJsonModule": true,
-    "lib": ["dom", "dom.iterable", "es2022"]
+    "lib": ["dom", "dom.iterable", "es2022"],
+    // Compile the library from source: rebuilding its dist (rm -rf dist) no longer breaks a running dev server.
+    "paths": {
+      "@stavgian/mfe-communication": ["../../libs/mfe-communication/src/index.ts"]
+    }
   },
   "files": [],
   "include": [],
