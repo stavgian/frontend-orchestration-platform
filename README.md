@@ -106,7 +106,7 @@ How it works:
 - Each app calls `connect({ id })`, which announces it on the channel (`system:ready`) and discovers apps already connected (`system:present`). `disconnect()` announces `system:left`.
 - Every message is an envelope `{ specversion, id, type, source, time, payload }`. Apps choose their own types and declare the payloads they use with TypeScript declaration merging. No shared types package is needed.
 - Subscriptions take an exact type, a namespace (`document:*`) or everything (`*`).
-- Every MFE depends on the package by version (`^2.0.0`) and the shell portal uses the workspace copy; none of them depends on another's code. Each connection keeps only its own state, so apps on different library versions still talk as long as they share the same `specversion`.
+- Every MFE depends on the package by version (`^2.0.0`) and the shell portal compiles the workspace source directly (a path mapping in `apps/portal/tsconfig.json`), so rebuilding the library never breaks a running dev server; none of them depends on another's code. Each connection keeps only its own state, so apps on different library versions still talk as long as they share the same `specversion`.
 
 On one page, the shell portal shows everything live:
 - the manifest it loaded the apps from: which apps, how each one is loaded, and from where
