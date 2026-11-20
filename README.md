@@ -106,7 +106,7 @@ How it works:
 - Each app calls `connect({ id })`, which announces it on the channel (`system:ready`) and discovers apps already connected (`system:present`). `disconnect()` announces `system:left`.
 - Every message is an envelope `{ specversion, id, type, source, time, payload }`. Apps choose their own types and declare the payloads they use with TypeScript declaration merging. No shared types package is needed.
 - Subscriptions take an exact type, a namespace (`document:*`) or everything (`*`).
-- The shell portal and every MFE depend on the package by version (`^2.0.0`), never on each other's code. Each connection keeps only its own state, so apps on different library versions still talk as long as they share the same `specversion`.
+- Every MFE depends on the package by version (`^2.0.0`) and the shell portal uses the workspace copy; none of them depends on another's code. Each connection keeps only its own state, so apps on different library versions still talk as long as they share the same `specversion`.
 
 On one page, the shell portal shows everything live:
 - the manifest it loaded the apps from: which apps, how each one is loaded, and from where
@@ -124,7 +124,7 @@ See the [package README](libs/mfe-communication/README.md) for the full API.
 ```
 @stavgian/mfe-communication  (npm, semver)
    ▲        ▲          ▲          ▲         ▲
-portal  angular-mfe  react-mfe  js-mfe  vue-mfe  svelte-mfe  lit-mfe   ← each pins its own version range
+portal  angular-mfe  react-mfe  js-mfe  vue-mfe  svelte-mfe  lit-mfe   ← each MFE pins its own version range
 ```
 
 In this repo, npm workspaces link the local library source to each app, as long as the library's version satisfies that app's range. An app can stay on `^2` while the library moves to `3.x`, in which case it installs `2.x` from npm instead.
@@ -209,6 +209,22 @@ npm run build:vue-mfe   # produces mfes/vue-mfe/dist/vue-mfe.js
 npm run serve:vue-mfe   # builds then serves on http://localhost:4304/vue-mfe.js
 ```
 
+### Svelte MFE (Svelte custom element)
+
+Svelte 5 compiled with `customElement: true` through `esbuild-svelte`; the component declares its own tag.
+
+```bash
+npm run build:svelte-mfe   # produces mfes/svelte-mfe/dist/svelte-mfe.js
+npm run serve:svelte-mfe   # http://localhost:4305/svelte-mfe.js
+```
+
+### Lit MFE (LitElement)
+
+```bash
+npm run build:lit-mfe   # produces mfes/lit-mfe/dist/lit-mfe.js
+npm run serve:lit-mfe   # http://localhost:4306/lit-mfe.js
+```
+
 ## Releasing `@stavgian/mfe-communication`
 
 Releases are made from this repo. A pushed tag triggers [`.github/workflows/publish-mfe-communication.yml`](.github/workflows/publish-mfe-communication.yml), which builds, tests and publishes with npm trusted publishing (no npm token stored, provenance attached).
@@ -229,22 +245,6 @@ The shell portal has its own semver version in [`apps/portal/package.json`](apps
 ```bash
 npx nx release patch --skip-publish -g portal   # add --first-release the first time; or minor / major: bumps version, writes apps/portal/CHANGELOG.md, commits, tags portal@x.y.z
 git push --follow-tags
-```
-
-### Svelte MFE (Svelte custom element)
-
-Svelte 5 compiled with `customElement: true` through `esbuild-svelte`; the component declares its own tag.
-
-```bash
-npm run build:svelte-mfe   # produces mfes/svelte-mfe/dist/svelte-mfe.js
-npm run serve:svelte-mfe   # http://localhost:4305/svelte-mfe.js
-```
-
-### Lit MFE (LitElement)
-
-```bash
-npm run build:lit-mfe   # produces mfes/lit-mfe/dist/lit-mfe.js
-npm run serve:lit-mfe   # http://localhost:4306/lit-mfe.js
 ```
 
 ## Running locally
@@ -279,6 +279,8 @@ This repo builds a single Pages artifact with separate URLs for the shell portal
 - React MFE: `/REPOSITORY_NAME/react-mfe/`
 - JS MFE: `/REPOSITORY_NAME/js-mfe/`
 - Vue MFE: `/REPOSITORY_NAME/vue-mfe/`
+- Svelte MFE: `/REPOSITORY_NAME/svelte-mfe/`
+- Lit MFE: `/REPOSITORY_NAME/lit-mfe/`
 
 Each MFE folder also has a standalone page that runs the app on its own.
 
