@@ -56,6 +56,10 @@ export class ContextPageComponent implements OnDestroy {
     });
   }
 
+  open(id: string): void {
+    void this.router.navigate(['/', id]);
+  }
+
   ngOnDestroy(): void {
     this.context.activate(null);
   }

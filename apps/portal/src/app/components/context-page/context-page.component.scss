@@ -1,5 +1,6 @@
 .context { padding: 22px 24px; margin-top: 8px; }
-.top { display: flex; justify-content: space-between; align-items: center; }
+.toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 16px; margin-top: 8px; }
+.top { display: flex; justify-content: flex-end; align-items: center; }
 .back { display: inline-flex; align-items: center; gap: 6px; color: var(--accent); font-size: 13px; text-decoration: none; }
 .kind { margin: 14px 0 2px; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
 h2 { margin: 0; font: 700 28px/1.2 var(--font-sans); letter-spacing: -0.02em; }
@@ -13,9 +14,8 @@ dd { margin: 2px 0 0; font-weight: 500; }
 .status { padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; background: var(--surface); }
 .status[data-tone='active'] { color: var(--ok); }
 .status[data-tone='pending'] { color: #a16207; }
-.switch { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
-.switch a { padding: 4px 12px; border-radius: 99px; border: 1px solid var(--border); font: 500 12px var(--font-mono); color: var(--text-secondary); text-decoration: none; }
-.switch a.current { color: var(--on-color); background: var(--accent); border-color: var(--accent); }
+.switch { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--subtle); }
+.switch select { max-width: 100%; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: 500 13px var(--font-sans); }
 
 .banner { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 14px; padding: 10px 14px; border-radius: 8px; background: color-mix(in srgb, var(--bavaria) 8%, white); font-size: 13px; }
 .banner code { margin: 0 4px; }
@@ -29,6 +29,8 @@ dd { margin: 2px 0 0; font-weight: 500; }
 /* Phones: the banner stacks; the icon goes, the id shrinks, the sync badge sits on its own line. */
 @media (max-width: 640px) {
   .context { padding: 16px; }
+  .switch { width: 100%; }
+  .switch select { flex: 1; min-width: 0; }
   .banner { gap: 8px; padding: 10px 12px; }
   .banner .ico-tile { display: none; }
   .txt { flex-basis: 100%; min-width: 0; }
